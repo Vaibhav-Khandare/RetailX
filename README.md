@@ -62,29 +62,21 @@ git clone https://github.com/Vaibhav-Khandare/RetailX.git
 ### 2️⃣ Install dependencies  
 pip install django
 
-python
-Copy code
-
 (Optional ML tools)
 pip install pandas numpy scikit-learn
 
 
 
-### 3️⃣ Run migrations  
-python manage.py migrate
-
-
-
-### 4️⃣ Create admin user  
-python manage.py createsuperuser
-
-
-### 5️⃣ Run project  
+### 3️⃣
+Run project  
 python manage.py runserver
 
 
+
+### 4️⃣
 Now open:  
 👉 http://127.0.0.1:8000/
+
 
 ---
 
