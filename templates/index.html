@@ -1,22 +1,331 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetailX - Advanced Inventory Billing System</title>
+    <link rel="shortcut icon" href="/static/images/RetailX logo with fruits in trolly.png" type="logo">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <h2>Retail<span>X</span></h2>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#login-options">Get Started</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                </ul>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<script src="{% static 'js/script.js' %}"></script>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Revolutionize Your Retail Business with <span>RetailX</span></h1>
+                    <p>Advanced Inventory Billing System with AI-Powered Future Trend Detection for Supermarkets and Retail Stores</p>
+                    <div class="hero-buttons">
+                        <a href="#login-options" class="btn primary">Get Started</a>
+                        <a href="#features" class="btn secondary">Explore Features</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="dashboard-preview">
+                        <div class="dashboard-header">
+                            <div class="dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="dashboard-content">
+                            <div class="chart-container">
+                                <div class="chart-bar" style="height: 70%"></div>
+                                <div class="chart-bar" style="height: 90%"></div>
+                                <div class="chart-bar" style="height: 60%"></div>
+                                <div class="chart-bar" style="height: 85%"></div>
+                                <div class="chart-bar" style="height: 75%"></div>
+                                <div class="chart-bar" style="height: 95%"></div>
+                            </div>
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <h4>98%</h4>
+                                    <p>Accuracy</p>
+                                </div>
+                                <div class="stat-item">
+                                    <h4>5K+</h4>
+                                    <p>Products</p>
+                                </div>
+                                <div class="stat-item">
+                                    <h4>24/7</h4>
+                                    <p>Support</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<html>
-    <head>
-        <title>
-            RetailX
-        </title>
-        <link rel="shortcut icon" href="/static/images/RetailX logo with fruits in trolly.png" type="logo">
-    </head>
-    <body>
-        <center>
-                <!-- <p>Index Page</p> -->
-                <img src="/static/images/RetailX logo with fruits in trolly.png" />
-                
-                <!-- Demo Image Added -->
-        </center>
-    </body>
+    <!-- Login Options Section -->
+    <section id="login-options" class="login-options">
+        <div class="container">
+            <div class="section-header">
+                <h2>Get Started with RetailX</h2>
+                <p>Choose your role and start managing your retail business efficiently</p>
+            </div>
+            <div class="login-grid">
+                <div class="login-card">
+                    <div class="login-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Admin</h3>
+                    <p>Full access to all features including product management, analytics, and user management</p>
+                    <div class="login-buttons">
+                        <a href="/admin_login" class="btn primary">Login</a>
+                        <a href="/admin_registration" class="btn secondary">Register</a>
+                    </div>
+                </div>
+                <div class="login-card">
+                    <div class="login-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Manager</h3>
+                    <p>Access to sales reports, inventory management, and staff performance analytics</p>
+                    <div class="login-buttons">
+                        <a href="/manager_login" class="btn primary">Login</a>
+                        <a href="/manager_registration" class="btn secondary">Register</a>
+                    </div>
+                </div>
+                <div class="login-card">
+                    <div class="login-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <h3>Cashier</h3>
+                    <p>Billing system access with product search and customer transaction processing</p>
+                    <div class="login-buttons">
+                        <a href="/cashier_login" class="btn primary">Login</a>
+                        <a href="/cashier_registration" class="btn secondary">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features for Modern Retail</h2>
+                <p>Everything you need to manage your retail business efficiently</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <h3>Smart Billing System</h3>
+                    <p>POS-like billing with product search, auto price fetch, and real-time stock updates.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h3>Inventory Management</h3>
+                    <p>Track stock levels, set reorder points, and get low stock alerts automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Sales Analytics</h3>
+                    <p>Detailed reports on daily, monthly, and category-wise sales with visual charts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Trend Prediction</h3>
+                    <p>AI-powered forecasting to predict future demand and optimize inventory.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Role-Based Access</h3>
+                    <p>Different dashboards for Admin, Manager, and Cashier with appropriate permissions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Responsive Design</h3>
+                    <p>Works seamlessly on desktop, tablet, and mobile devices for on-the-go management.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2>How RetailX Works</h2>
+                <p>Simple steps to transform your retail operations</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Add Your Products</h3>
+                        <p>Import your product catalog with details like name, category, price, and cost price.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Manage Inventory</h3>
+                        <p>Set stock levels and reorder points. Get alerts when items are running low.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Process Sales</h3>
+                        <p>Use our POS-like billing system to quickly process customer purchases.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Analyze & Predict</h3>
+                        <p>View sales reports and get AI-powered predictions for future demand trends.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2>What Our Customers Say</h2>
+                <p>Retailers who transformed their business with RetailX</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"RetailX has completely revolutionized how we manage our supermarket. The trend prediction feature alone has increased our sales by 18%!"</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Sarah Johnson</h4>
+                            <p>Owner, FreshMart Supermarket</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"The billing system is so intuitive. Our cashiers learned it in minutes, and the inventory management has eliminated our stock-out issues."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Michael Chen</h4>
+                            <p>Manager, QuickStop Retail</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"As a multi-store owner, the centralized dashboard gives me complete visibility across all locations. The analytics help me make data-driven decisions."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Robert Williams</h4>
+                            <p>CEO, UrbanGrocers Chain</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo">
+                        <h2>Retail<span>X</span></h2>
+                    </div>
+                    <p>Advanced Inventory Billing System with Future Trend Detection for modern retailers.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#login-options">Get Started</a></li>
+                        <li><a href="#testimonials">Testimonials</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Status</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 RetailX. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+</body>
 </html>
