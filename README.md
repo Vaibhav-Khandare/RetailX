@@ -50,34 +50,14 @@ This project is built by a team of 5 developers
 | Tools | Git, GitHub |
 | ML (optional) | Pandas, NumPy, Scikit-Learn |
 
----
-
-## 📂 Project Structure
-
-RetailX/
-│
-├── RetailX/ # Main project folder
-├── static/ # CSS, JS, Images
-├── templates/ # HTML Templates
-├── app/ (future apps) # Billing / Inventory modules
-│
-├── db.sqlite3 # Database file
-├── manage.py # Django manager
-│
-└── README.md # Project documentation
-
-yaml
-Copy code
 
 ---
 
 ## ⚙️ Installation Guide (For Team Members)
 
 ### 1️⃣ Clone this project  
-git clone https://github.com/YOUR_USERNAME/RetailX.git
+git clone https://github.com/Vaibhav-Khandare/RetailX.git
 
-shell
-Copy code
 
 ### 2️⃣ Install dependencies  
 pip install django
@@ -88,26 +68,20 @@ Copy code
 (Optional ML tools)
 pip install pandas numpy scikit-learn
 
-shell
-Copy code
+
 
 ### 3️⃣ Run migrations  
 python manage.py migrate
 
-pgsql
-Copy code
+
 
 ### 4️⃣ Create admin user  
 python manage.py createsuperuser
 
-shell
-Copy code
 
 ### 5️⃣ Run project  
 python manage.py runserver
 
-yaml
-Copy code
 
 Now open:  
 👉 http://127.0.0.1:8000/
