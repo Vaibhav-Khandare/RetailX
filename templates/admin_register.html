@@ -152,7 +152,8 @@
         <div class="title">Admin Registration</div>
         <div class="subtitle">Create a new RetailX Admin account</div>
 
-        <form action="/adminregister" method="post">
+        <form action="#" method="post">
+            {%csrf_token%}
 
             <div class="input-field">
                 <input type="text" name="fullname" placeholder="Full Name" required>

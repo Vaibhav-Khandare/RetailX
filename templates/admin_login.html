@@ -143,8 +143,8 @@
         <div class="title">Admin Login</div>
         <div class="subtitle">Secure login to RetailX admin panel</div>
 
-        <form action="/adminlogin" method="post">
-
+        <form action="#" method="post">
+            {%csrf_token%}
             <div class="input-field">
                 <input type="text" name="username" placeholder="Enter Username" required>
                 <i class="fa-solid fa-user"></i>

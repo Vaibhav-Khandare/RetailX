@@ -151,8 +151,8 @@
         <div class="title">Cashier Registration</div>
         <div class="subtitle">Create a new RetailX Cashier account</div>
 
-        <form action="/cashierregister" method="post">
-
+        <form action="#" method="post">
+            {%csrf_token%}
             <div class="input-field">
                 <input type="text" name="fullname" placeholder="Full Name" required>
                 <i class="fa-solid fa-user"></i>
