@@ -2,6 +2,8 @@ from django.http import HttpResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from AccountsDB.models import Admin, Cashier, Manager
 from django.contrib.auth.hashers import make_password, check_password
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import check_password
 
 
 
@@ -14,25 +16,8 @@ def test(request):
 
 def admin_login(request):
     if request.method == 'POST':
-        # username = request.POST['username']
         username = request.POST.get('username', '').lower()
-        password = request.POST['password']
-
-        # CORE LOGIC WITHOUT HASHING 
-            # a1 = Admin.objects.filter(username=username, confirm_password=password).exists()
-            # if a1:
-            #     a2 = Admin.objects.filter(username=username, confirm_password=password).first()
-            #     current_username = a2.username
-            #     current_useremail = a2.email
-
-            #     request.session['username'] = current_username
-            #     request.session['email'] = current_useremail
-
-            #     return render(request, 'index.html')
-            # else:
-            #     return render(request, 'admin_register.html')
-
-            
+        password = request.POST.get('password')
 
         # Get user by username
         try:
@@ -44,11 +29,12 @@ def admin_login(request):
         if check_password(password, user.confirm_password):
             request.session['username'] = user.username
             request.session['email'] = user.email
-            return render(request, 'index.html')
+            return redirect('/admin-home')
         else:
-            return render(request, 'admin_register.html')
-        
-    return render(request,'admin_login.html')
+            return render(request, 'admin_login.html', {'error': 'Invalid username or password'})
+
+    
+    return render(request, 'admin_login.html')
 
 def admin_registration(request):
     if request.method == 'POST':
@@ -147,4 +133,10 @@ def cashier_registration(request):
         return redirect('/cashier_login')
     
     return render(request,"cashier_register.html")
+
+def admin_home(request):
+    # Check if admin is logged in
+    if not request.session.get('username'):
+        return redirect('/admin_login')  # Redirect to login if not logged in
+    return render(request, 'admin_home.html')
 

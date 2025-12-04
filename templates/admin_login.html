@@ -143,7 +143,8 @@
         <div class="title">Admin Login</div>
         <div class="subtitle">Secure login to RetailX admin panel</div>
 
-        <form action="#" method="post">
+        <form method="post" action="#">
+
             {%csrf_token%}
             <div class="input-field">
                 <input type="text" name="username" placeholder="Enter Username" required>
@@ -155,7 +156,8 @@
                 <i class="fa-solid fa-eye" id="togglePw"></i>
             </div>
 
-            <button class="login-btn">Login</button>
+            <button type="submit" class="login-btn">Login</button>
+
         </form>
 
         <div class="footer">RetailX Admin Panel</div>

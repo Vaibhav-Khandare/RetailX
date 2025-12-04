@@ -28,4 +28,5 @@ urlpatterns = [
     path('manager_registration/',views.manager_registration),
     path('cashier_login/',views.cashier_login),
     path('cashier_registration/',views.cashier_registration),
+    path('admin-home/', views.admin_home, name='admin_home'),
 ]
