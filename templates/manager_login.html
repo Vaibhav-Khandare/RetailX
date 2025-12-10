@@ -143,20 +143,21 @@
         <div class="title">Manager Login</div>
         <div class="subtitle">Secure login to RetailX manager panel</div>
 
-        <form action="#" method="post">
-            {%csrf_token%}
-            <div class="input-field">
-                <input type="text" name="username" placeholder="Enter Username" required>
-                <i class="fa-solid fa-user"></i>
-            </div>
+        <form action="{% url 'manager_login' %}" method="post">
+    {% csrf_token %}
+    <div class="input-field">
+        <input type="text" name="username" placeholder="Enter Username" required>
+        <i class="fa-solid fa-user"></i>
+    </div>
 
-            <div class="input-field">
-                <input type="password" id="password" name="password" placeholder="Enter Password" required>
-                <i class="fa-solid fa-eye" id="togglePw"></i>
-            </div>
+    <div class="input-field">
+        <input type="password" id="password" name="password" placeholder="Enter Password" required>
+        <i class="fa-solid fa-eye" id="togglePw"></i>
+    </div>
 
-            <button class="login-btn">Login</button>
-        </form>
+    <button class="login-btn">Login</button>
+</form>
+
 
         <div class="footer">RetailX Manager Panel</div>
     </div>

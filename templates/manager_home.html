@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            color: white;
+            padding-top: 20px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 15px 20px;
+            text-decoration: none;
+            margin: 5px 0;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            border-left: 4px solid #1abc9c;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin-top: 0;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1abc9c;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #16a085;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Manager</h2>
+    <a href="#stock">Stock Management</a>
+    <a href="#products">Product Monitoring</a>
+    <a href="#operations">Daily Operations</a>
+    <a href="#reports">Reports</a>
+    <a href="/manager_login">Logout</a>
+</div>
+
+<div class="main-content">
+
+    <!-- STOCK MANAGEMENT -->
+    <div id="stock" class="card">
+        <h3>Stock Management</h3>
+        <form method="POST" action="/manager/add-stock/">
+            {% csrf_token %}
+            <input type="text" name="product_name" placeholder="Product Name" required>
+            <input type="number" name="quantity" placeholder="Quantity" required>
+            <input type="text" name="supplier" placeholder="Supplier Name" required>
+            <button type="submit">Add Stock</button>
+        </form>
+        <br>
+        <div class="table-container">
+            <h4>Current Stock</h4>
+            <table>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Supplier</th>
+                    <th>Action</th>
+                </tr>
+                {% for stock in stocks %}
+                <tr>
+                    <td>{{ stock.product_name }}</td>
+                    <td>{{ stock.quantity }}</td>
+                    <td>{{ stock.supplier }}</td>
+                    <td>
+                        <form method="POST" action="/manager/remove-stock/{{ stock.id }}/">
+                            {% csrf_token %}
+                            <button type="submit">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- PRODUCT MONITORING -->
+    <div id="products" class="card">
+        <h3>Product Monitoring</h3>
+        <div class="table-container">
+            <h4>All Products</h4>
+            <table>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                </tr>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.expiry_date }}</td>
+                    <td>
+                        {% if product.quantity < 10 %}
+                            <span style="color:red;">Low Stock</span>
+                        {% else %}
+                            <span style="color:green;">OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- DAILY OPERATIONS -->
+    <div id="operations" class="card">
+        <h3>Daily Operations</h3>
+        <div class="table-container">
+            <h4>Cashier Activities</h4>
+            <table>
+                <tr>
+                    <th>Cashier</th>
+                    <th>Bill Count</th>
+                    <th>Refund Requests</th>
+                    <th>Action</th>
+                </tr>
+                {% for activity in cashier_activities %}
+                <tr>
+                    <td>{{ activity.cashier_name }}</td>
+                    <td>{{ activity.bill_count }}</td>
+                    <td>{{ activity.refund_requests }}</td>
+                    <td>
+                        {% if activity.refund_requests > 0 %}
+                        <form method="POST" action="/manager/approve-refund/{{ activity.id }}/">
+                            {% csrf_token %}
+                            <button type="submit">Approve</button>
+                        </form>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="reports" class="card">
+        <h3>Reports</h3>
+        <div class="table-container">
+            <h4>Daily Sales Report</h4>
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>Total Sales</th>
+                    <th>High-Selling Product</th>
+                    <th>Low-Selling Product</th>
+                </tr>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.date }}</td>
+                    <td>{{ report.total_sales }}</td>
+                    <td>{{ report.high_selling }}</td>
+                    <td>{{ report.low_selling }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
