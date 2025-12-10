@@ -134,6 +134,7 @@ def cashier_registration(request):
     
     return render(request,"cashier_register.html")
 
+
 def admin_home(request):
     # Check if admin is logged in
     if not request.session.get('username'):
