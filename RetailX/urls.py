@@ -22,11 +22,16 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.index),
     path('test/', views.test),
-    path('admin_login/',views.admin_login),
     path('admin_registration/',views.admin_registration),
-    path('manager_login/',views.manager_login),
+    path('manager_login/',views.manager_login,name='manager_login'),
     path('manager_registration/',views.manager_registration),
     path('cashier_login/',views.cashier_login),
     path('cashier_registration/',views.cashier_registration),
+    path('admin_login/', views.admin_login, name='admin_login'),
     path('admin-home/', views.admin_home, name='admin_home'),
+    path('cashier-home/',views.cashier_home,name='cashier_home'),
+    path('manager-home/',views.manager_home,name='manager_home'),
+    path('/logout',views.admin_login),
+   
+
 ]

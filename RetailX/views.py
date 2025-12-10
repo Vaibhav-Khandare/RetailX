@@ -17,23 +17,27 @@ def test(request):
 def admin_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').lower()
-        password = request.POST.get('password')
+        password = request.POST.get('password', '')
 
         # Get user by username
         try:
             user = Admin.objects.get(username=username)
         except Admin.DoesNotExist:
-            return render(request, 'admin_register.html')
+            return render(request, 'admin_login.html', {'error': 'Invalid username'})
 
-        # Check hashed password
-        if check_password(password, user.confirm_password):
+        # IMPORTANT: check against the password field (where you stored the hash)
+        if check_password(password, user.password):
+            # create session
             request.session['username'] = user.username
             request.session['email'] = user.email
+
+            # optional: confirm session saved (for debugging)
+            # print("Session keys:", request.session.keys())
+
             return redirect('/admin-home')
         else:
             return render(request, 'admin_login.html', {'error': 'Invalid username or password'})
 
-    
     return render(request, 'admin_login.html')
 
 def admin_registration(request):
@@ -57,24 +61,25 @@ def admin_registration(request):
 
 def manager_login(request):
     if request.method == 'POST':
-        # username = request.POST['username']
-        username = request.POST.get('username', '').lower()
-        password = request.POST['password']
+        username = request.POST.get('username', '')
+        password = request.POST.get('password')
 
-        # Get user by username
         try:
-            user = Manager.objects.get(username=username)
+            # Case-insensitive search
+            manager = Manager.objects.get(username__iexact=username)
+            
+            if check_password(password, manager.password):
+                # Set session
+                request.session['manager_username'] = manager.username
+                return redirect('manager_home')  # Use named URL
+            else:
+                error = "Invalid password"
         except Manager.DoesNotExist:
-            return render(request, 'manager_register.html')
+            error = "Manager not found"
 
-        # Check hashed password
-        if check_password(password, user.confirm_password):
-            request.session['username'] = user.username
-            request.session['email'] = user.email
-            return render(request, 'index.html')
-        else:
-            return render(request, 'manager_register.html')
-    return render(request,'manager_login.html')
+        return render(request, 'manager_login.html', {'error': error})
+
+    return render(request, 'manager_login.html')
 
 def manager_registration(request):
     if request.method == 'POST':
@@ -96,24 +101,25 @@ def manager_registration(request):
 
 def cashier_login(request):
     if request.method == 'POST':
-        # username = request.POST['username']
         username = request.POST.get('username', '').lower()
-        password = request.POST['password']
+        password = request.POST.get('password', '')
 
-        # Get user by username
         try:
             user = Cashier.objects.get(username=username)
         except Cashier.DoesNotExist:
-            return render(request, 'cashier_register.html')
+            return render(request, 'cashier_login.html', {'error': 'Invalid username'})
 
-        # Check hashed password
-        if check_password(password, user.confirm_password):
-            request.session['username'] = user.username
-            request.session['email'] = user.email
-            return render(request, 'index.html')
+        # Compare hashed password
+        if check_password(password, user.password):  
+            request.session['cashier_username'] = user.username
+            request.session['cashier_email'] = user.email
+
+            return redirect('/cashier-home')   # CORRECT REDIRECT
         else:
-            return render(request, 'cashier_register.html')
-    return render(request,"cashier_login.html")
+            return render(request, 'cashier_login.html', {'error': 'Invalid username or password'})
+
+    return render(request, "cashier_login.html")
+
 
 def cashier_registration(request):
     if request.method == 'POST':
@@ -139,4 +145,22 @@ def admin_home(request):
     if not request.session.get('username'):
         return redirect('/admin_login')  # Redirect to login if not logged in
     return render(request, 'admin_home.html')
+
+def cashier_home(request):
+    # Check if cashier is logged in
+    if not request.session.get('cashier_username'):
+        return redirect('/cashier_login')   # redirect to cashier login
+    
+    return render(request, 'cashier_home.html')
+
+def manager_home(request):
+    # Only allow access if manager is logged in
+    if not request.session.get('manager_username'):
+        return redirect('/manager_login')  # redirect to login page
+    
+    return render(request, 'manager_home.html')
+
+def logout_view(request):
+    request.session.flush()  # clears all session data
+    return redirect('manager_login')  # or 'manager_login', 'cashier_login', etc.
 
