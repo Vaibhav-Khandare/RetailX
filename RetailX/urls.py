@@ -28,9 +28,9 @@ urlpatterns = [
     path('cashier_login/',views.cashier_login),
     path('cashier_registration/',views.cashier_registration),
     path('admin_login/', views.admin_login, name='admin_login'),
-    path('admin-home/', views.admin_home, name='admin_home'),
-    path('cashier-home/',views.cashier_home,name='cashier_home'),
-    path('manager-home/',views.manager_home,name='manager_home'),
+    path('admin_home/', views.admin_home, name='admin_home'),
+    path('cashier_home/',views.cashier_home,name='cashier_home'),
+    path('manager_home/',views.manager_home,name='manager_home'),
     path('/logout',views.admin_login),
    
 

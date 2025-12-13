@@ -23,10 +23,13 @@
         </div>
 
         <div class="user-info">
-            <div class="avatar">AD</div>
+            <div class="avatar">A</div>
             <div class="user-details">
-                <h4>Administrator</h4>
-                <p>admin@retailx.com</p>
+                <!-- <form action="" method="post">      // bro here i try to make the method post but it is useless 
+                    {% csrf_token %} -->
+                <h4>{{uname}}</h4>
+                <p>{{email}}</p>
+                <!-- </form> -->
             </div>
         </div>
 
@@ -460,7 +463,7 @@
         </div>
     </div>
 
-    <!-- USER MODAL -->
+    <!-- USER MODAL                                 bro in this modaaal I write the code about add user form !!  -->
     <div id="userModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -468,18 +471,12 @@
                 <button class="close-modal" onclick="closeUserModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="userForm">
-                    <div class="form-group">
-                        <label for="userName">Full Name</label>
-                        <input type="text" id="userName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="userEmail">Email Address</label>
-                        <input type="email" id="userEmail" required>
-                    </div>
+                <form id="userForm" action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="formType" id="formType" value="userModal">
                     <div class="form-group">
                         <label for="userRole">Role</label>
-                        <select id="userRole" required>
+                        <select id="userRole" name="userRole" required>
                             <option value="">Select Role</option>
                             <option value="admin">Administrator</option>
                             <option value="manager">Manager</option>
@@ -487,21 +484,32 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="userPassword">Password</label>
-                        <input type="password" id="userPassword" required>
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" required>
                     </div>
                     <div class="form-group">
-                        <label for="userStatus">Status</label>
-                        <select id="userStatus" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="pending">Pending</option>
-                        </select>
+                        <label for="userEmail">Email Address</label>
+                        <input type="email" id="userEmail" name="userEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userName">User Name</label>
+                        <input type="text" id="userName" name="userName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userPassword">Password</label>
+                        <input type="password" id="userPassword" name="userPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmUserPassword">Confirm Password</label>
+                        <input type="password" id="confirmUserPassword" name="confirmUserPassword" required>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
                         <button type="submit" class="btn btn-primary">Add User</button>
                     </div>
+                    <!-- <input type="submit"> -->
                 </form>
             </div>
         </div>

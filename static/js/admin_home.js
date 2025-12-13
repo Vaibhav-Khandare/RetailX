@@ -122,7 +122,7 @@ function setupFormHandlers() {
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+            // e.preventDefault();                    // bro note that this function is blocking the POST method so keep it commented !! 
             saveUser();
         });
     }
@@ -806,7 +806,7 @@ function closeInventoryModal() {
     }
 }
 
-function openQuickAction() {
+function openQuickAction() {                                          
     const modal = document.getElementById('quickActionModal');
     if (modal) {
         modal.style.display = 'flex';
