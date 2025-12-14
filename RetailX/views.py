@@ -1,11 +1,11 @@
 from django.http import HttpResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from AccountsDB.models import Admin, Cashier, Manager
+from productsDB.models import Product
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import check_password
 from django.views.decorators.csrf import csrf_exempt
-
 
 
 def index(request):
@@ -146,11 +146,63 @@ def admin_home(request):
         return redirect('/admin_login')  # Redirect to login if not logged 
     else:
         print("------------------->  Login Successfull !! <-------------------")
+        
     # print("Admin Logged-in uname:",request.session.get('username'))       # bro here i try to fetch admin username
-   
-    admin_detail={
+    
+    #Bro here i Counted Total no. of USERS AND PRODUCTS
+    request.session['totaluser'] = None       #first here i clear the cache which will lead to error
+    nadmin=Admin.objects.count()
+    nmanager=Manager.objects.count()
+    ncashier=Cashier.objects.count()
+
+    totuser=nadmin+nmanager+ncashier
+    # print("totuser====",totuser)
+    totpro=Product.objects.count()
+
+    #something about user list
+    admins = Admin.objects.all()
+    managers = Manager.objects.all()
+    cashiers = Cashier.objects.all()
+    
+    # OR combine them (if you want all in one table)
+    all_users = []
+    for admin in admins:
+        all_users.append({
+            'type': 'Admin',
+            'name': admin.fullname,
+            'email': admin.email,
+            'username': admin.username,
+            'status': 'Active',
+            'last_login': 'N/A'  # Add this field to your model if needed
+        })
+    
+    for manager in managers:
+        all_users.append({
+            'type': 'Manager',
+            'name': manager.fullname,
+            'email': manager.email,
+            'username': manager.username,
+            'status': 'Active',
+            'last_login': 'N/A'
+        })
+    
+    for cashier in cashiers:
+        all_users.append({
+            'type': 'Cashier',
+            'name': cashier.fullname,
+            'email': cashier.email,
+            'username': cashier.username,
+            'status': 'Active',
+            'last_login': 'N/A'
+        })
+
+
+    admhm_data={
             'uname':request.session.get('username'),
-            'email':request.session.get('email')
+            'email':request.session.get('email'),
+            'totaluser':totuser,
+            'totalpro':totpro,
+            'users':all_users
         }
     
     if(request.method=='POST' and request.POST['formType']=='userModal'):                      #formType use kia gya hai as a hidden data which will show that the POST method came from which 'Form' 🐦‍⬛       
@@ -205,7 +257,33 @@ def admin_home(request):
             else:
                 print("Plss Enter correct Password !")
                 print("Try Again !!!")
-    return render(request, 'admin_home.html',admin_detail)
+
+
+    if(request.method=='POST' and request.POST['formType']=='productModal'):
+        print("--------> New Product Details: ")               
+        print('Name:    ',request.POST['productName'])
+        print('Category:   ',request.POST['productCategory'])
+        print('SKU:  ',request.POST['productSKU'])
+        print("Brand:",request.POST['productBrand'])
+        print('Price:   ',request.POST['productPrice'])
+        print('Initial Stock:',request.POST['productStock'])
+        print('Minimum Stock Level:',request.POST['productMinStock'])
+        print("Product Description:\n",request.POST['productDescription'])
+
+        pname=request.POST['productName']
+        pcat=request.POST['productCategory']
+        psku=request.POST['productSKU']
+        pbr=request.POST['productBrand']
+        pp=int(request.POST['productPrice'])
+        pis=int(request.POST['productStock'])
+        pmsl=request.POST['productMinStock']
+        pdesc=request.POST['productDescription']
+
+        Pobj=Product(name=pname,sku=psku,category=pcat,brand=pbr,price=pp,in_stock=pis,min_stock_level=pmsl,description=pdesc)
+        Pobj.save()
+
+
+    return render(request, 'admin_home.html',admhm_data)
 
 def cashier_home(request):
     # Check if cashier is logged in

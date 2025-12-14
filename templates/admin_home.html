@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RetailX - Advanced Admin Dashboard</title>
     <link rel="stylesheet" href="/static/css/admin_home.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <!-- SIDEBAR -->
     <div class="sidebar">
@@ -73,7 +76,7 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
             </div>
-            
+
             <div class="topbar-right">
                 <!-- Notification Panel -->
                 <div class="notification-container">
@@ -94,7 +97,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="date-display">
                     <i class="fas fa-calendar-alt"></i>
                     <span id="currentDate"></span>
@@ -121,26 +124,27 @@
                         </div>
                         <div class="stat-content">
                             <h3>Total Users</h3>
-                            <p class="stat-value" id="totalUsers">24</p>
+                            <p class="stat-value" id="totalUsers">{{totaluser}}</p>
+                            <!-- Debugg : {{totaluser}} -->
                             <span class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> +2 this week
+                                <i class="fas fa-arrow-up"></i> work is Done
                             </span>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-box"></i>
                         </div>
                         <div class="stat-content">
                             <h3>Total Products</h3>
-                            <p class="stat-value" id="totalProducts">156</p>
+                            <p class="stat-value" id="totalProducts">{{ totalpro }}</p>
                             <span class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> +12 this week
+                                <i class="fas fa-arrow-up"></i> Work is Done
                             </span>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-chart-line"></i>
@@ -149,11 +153,11 @@
                             <h3>Today's Revenue</h3>
                             <p class="stat-value" id="todayRevenue">$2,845</p>
                             <span class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> +8.5%
+                                <i class="fas fa-exclamation-circle"></i> Attention Required
                             </span>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -171,7 +175,7 @@
                 <div class="dashboard-grid">
                     <div class="dashboard-card wide">
                         <div class="card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Sales Overview</h3>
+                            <h3><i class="fas fa-chart-bar"></i> Sales Overview (Attention Required Need to Work)</h3>
                             <select id="salesPeriod" class="period-select" onchange="updateSalesChart()">
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
@@ -220,7 +224,8 @@
                             <option value="manager">Managers</option>
                             <option value="cashier">Cashiers</option>
                         </select>
-                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input" onkeyup="searchUsers()">
+                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input"
+                            onkeyup="searchUsers()">
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn" onclick="exportUsers()">
@@ -237,7 +242,7 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="selectAllUsers" onclick="toggleAllUsers()"></th>
-                                <th>Name</th>
+                                <th>Name</th><!-- Debugg {{uao.fullname}}    debugging v-->
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Status</th>
@@ -246,7 +251,33 @@
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
-                            <!-- Users loaded via AJAX -->
+                            <!-- upload user name here djangooooo -->
+                            <!-- Debugg {{uao.fullname}} -->
+                            {% for user in users %}
+                            <tr>
+                                <td><input type="checkbox" class="user-checkbox"></td>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td><span class="status-badge">{{ user.type }}</span></td>
+                                <td><span class="status-badge status-active">{{ user.status }}</span></td>
+                                <td>{{ user.last_login }}</td>
+                                <td>
+                                    <button class="action-btn small" onclick="editUser('{{ user.username }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn small"
+                                        onclick="deleteUser('{{ user.type }}', '{{ user.username }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" style="text-align: center;">No users found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <!-- enenenene -->
                         </tbody>
                     </table>
                 </div>
@@ -491,7 +522,7 @@
                         <label for="userEmail">Email Address</label>
                         <input type="email" id="userEmail" name="userEmail" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="userName">User Name</label>
                         <input type="text" id="userName" name="userName" required>
@@ -523,14 +554,16 @@
                 <button class="close-modal" onclick="closeProductModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="productForm">
+                <form id="productForm" action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="formType" id="formType" value="productModal">
                     <div class="form-group">
                         <label for="productName">Product Name</label>
-                        <input type="text" id="productName" required>
+                        <input type="text" id="productName" name="productName" required>
                     </div>
                     <div class="form-group">
                         <label for="productCategory">Category</label>
-                        <select id="productCategory" required>
+                        <select id="productCategory" name="productCategory" required>
                             <option value="">Select Category</option>
                             <option value="electronics">Electronics</option>
                             <option value="clothing">Clothing</option>
@@ -540,23 +573,27 @@
                     </div>
                     <div class="form-group">
                         <label for="productSKU">SKU</label>
-                        <input type="text" id="productSKU" required>
+                        <input type="text" id="productSKU" name="productSKU" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productBrand">Brand</label>
+                        <input type="text" id="productBrand" name="productBrand" required>
                     </div>
                     <div class="form-group">
                         <label for="productPrice">Price ($)</label>
-                        <input type="number" id="productPrice" step="0.01" required>
+                        <input type="number" id="productPrice" name="productPrice" step="50" required>
                     </div>
                     <div class="form-group">
                         <label for="productStock">Initial Stock</label>
-                        <input type="number" id="productStock" required>
+                        <input type="number" id="productStock" name="productStock" required>
                     </div>
                     <div class="form-group">
                         <label for="productMinStock">Minimum Stock Level</label>
-                        <input type="number" id="productMinStock" required>
+                        <input type="number" id="productMinStock" name="productMinStock" required>
                     </div>
                     <div class="form-group">
                         <label for="productDescription">Description</label>
-                        <textarea id="productDescription" rows="3"></textarea>
+                        <textarea id="productDescription" name="productDescription" rows="3"></textarea>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
@@ -654,4 +691,5 @@
 
     <script src="/static/js/admin_home.js"></script>
 </body>
+
 </html>

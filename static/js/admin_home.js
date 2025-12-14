@@ -131,7 +131,7 @@ function setupFormHandlers() {
     const productForm = document.getElementById('productForm');
     if (productForm) {
         productForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+            // e.preventDefault();                 // bro POST method ko yhi block kr rha hai
             saveProduct();
         });
     }
@@ -182,19 +182,20 @@ function loadDashboardData() {
 }
 
 function updateStats() {
+    hideLoading();
     // Simulate API data
-    const stats = {
-        totalUsers: 24,
-        totalProducts: 156,
-        todayRevenue: 2845,
-        lowStockCount: 7,
-        stockValue: 45280,
-        monthlyTurnover: 2.8
-    };
-    
+    // const stats = {
+    //     totalUsers: djangouser,
+    //     totalProducts: djangouser,
+    //     todayRevenue: djangouser,
+    //     lowStockCount:,
+    //     stockValue: 45280,
+    //     monthlyTurnover: 2.8
+    // };
+    const stats={}
     // Update DOM
-    const totalUsersElement = document.getElementById('totalUsers');
-    const totalProductsElement = document.getElementById('totalProducts');
+    // const totalUsersElement = document.getElementById('totalUsers');
+    // const totalProductsElement = document.getElementById('totalProducts');
     const todayRevenueElement = document.getElementById('todayRevenue');
     const lowStockCountElement = document.getElementById('lowStockCount');
     const totalStockValueElement = document.getElementById('totalStockValue');
@@ -217,11 +218,11 @@ function loadUsers() {
     // Simulate API call
     setTimeout(() => {
         const users = [
-            { id: 1, name: 'John Doe', email: 'john@retailx.com', role: 'admin', status: 'active', lastLogin: '2024-01-15 14:30' },
-            { id: 2, name: 'Jane Smith', email: 'jane@retailx.com', role: 'manager', status: 'active', lastLogin: '2024-01-15 10:15' },
-            { id: 3, name: 'Bob Wilson', email: 'bob@retailx.com', role: 'cashier', status: 'active', lastLogin: '2024-01-14 16:45' },
-            { id: 4, name: 'Alice Brown', email: 'alice@retailx.com', role: 'cashier', status: 'inactive', lastLogin: '2024-01-10 09:20' },
-            { id: 5, name: 'Charlie Davis', email: 'charlie@retailx.com', role: 'manager', status: 'pending', lastLogin: '2024-01-13 11:30' }
+            // { id: 1, name: 'John Doe', email: 'john@retailx.com', role: 'admin', status: 'active', lastLogin: '2024-01-15 14:30' },
+            // { id: 2, name: 'Jane Smith', email: 'jane@retailx.com', role: 'manager', status: 'active', lastLogin: '2024-01-15 10:15' },
+            // { id: 3, name: 'Bob Wilson', email: 'bob@retailx.com', role: 'cashier', status: 'active', lastLogin: '2024-01-14 16:45' },
+            // { id: 4, name: 'Alice Brown', email: 'alice@retailx.com', role: 'cashier', status: 'inactive', lastLogin: '2024-01-10 09:20' },
+            // { id: 5, name: 'Charlie Davis', email: 'charlie@retailx.com', role: 'manager', status: 'pending', lastLogin: '2024-01-13 11:30' }
         ];
         
         renderUsersTable(users);
@@ -1096,7 +1097,7 @@ function importProducts() {
 function generateReport() {
     showLoading();
     setTimeout(() => {
-        showToast('PDF report generated!', 'success');
+        showToast('Need to work On this Function still incomplete !!', 'success');
         hideLoading();
     }, 2000);
 }
@@ -1157,7 +1158,7 @@ function quickStockCheck() {
     closeQuickAction();
     showLoading();
     setTimeout(() => {
-        showToast('Stock check completed! 7 low stock items found.', 'warning');
+        showToast('Need to work On this Function still incomplete !!');
         hideLoading();
     }, 1000);
 }
