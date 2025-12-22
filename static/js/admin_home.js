@@ -118,21 +118,19 @@ function loadSectionData(sectionId) {
 
 // Setup Form Handlers
 function setupFormHandlers() {
-    // User Form
+    // User Form - No need to prevent default as we want form submission
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.addEventListener('submit', function(e) {
-            // e.preventDefault();                    // bro note that this function is blocking the POST method so keep it commented !! 
-            saveUser();
+            // Form will submit normally to Django
         });
     }
     
-    // Product Form
+    // Product Form - No need to prevent default
     const productForm = document.getElementById('productForm');
     if (productForm) {
         productForm.addEventListener('submit', function(e) {
-            // e.preventDefault();                 // bro POST method ko yhi block kr rha hai
-            saveProduct();
+            // Form will submit normally to Django
         });
     }
     
@@ -182,202 +180,142 @@ function loadDashboardData() {
 }
 
 function updateStats() {
+    // Stats are already updated by Django context
+    // Additional stats can be updated here if needed
     hideLoading();
-    // Simulate API data
-    // const stats = {
-    //     totalUsers: djangouser,
-    //     totalProducts: djangouser,
-    //     todayRevenue: djangouser,
-    //     lowStockCount:,
-    //     stockValue: 45280,
-    //     monthlyTurnover: 2.8
-    // };
-    const stats={}
-    // Update DOM
-    // const totalUsersElement = document.getElementById('totalUsers');
-    // const totalProductsElement = document.getElementById('totalProducts');
-    const todayRevenueElement = document.getElementById('todayRevenue');
-    const lowStockCountElement = document.getElementById('lowStockCount');
-    const totalStockValueElement = document.getElementById('totalStockValue');
-    const lowStockItemsElement = document.getElementById('lowStockItems');
-    const monthlyTurnoverElement = document.getElementById('monthlyTurnover');
-    
-    if (totalUsersElement) totalUsersElement.textContent = stats.totalUsers;
-    if (totalProductsElement) totalProductsElement.textContent = stats.totalProducts;
-    if (todayRevenueElement) todayRevenueElement.textContent = `$${stats.todayRevenue.toLocaleString()}`;
-    if (lowStockCountElement) lowStockCountElement.textContent = stats.lowStockCount;
-    if (totalStockValueElement) totalStockValueElement.textContent = `$${stats.stockValue.toLocaleString()}`;
-    if (lowStockItemsElement) lowStockItemsElement.textContent = `${stats.lowStockCount} items`;
-    if (monthlyTurnoverElement) monthlyTurnoverElement.textContent = `${stats.monthlyTurnover}x`;
 }
 
-// AJAX Load Users
+// AJAX Load Users (for client-side filtering)
 function loadUsers() {
-    showLoading();
+    // Users are already loaded by Django
+    // This function handles client-side filtering and search
     
-    // Simulate API call
-    setTimeout(() => {
-        const users = [
-                { id: 1, name: 'John Doe', email: 'john@retailx.com', role: 'admin', status: 'active', lastLogin: '2024-01-15 14:30' },
-                { id: 2, name: 'Jane Smith', email: 'jane@retailx.com', role: 'manager', status: 'active', lastLogin: '2024-01-15 10:15' },
-                { id: 3, name: 'Bob Wilson', email: 'bob@retailx.com', role: 'cashier', status: 'active', lastLogin: '2024-01-14 16:45' },
-                { id: 4, name: 'Alice Brown', email: 'alice@retailx.com', role: 'cashier', status: 'inactive', lastLogin: '2024-01-10 09:20' },
-                { id: 5, name: 'Charlie Davis', email: 'charlie@retailx.com', role: 'manager', status: 'pending', lastLogin: '2024-01-13 11:30' }
-        ];
-        
-        renderUsersTable(users);
-        hideLoading();
-    }, 1000);
+    const userFilter = document.getElementById('userFilter');
+    if (userFilter) {
+        filterUsers();
+    }
 }
 
-function renderUsersTable(users) {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
+function filterUsers() {
+    const filterValue = document.getElementById('userFilter')?.value || 'all';
+    const searchValue = document.getElementById('userSearch')?.value.toLowerCase() || '';
     
-    tbody.innerHTML = '';
+    const rows = document.querySelectorAll('#usersTableBody tr');
+    let visibleCount = 0;
     
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><input type="checkbox" class="user-checkbox" value="${user.id}"></td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td><span class="status-badge">${user.role}</span></td>
-            <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-            <td>${user.lastLogin}</td>
-            <td>
-                <button class="action-btn small" onclick="editUser(${user.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn small" onclick="deleteUser(${user.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="action-btn small" onclick="resetUserPassword(${user.id})">
-                    <i class="fas fa-key"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
+    rows.forEach(row => {
+        const role = row.querySelector('.status-badge').textContent.toLowerCase();
+        const text = row.textContent.toLowerCase();
+        
+        let shouldShow = true;
+        
+        // Apply role filter
+        if (filterValue !== 'all' && !role.includes(filterValue)) {
+            shouldShow = false;
+        }
+        
+        // Apply search filter
+        if (searchValue && !text.includes(searchValue)) {
+            shouldShow = false;
+        }
+        
+        row.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) {
+            visibleCount++;
+        }
     });
+    
+    // Update user count display
+    const userCountElement = document.querySelector('#users + .table-container');
+    if (userCountElement && userCountElement.nextElementSibling) {
+        userCountElement.nextElementSibling.textContent = `Showing ${visibleCount} user(s) in total`;
+    }
 }
 
-// AJAX Load Products
+function searchUsers() {
+    filterUsers();
+}
+
+// AJAX Load Products (for client-side filtering)
 function loadProducts() {
-    showLoading();
+    // Products are already loaded by Django
+    // This function handles client-side filtering
     
-    setTimeout(() => {
-        const products = [
-            { id: 1, name: 'Laptop Pro', category: 'electronics', price: 1299.99, stock: 45, minStock: 10, sku: 'LP-2024' },
-            { id: 2, name: 'Wireless Mouse', category: 'electronics', price: 29.99, stock: 120, minStock: 50, sku: 'WM-101' },
-            { id: 3, name: 'T-Shirt', category: 'clothing', price: 19.99, stock: 5, minStock: 20, sku: 'TS-001' },
-            { id: 4, name: 'Coffee Maker', category: 'home', price: 89.99, stock: 25, minStock: 15, sku: 'CM-500' },
-            { id: 5, name: 'Organic Coffee', category: 'groceries', price: 12.99, stock: 80, minStock: 30, sku: 'OC-200' }
-        ];
-        
-        renderProductsGrid(products);
-        
-        // Update category filter
-        updateCategoryFilter(products);
-        
-        hideLoading();
-    }, 1000);
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (categoryFilter) {
+        updateCategoryFilter();
+        filterProducts();
+    }
 }
 
-function renderProductsGrid(products) {
-    const grid = document.getElementById('productsGrid');
-    if (!grid) return;
+function filterProducts() {
+    const categoryValue = document.getElementById('categoryFilter')?.value || 'all';
+    const stockValue = document.getElementById('stockFilter')?.value || 'all';
     
-    grid.innerHTML = '';
+    const productCards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
     
-    products.forEach(product => {
-        let stockClass = 'high';
-        if (product.stock <= product.minStock) {
-            stockClass = 'low';
-        }
-        if (product.stock === 0) {
-            stockClass = 'out';
+    productCards.forEach(card => {
+        const category = card.querySelector('.product-category').textContent.toLowerCase();
+        const stockLevel = card.querySelector('.stock-level');
+        const stockText = stockLevel.textContent;
+        const stockNumber = parseInt(stockText);
+        
+        let shouldShow = true;
+        
+        // Apply category filter
+        if (categoryValue !== 'all' && !category.includes(categoryValue)) {
+            shouldShow = false;
         }
         
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-            <div class="product-image">
-                <i class="fas fa-box fa-3x"></i>
-            </div>
-            <div class="product-info">
-                <h4 class="product-title">${product.name}</h4>
-                <p class="product-category">${product.category}</p>
-                <p class="product-price">$${product.price.toFixed(2)}</p>
-                <div class="product-stock">
-                    <span>SKU: ${product.sku}</span>
-                    <span class="stock-level ${stockClass}">${product.stock} units</span>
-                </div>
-                <div style="margin-top: 15px; display: flex; gap: 10px;">
-                    <button class="action-btn small" onclick="editProduct(${product.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn small" onclick="deleteProduct(${product.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="action-btn small" onclick="viewProductDetails(${product.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
+        // Apply stock filter
+        if (stockValue === 'low' && !stockLevel.classList.contains('low')) {
+            shouldShow = false;
+        } else if (stockValue === 'out' && stockNumber > 0) {
+            shouldShow = false;
+        }
+        
+        card.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) {
+            visibleCount++;
+        }
+    });
+    
+    // Update product count display
+    const productCountElement = document.querySelector('#productsGrid').nextElementSibling;
+    if (productCountElement) {
+        productCountElement.textContent = `Showing ${visibleCount} product(s) in total`;
+    }
+}
+
+function updateCategoryFilter() {
+    const filter = document.getElementById('categoryFilter');
+    if (!filter) return;
+    
+    // Get unique categories from products
+    const categories = new Set();
+    document.querySelectorAll('.product-category').forEach(element => {
+        categories.add(element.textContent.trim());
+    });
+    
+    // Clear existing options except "All Categories"
+    filter.innerHTML = '<option value="all">All Categories</option>';
+    
+    // Add categories
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.toLowerCase();
+        option.textContent = category;
+        filter.appendChild(option);
     });
 }
 
 // AJAX Load Inventory
 function loadInventory() {
-    showLoading();
-    
-    setTimeout(() => {
-        const inventory = [
-            { id: 1, name: 'Laptop Pro', sku: 'LP-2024', current: 45, min: 10, status: 'In Stock', lastUpdated: '2024-01-15' },
-            { id: 2, name: 'Wireless Mouse', sku: 'WM-101', current: 120, min: 50, status: 'In Stock', lastUpdated: '2024-01-15' },
-            { id: 3, name: 'T-Shirt', sku: 'TS-001', current: 5, min: 20, status: 'Low Stock', lastUpdated: '2024-01-14' },
-            { id: 4, name: 'Coffee Maker', sku: 'CM-500', current: 25, min: 15, status: 'In Stock', lastUpdated: '2024-01-15' },
-            { id: 5, name: 'Organic Coffee', sku: 'OC-200', current: 80, min: 30, status: 'In Stock', lastUpdated: '2024-01-13' }
-        ];
-        
-        renderInventoryTable(inventory);
-        hideLoading();
-    }, 1000);
-}
-
-function renderInventoryTable(inventory) {
-    const tbody = document.getElementById('inventoryTableBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    inventory.forEach(item => {
-        let statusClass = 'status-active';
-        if (item.status === 'Low Stock') {
-            statusClass = 'status-pending';
-        }
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.sku}</td>
-            <td>${item.current}</td>
-            <td>${item.min}</td>
-            <td><span class="status-badge ${statusClass}">${item.status}</span></td>
-            <td>${item.lastUpdated}</td>
-            <td>
-                <button class="action-btn small" onclick="adjustStock(${item.id})">
-                    <i class="fas fa-edit"></i> Adjust
-                </button>
-                <button class="action-btn small" onclick="viewInventoryHistory(${item.id})">
-                    <i class="fas fa-history"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+    // Inventory data is already loaded by Django
+    // Additional processing can be done here
 }
 
 // AJAX Load Analytics
@@ -927,50 +865,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-function filterUsers() {
-    const filterValue = document.getElementById('userFilter')?.value;
-    showLoading();
-    
-    setTimeout(() => {
-        // In real app, this would be an API call with filter parameter
-        loadUsers();
-        hideLoading();
-    }, 500);
-}
-
-function searchUsers() {
-    const searchValue = document.getElementById('userSearch')?.value.toLowerCase() || '';
-    const rows = document.querySelectorAll('#usersTableBody tr');
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchValue) ? '' : 'none';
-    });
-}
-
-function filterProducts() {
-    showLoading();
-    
-    setTimeout(() => {
-        loadProducts();
-        hideLoading();
-    }, 500);
-}
-
-function updateCategoryFilter(products) {
-    const filter = document.getElementById('categoryFilter');
-    if (!filter) return;
-    
-    const categories = [...new Set(products.map(p => p.category))];
-    
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        filter.appendChild(option);
-    });
-}
-
 function loadProductDropdown() {
     const select = document.getElementById('inventoryProduct');
     if (!select) return;
@@ -1068,8 +962,22 @@ function bulkResetPassword() {
     
     if (confirm(`Reset passwords for ${selected.length} selected users?`)) {
         showLoading();
+        
+        // Get selected user IDs and types
+        const usersToReset = [];
+        selected.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const roleBadge = row.querySelector('.status-badge');
+            const role = roleBadge.textContent.toLowerCase();
+            usersToReset.push({
+                id: checkbox.value,
+                type: role
+            });
+        });
+        
+        // In a real implementation, you would send this data to the server
         setTimeout(() => {
-            showToast('Passwords reset successfully!', 'success');
+            showToast('Passwords reset emails sent!', 'success');
             hideLoading();
         }, 1500);
     }
@@ -1191,28 +1099,53 @@ function performGlobalSearch(term) {
 }
 
 // Edit Functions (stubs for demo)
-function editUser(id) {
-    showToast(`Edit user ${id} - Feature coming soon!`, 'info');
+function editUser(id, type) {
+    showToast(`Edit user ${id} (${type}) - Feature coming soon!`, 'info');
 }
 
-function deleteUser(id) {
+function deleteUser(id, type) {
     if (confirm('Are you sure you want to delete this user?')) {
         showLoading();
-        setTimeout(() => {
-            showToast('User deleted successfully!', 'success');
-            loadUsers();
-            hideLoading();
-        }, 1000);
+        
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete-user/${type}/${id}/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
-function resetUserPassword(id) {
-    if (confirm('Reset password for this user?')) {
+function resetUserPassword(id, type) {
+    if (confirm('Reset password for this user? A temporary password will be generated.')) {
         showLoading();
-        setTimeout(() => {
-            showToast('Password reset email sent!', 'success');
-            hideLoading();
-        }, 1000);
+        
+        // Create a form to submit the password reset request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reset-password/${type}/${id}/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
@@ -1223,11 +1156,23 @@ function editProduct(id) {
 function deleteProduct(id) {
     if (confirm('Are you sure you want to delete this product?')) {
         showLoading();
-        setTimeout(() => {
-            showToast('Product deleted successfully!', 'success');
-            loadProducts();
-            hideLoading();
-        }, 1000);
+        
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete-product/${id}/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
