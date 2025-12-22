@@ -176,25 +176,25 @@ def admin_home(request):
             'last_login': 'N/A'  # Add this field to your model if needed
         })
     
-    for manager in managers:
-        all_users.append({
-            'type': 'Manager',
-            'name': manager.fullname,
-            'email': manager.email,
-            'username': manager.username,
-            'status': 'Active',
-            'last_login': 'N/A'
-        })
+    # for manager in managers:
+    #     all_users.append({
+    #         'type': 'Manager',
+    #         'name': manager.fullname,
+    #         'email': manager.email,
+    #         'username': manager.username,
+    #         'status': 'Active',
+    #         'last_login': 'N/A'
+    #     })
     
-    for cashier in cashiers:
-        all_users.append({
-            'type': 'Cashier',
-            'name': cashier.fullname,
-            'email': cashier.email,
-            'username': cashier.username,
-            'status': 'Active',
-            'last_login': 'N/A'
-        })
+    # for cashier in cashiers:
+    #     all_users.append({
+    #         'type': 'Cashier',
+    #         'name': cashier.fullname,
+    #         'email': cashier.email,
+    #         'username': cashier.username,
+    #         'status': 'Active',
+    #         'last_login': 'N/A'
+    #     })
 
 
     admhm_data={

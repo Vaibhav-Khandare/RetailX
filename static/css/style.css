@@ -198,6 +198,7 @@ p {
 }
 
 .hero-image {
+    padding:0px 0px 0px 150px;
     display: flex;
     justify-content: center;
 }
@@ -288,7 +289,7 @@ p {
 
 /* Logo Animation */
 #logo-l {
-    
+
     opacity: 0;
     transform: scale(1.5) translateY(20px);
     animation: logoAnimation 1.3s ease-in-out forwards;
