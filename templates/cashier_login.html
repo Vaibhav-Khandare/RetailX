@@ -14,121 +14,184 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-        * {
-            margin: 0; padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+        /* REPLACE THE ENTIRE <style> SECTION WITH THIS: */
 
-        body {
-            background: #F5F7FA;   
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+* {
+    margin: 0; 
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
 
-        /* LOGIN CARD */
-        .login-card {
-            width: 380px;
-            background: #fff;
-            padding: 40px 35px;
-            border-radius: 18px;
-            box-shadow: 0px 8px 20px rgba(0,0,0,0.08);
-            text-align: center;
-        }
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #e8f4ff 0%, #e8f4ff 45%, #ffffff 45%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        /* LOGO */
-        .logo {
-            width: 85px;
-            height: 85px;
-            border-radius: 50%;
-            margin-bottom: 15px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
-        }
+/* LOGIN CARD */
+.login-card {
+    width: 380px;
+    background: #fff;
+    padding: 40px 35px;
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(76, 111, 255, 0.12);
+    text-align: center;
+    animation: fadeSlideIn 0.6s ease-out;
+}
 
-        .title {
-            font-size: 26px;
-            font-weight: 600;
-            color: #1F2937;
-            margin-bottom: 5px;
-        }
+/* LOGO */
+.logo {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 15px rgba(76, 111, 255, 0.15);
+    border: 3px solid white;
+    transition: transform 0.3s ease;
+}
 
-        .subtitle {
-            color: #6B7280;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
+.logo:hover {
+    transform: scale(1.03);
+}
 
-        /* INPUT FIELDS */
-        .input-field {
-            position: relative;
-            margin-bottom: 18px;
-        }
+.title {
+    font-size: 26px;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 8px;
+}
 
-        .input-field input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            font-size: 15px;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            outline: none;
-        }
+.subtitle {
+    color: #6B7280;
+    font-size: 14px;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
 
-        .input-field input:focus {
-            border-color: #4C6FFF;
-            box-shadow: 0px 0px 5px rgba(76,111,255,0.4);
-        }
+/* INPUT FIELDS */
+.input-field {
+    position: relative;
+    margin-bottom: 20px;
+}
 
-        .input-field i {
-            position: absolute;
-            top: 50%;
-            right: 14px;
-            transform: translateY(-50%);
-            color: #6B7280;
-            cursor: pointer;
-        }
+.input-field input {
+    width: 100%;
+    padding: 14px 50px 14px 18px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+    outline: none;
+    background: #F9FAFB;
+    transition: all 0.3s ease;
+}
 
-        /* LOGIN BUTTON */
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: #4C6FFF;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.25s;
-        }
+.input-field input:focus {
+    border-color: #4C6FFF;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1);
+}
 
-        .login-btn:hover {
-            background: #3548e8;
-            transform: scale(1.02);
-        }
+.input-field i {
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    cursor: pointer;
+    transition: color 0.3s;
+}
 
-        /* FOOTER TEXT */
-        .footer {
-            margin-top: 15px;
-            font-size: 13px;
-            color: #6B7280;
-        }
-        /* ANIMATION */
+.input-field input:focus + i {
+    color: #4C6FFF;
+}
+
+/* LOGIN BUTTON */
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: #4C6FFF;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background: #3548e8;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(76, 111, 255, 0.2);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+/* FOOTER TEXT */
+.footer {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.footer a {
+    color: #4C6FFF;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.footer a:hover {
+    color: #3548e8;
+    text-decoration: underline;
+}
+
+/* ANIMATION - Simple and clean */
 @keyframes fadeSlideIn {
     0% {
         opacity: 0;
-        transform: translateY(50px);
+        transform: translateY(20px);
     }
     100% {
         opacity: 1;
         transform: translateY(0);
     }
 }
-
-.login-card {
-    animation: fadeSlideIn 0.8s ease-out;
+/* ERROR MESSAGE STYLING */
+.alert {
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: shake 0.5s ease;
 }
 
+.alert-error {
+    background-color: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #DC2626;
+}
+
+.alert i {
+    font-size: 16px;
+}
+
+/* Shake animation for error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
 
     </style>
 </head>
@@ -156,7 +219,20 @@
             </div>
 
             <button class="login-btn">Login</button>
+            <div class="footer">
+        Do not have an account? <a href="/cashier_registration/">Register</a>
+    </div>
         </form>
+
+        <!-- ERROR MESSAGE DISPLAY -->
+{% if error %}
+    <div class="error-message" style="margin-top: 15px; margin-bottom: 15px;">
+        <div class="alert alert-error">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+        </div>
+    </div>
+{% endif %}
+
 
         <div class="footer">RetailX Cashier Panel</div>
     </div>
@@ -175,6 +251,21 @@
                 toggle.classList.replace("fa-eye-slash", "fa-eye");
             }
         });
+
+
+    // Add this at the end of your existing script
+document.addEventListener('DOMContentLoaded', function() {
+    const errorMessage = document.querySelector('.error-message');
+    if (errorMessage) {
+        setTimeout(() => {
+            errorMessage.style.opacity = '0';
+            errorMessage.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 500);
+        }, 5000); // 5 seconds
+    }
+});
     </script>
 
 </body>
