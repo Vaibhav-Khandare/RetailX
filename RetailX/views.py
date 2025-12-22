@@ -303,3 +303,5 @@ def logout_view(request):
     request.session.flush()  # clears all session data
     return redirect('manager_login')  # or 'manager_login', 'cashier_login', etc.
 
+
+
