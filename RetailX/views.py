@@ -143,7 +143,7 @@ def cashier_registration(request):
 def admin_home(request):
     # Check if admin is logged in
     if not request.session.get('username'):
-        return redirect('/admin_login')  # Redirect to login if not logged 
+        return redirect('/admin_login')  # Redirect to login if not logged  
     else:
         print("------------------->  Login Successfull !! <-------------------")
         
