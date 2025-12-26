@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from AccountsDB.models import Admin, Cashier, Manager
 from productsDB.models import Product
@@ -8,6 +8,81 @@ from django.contrib.auth.hashers import check_password
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from datetime import datetime
+import json
+import random
+import smtplib
+from email.mime.text import MIMEText
+from django.contrib import messages
+
+
+# OTP storage for admin, manager, and cashier
+otp_storage = {}
+manager_otp_storage = {}  # Separate storage for manager OTPs
+cashier_otp_storage = {}  # Separate storage for cashier OTPs
+
+def send_email_otp(receiver_email, otp, user_type="admin"):
+    """Send OTP email for admin, manager, or cashier registration"""
+    sender_email = "retailx.connect@gmail.com"
+    sender_password = "kalk fnar rmnz imwj"
+    
+    if user_type == "admin":
+        subject = "Your OTP Verification Code - RetailX Admin Registration"
+        body = f"""Dear Admin,
+
+This is an official email verification message from RetailX Team.
+
+Your One-Time Password (OTP) for admin registration is: {otp}
+
+Please use this code to verify your email address.
+
+This OTP is valid for 5 minutes.
+
+Thank you,
+RetailX Team"""
+    elif user_type == "manager":
+        subject = "Your OTP Verification Code - RetailX Manager Registration"
+        body = f"""Dear Manager,
+
+This is an official email verification message from RetailX Team.
+
+Your One-Time Password (OTP) for manager registration is: {otp}
+
+Please use this code to verify your email address.
+
+This OTP is valid for 5 minutes.
+
+Thank you,
+RetailX Team"""
+    else:  # cashier
+        subject = "Your OTP Verification Code - RetailX Cashier Registration"
+        body = f"""Dear Cashier,
+
+This is an official email verification message from RetailX Team.
+
+Your One-Time Password (OTP) for cashier registration is: {otp}
+
+Please use this code to verify your email address.
+
+This OTP is valid for 5 minutes.
+
+Thank you,
+RetailX Team"""
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        print(f"{user_type.capitalize()} Registration Detected !!")
+        print(f"OTP email sent to {receiver_email}")
+        return True
+    except Exception as e:
+        print("Error sending email:", e)
+        return False
 
 
 def index(request):
@@ -21,45 +96,364 @@ def admin_login(request):
         username = request.POST.get('username', '').lower()
         password = request.POST.get('password', '')
 
-        # Get user by username
         try:
             user = Admin.objects.get(username=username)
         except Admin.DoesNotExist:
             return render(request, 'admin_login.html', {'error': 'Invalid username'})
 
-        # IMPORTANT: check against the password field (where you stored the hash)
         if check_password(password, user.password):
-            # create session
             request.session['username'] = user.username
             request.session['email'] = user.email
-
-            # optional: confirm session saved (for debugging)
-            # print("Session keys:", request.session.keys())
-
             return redirect('/admin_home')
         else:
             return render(request, 'admin_login.html', {'error': 'Invalid username or password'})
 
     return render(request, 'admin_login.html')
 
+@csrf_exempt
 def admin_registration(request):
+    """Handle admin registration with OTP verification"""
+    
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            email = data.get('email')
+            
+            if action == 'send_otp':
+                if not email:
+                    return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
+                
+                if Admin.objects.filter(email=email).exists():
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'This email is already registered'
+                    }, status=400)
+                
+                otp = str(random.randint(100000, 999999))
+                if send_email_otp(email, otp, "admin"):
+                    otp_storage[f'email_{email}'] = otp
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': f'OTP sent to {email}'
+                    })
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Failed to send OTP'
+                }, status=500)
+                
+            elif action == 'verify_otp':
+                user_otp = data.get('otp')
+                email = data.get('email')
+                
+                if not user_otp or not email:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'OTP and email are required'
+                    }, status=400)
+                
+                stored_otp = otp_storage.get(f'email_{email}')
+                
+                if stored_otp and stored_otp == user_otp:
+                    del otp_storage[f'email_{email}']
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': 'Email verified successfully'
+                    })
+                
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Incorrect OTP. Please check and try again.'
+                }, status=400)
+                
+            else:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Invalid action'
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Invalid request data'
+            }, status=400)
+        except Exception as e:
+            print("Error:", str(e))
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Server error'
+            }, status=500)
+    
     if request.method == 'POST':
-        fullname = request.POST['fullname']
-        email = request.POST['email']
-        # username = request.POST['username'].lower()
+        fullname = request.POST.get('fullname')
+        email = request.POST.get('email')
         username = request.POST.get('username', '').lower()
-        password = request.POST['password']
-        confirm_password = request.POST['confirm_password']
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
 
-        hashed_password = make_password(confirm_password)
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match!")
+            return render(request, 'admin_register.html')
+        
+        if Admin.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists!")
+            return render(request, 'admin_register.html')
+        
+        if Admin.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered!")
+            return render(request, 'admin_register.html')
 
-        # database table object 
-        # print(fullname, email, username, password, confirm_password)
-        a1 = Admin(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-        a1.save()
+        hashed_password = make_password(password)
+        
+        admin = Admin(
+            fullname=fullname,
+            email=email,
+            username=username,
+            password=hashed_password,
+            confirm_password=hashed_password
+        )
+        admin.save()
+        
+        messages.success(request, "Registration successful! Please login.")
         return redirect('/admin_login')
     
-    return render(request,'admin_register.html')
+    return render(request, 'admin_register.html')
+
+@csrf_exempt
+def manager_registration(request):
+    """Handle manager registration with OTP verification"""
+    
+    # AJAX requests for OTP handling
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            email = data.get('email')
+            
+            if action == 'send_otp':
+                if not email:
+                    return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
+                
+                # Check if email already exists
+                if Manager.objects.filter(email=email).exists():
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'This email is already registered'
+                    }, status=400)
+                
+                # Generate and store OTP
+                otp = str(random.randint(100000, 999999))
+                if send_email_otp(email, otp, "manager"):
+                    manager_otp_storage[f'email_{email}'] = otp
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': f'OTP sent to {email}'
+                    })
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Failed to send OTP'
+                }, status=500)
+                
+            elif action == 'verify_otp':
+                user_otp = data.get('otp')
+                email = data.get('email')
+                
+                if not user_otp or not email:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'OTP and email are required'
+                    }, status=400)
+                
+                stored_otp = manager_otp_storage.get(f'email_{email}')
+                
+                if stored_otp and stored_otp == user_otp:
+                    del manager_otp_storage[f'email_{email}']
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': 'Email verified successfully'
+                    })
+                
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Incorrect OTP. Please check and try again.'
+                }, status=400)
+                
+            else:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Invalid action'
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Invalid request data'
+            }, status=400)
+        except Exception as e:
+            print("Error:", str(e))
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Server error'
+            }, status=500)
+    
+    # Handle form submission (after OTP verification)
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname')
+        email = request.POST.get('email')
+        username = request.POST.get('username', '').lower()
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Validate passwords match
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match!")
+            return render(request, 'manager_register.html')
+        
+        # Check if username already exists
+        if Manager.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists!")
+            return render(request, 'manager_register.html')
+        
+        # Check if email already exists
+        if Manager.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered!")
+            return render(request, 'manager_register.html')
+
+        # Hash password and create manager
+        hashed_password = make_password(password)
+        
+        manager = Manager(
+            fullname=fullname,
+            email=email,
+            username=username,
+            password=hashed_password,
+            confirm_password=hashed_password
+        )
+        manager.save()
+        
+        messages.success(request, "Registration successful! Please login.")
+        return redirect('/manager_login')
+    
+    # GET request - show registration form
+    return render(request, 'manager_register.html')
+
+@csrf_exempt
+def cashier_registration(request):
+    """Handle cashier registration with OTP verification"""
+    
+    # AJAX requests for OTP handling
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            email = data.get('email')
+            
+            if action == 'send_otp':
+                if not email:
+                    return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
+                
+                # Check if email already exists
+                if Cashier.objects.filter(email=email).exists():
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'This email is already registered'
+                    }, status=400)
+                
+                # Generate and store OTP
+                otp = str(random.randint(100000, 999999))
+                if send_email_otp(email, otp, "cashier"):
+                    cashier_otp_storage[f'email_{email}'] = otp
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': f'OTP sent to {email}'
+                    })
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Failed to send OTP'
+                }, status=500)
+                
+            elif action == 'verify_otp':
+                user_otp = data.get('otp')
+                email = data.get('email')
+                
+                if not user_otp or not email:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'OTP and email are required'
+                    }, status=400)
+                
+                stored_otp = cashier_otp_storage.get(f'email_{email}')
+                
+                if stored_otp and stored_otp == user_otp:
+                    del cashier_otp_storage[f'email_{email}']
+                    return JsonResponse({
+                        'status': 'success', 
+                        'message': 'Email verified successfully'
+                    })
+                
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Incorrect OTP. Please check and try again.'
+                }, status=400)
+                
+            else:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Invalid action'
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Invalid request data'
+            }, status=400)
+        except Exception as e:
+            print("Error:", str(e))
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Server error'
+            }, status=500)
+    
+    # Handle form submission (after OTP verification)
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname')
+        email = request.POST.get('email')
+        username = request.POST.get('username', '').lower()
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Validate passwords match
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match!")
+            return render(request, 'cashier_register.html')
+        
+        # Check if username already exists
+        if Cashier.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists!")
+            return render(request, 'cashier_register.html')
+        
+        # Check if email already exists
+        if Cashier.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered!")
+            return render(request, 'cashier_register.html')
+
+        # Hash password and create cashier
+        hashed_password = make_password(password)
+        
+        cashier = Cashier(
+            fullname=fullname,
+            email=email,
+            username=username,
+            password=hashed_password,
+            confirm_password=hashed_password
+        )
+        cashier.save()
+        
+        messages.success(request, "Registration successful! Please login.")
+        return redirect('/cashier_login')
+    
+    # GET request - show registration form
+    return render(request, 'cashier_register.html')
 
 def manager_login(request):
     if request.method == 'POST':
@@ -67,13 +461,11 @@ def manager_login(request):
         password = request.POST.get('password')
 
         try:
-            # Case-insensitive search
             manager = Manager.objects.get(username__iexact=username)
             
             if check_password(password, manager.password):
-                # Set session
                 request.session['manager_username'] = manager.username
-                return redirect('manager_home')  # Use named URL
+                return redirect('manager_home')
             else:
                 error = "Invalid password"
         except Manager.DoesNotExist:
@@ -82,23 +474,6 @@ def manager_login(request):
         return render(request, 'manager_login.html', {'error': error})
 
     return render(request, 'manager_login.html')
-
-def manager_registration(request):
-    if request.method == 'POST':
-        fullname = request.POST['fullname']
-        email = request.POST['email']
-        username = request.POST.get('username', '').lower()
-        password = request.POST['password']
-        confirm_password = request.POST['confirm_password']
-
-        hashed_password = make_password(confirm_password)
-
-        # database table object 
-        # print(fullname, email, username, password, confirm_password)
-        m1 = Manager(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-        m1.save()
-        return redirect('/manager_login')
-    return render(request,'manager_register.html')
 
 def cashier_login(request):
     if request.method == 'POST':
@@ -110,61 +485,32 @@ def cashier_login(request):
         except Cashier.DoesNotExist:
             return render(request, 'cashier_login.html', {'error': 'Invalid username'})
 
-        # Compare hashed password
         if check_password(password, user.password):  
             request.session['cashier_username'] = user.username
             request.session['cashier_email'] = user.email
-
-            return redirect('/cashier_home')   # CORRECT REDIRECT
+            return redirect('/cashier_home')
         else:
             return render(request, 'cashier_login.html', {'error': 'Invalid username or password'})
 
     return render(request, "cashier_login.html")
 
-
-def cashier_registration(request):
-    if request.method == 'POST':
-        fullname = request.POST['fullname']
-        email = request.POST['email']
-        # username = request.POST['username']
-        username = request.POST.get('username', '').lower()
-        password = request.POST['password']
-        confirm_password = request.POST['confirm_password']
-
-        hashed_password = make_password(confirm_password)
-
-        # database table object 
-        # print(fullname, email, username, password, confirm_password)
-        c1 = Cashier(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-        c1.save()
-        return redirect('/cashier_login')
-    
-    return render(request,"cashier_register.html")
-
 @csrf_exempt
 def admin_home(request):
-    # Check if admin is logged in
     if not request.session.get('username'):
-        return redirect('/admin_login')  # Redirect to login if not logged  
+        return redirect('/admin_login')
     
-    # Count total users
     nadmin = Admin.objects.count()
     nmanager = Manager.objects.count()
     ncashier = Cashier.objects.count()
     totuser = nadmin + nmanager + ncashier
-    
-    # Count total products
     totpro = Product.objects.count()
     
-    # Get all users with their details
     admins = Admin.objects.all()
     managers = Manager.objects.all()
     cashiers = Cashier.objects.all()
     
-    # Combine all users into one list with proper formatting
     all_users = []
     
-    # Process Admins
     for admin in admins:
         all_users.append({
             'id': admin.id,
@@ -177,7 +523,6 @@ def admin_home(request):
             'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(admin, 'last_login') and admin.last_login else 'Never'
         })
     
-    # Process Managers
     for manager in managers:
         all_users.append({
             'id': manager.id,
@@ -190,7 +535,6 @@ def admin_home(request):
             'last_login': manager.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(manager, 'last_login') and manager.last_login else 'Never'
         })
     
-    # Process Cashiers
     for cashier in cashiers:
         all_users.append({
             'id': cashier.id,
@@ -203,13 +547,9 @@ def admin_home(request):
             'last_login': cashier.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(cashier, 'last_login') and cashier.last_login else 'Never'
         })
     
-    # Get all products for product management
     all_products = Product.objects.all().values('id', 'name', 'category', 'price', 'in_stock', 'min_stock_level', 'sku')
-    
-    # Calculate dashboard statistics
     low_stock_count = Product.objects.filter(in_stock__lt=10).count()
     
-    # Prepare context data
     context = {
         'uname': request.session.get('username'),
         'email': request.session.get('email'),
@@ -220,7 +560,6 @@ def admin_home(request):
         'low_stock_count': low_stock_count,
     }
     
-    # Handle new user registration
     if request.method == 'POST' and request.POST.get('formType') == 'userModal':
         user_role = request.POST.get('userRole')
         fullname = request.POST.get('fullName')
@@ -248,7 +587,7 @@ def admin_home(request):
                     password=hashed_password,
                     confirm_password=hashed_password
                 )
-            else:  # cashier
+            else:
                 Cashier.objects.create(
                     fullname=fullname,
                     email=email,
@@ -257,10 +596,8 @@ def admin_home(request):
                     confirm_password=hashed_password
                 )
             
-            # Redirect to refresh the page with new data
             return redirect('/admin_home')
     
-    # Handle new product addition
     if request.method == 'POST' and request.POST.get('formType') == 'productModal':
         Product.objects.create(
             name=request.POST.get('productName'),
@@ -273,25 +610,22 @@ def admin_home(request):
             description=request.POST.get('productDescription')
         )
         
-        # Redirect to refresh the page with new data
         return redirect('/admin_home')
     
     return render(request, 'admin_home.html', context)
 
 def cashier_home(request):
-    # Check if cashier is logged in
     if not request.session.get('cashier_username'):
         return redirect('/cashier_login')
     
     return render(request, 'cashier_home.html')
 
 def manager_home(request):
-    # Only allow access if manager is logged in
     if not request.session.get('manager_username'):
         return redirect('/manager_login')
     
     return render(request, 'manager_home.html')
 
 def logout_view(request):
-    request.session.flush()  # clears all session data
-    return redirect('manager_login')  # or 'manager_login', 'cashier_login', etc.
+    request.session.flush()
+    return redirect('manager_login')
