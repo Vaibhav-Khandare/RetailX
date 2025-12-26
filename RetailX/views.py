@@ -459,6 +459,9 @@ def manager_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = request.POST.get('password')
+        dict= {
+            'manager_username':'',
+        }
 
         try:
             manager = Manager.objects.get(username__iexact=username)
@@ -620,11 +623,36 @@ def cashier_home(request):
     
     return render(request, 'cashier_home.html')
 
+# def manager_home(request):
+#     # Only allow access if manager is logged in
+#     if not request.session.get('manager_username'):
+#         return redirect('/manager_login')
+    
+#     return render(request, 'manager_home.html')
+
 def manager_home(request):
     if not request.session.get('manager_username'):
         return redirect('/manager_login')
     
-    return render(request, 'manager_home.html')
+    # Get manager details
+    manager_username = request.session.get('manager_username')
+    try:
+        manager = Manager.objects.get(username=manager_username)
+        context = {
+            'manager_name': manager.fullname,
+            'manager_username': manager.username
+        }
+    except Manager.DoesNotExist:
+        context = {
+            'manager_name': 'Manager',
+            'manager_username': 'Unknown'
+        }
+    
+    return render(request, 'manager_home.html', context)
+
+
+
+
 
 def logout_view(request):
     request.session.flush()

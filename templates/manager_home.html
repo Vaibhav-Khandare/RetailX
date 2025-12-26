@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body data-manager="{{ manager_name }}">
     <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">
@@ -18,8 +18,8 @@
                     <i class="fas fa-user-tie"></i>
                 </div>
                 <div class="user-info">
-                    <h3 id="managerName">Manager Name</h3>
-                    <p id="managerId">ID: #MGR001</p>
+                    <h3 id="managerName">{{ manager_name }}</h3>
+                    <p id="managerId">ID: {{ manager_username }}</p>
                     <p class="role-badge">Manager</p>
                 </div>
             </div>

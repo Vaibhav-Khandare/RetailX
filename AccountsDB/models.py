@@ -26,6 +26,7 @@ class Cashier(models.Model):
     
 
 
+
 class Manager(models.Model):
     fullname = models.CharField(max_length=30)
     email = models.CharField(max_length=100, unique=True)
