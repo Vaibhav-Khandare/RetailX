@@ -198,6 +198,7 @@ p {
 }
 
 .hero-image {
+    padding:0px 0px 0px 150px;
     display: flex;
     justify-content: center;
 }
@@ -284,6 +285,25 @@ p {
     font-size: 0.9rem;
     color: var(--gray);
     margin-bottom: 0;
+}
+
+/* Logo Animation */
+#logo-l {
+
+    opacity: 0;
+    transform: scale(1.5) translateY(20px);
+    animation: logoAnimation 1.3s ease-in-out forwards;
+}
+
+@keyframes logoAnimation {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 /* Section Styling */
@@ -637,7 +657,7 @@ section {
     }
     
     .hero {
-        padding: 120px 0 60px;
+        padding: 120px 0 60px;  
     }
     
     .hero-buttons {

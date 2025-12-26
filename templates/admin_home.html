@@ -28,11 +28,8 @@
         <div class="user-info">
             <div class="avatar">A</div>
             <div class="user-details">
-                <!-- <form action="" method="post">      // bro here i try to make the method post but it is useless 
-                    {% csrf_token %} -->
                 <h4>{{uname}}</h4>
                 <p>{{email}}</p>
-                <!-- </form> -->
             </div>
         </div>
 
@@ -125,9 +122,8 @@
                         <div class="stat-content">
                             <h3>Total Users</h3>
                             <p class="stat-value" id="totalUsers">{{totaluser}}</p>
-                            <!-- Debugg : {{totaluser}} -->
                             <span class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> work is Done
+                                <i class="fas fa-arrow-up"></i> Updated
                             </span>
                         </div>
                     </div>
@@ -140,7 +136,7 @@
                             <h3>Total Products</h3>
                             <p class="stat-value" id="totalProducts">{{ totalpro }}</p>
                             <span class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> Work is Done
+                                <i class="fas fa-arrow-up"></i> Updated
                             </span>
                         </div>
                     </div>
@@ -164,7 +160,7 @@
                         </div>
                         <div class="stat-content">
                             <h3>Low Stock Items</h3>
-                            <p class="stat-value" id="lowStockCount">7</p>
+                            <p class="stat-value" id="lowStockCount">{{ low_stock_count }}</p>
                             <span class="stat-change negative">
                                 <i class="fas fa-exclamation-circle"></i> Attention Required
                             </span>
@@ -175,7 +171,7 @@
                 <div class="dashboard-grid">
                     <div class="dashboard-card wide">
                         <div class="card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Sales Overview (Attention Required Need to Work)</h3>
+                            <h3><i class="fas fa-chart-bar"></i> Sales Overview</h3>
                             <select id="salesPeriod" class="period-select" onchange="updateSalesChart()">
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
@@ -242,8 +238,9 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="selectAllUsers" onclick="toggleAllUsers()"></th>
-                                <th>Name</th><!-- Debugg {{uao.fullname}}    debugging v-->
+                                <th>Name</th>
                                 <th>Email</th>
+                                <th>Username</th>
                                 <th>Role</th>
                                 <th>Status</th>
                                 <th>Last Login</th>
@@ -251,35 +248,44 @@
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
-                            <!-- upload user name here djangooooo -->
-                            <!-- Debugg {{uao.fullname}} -->
-                            {% for user in users %}
-                            <tr>
-                                <td><input type="checkbox" class="user-checkbox"></td>
-                                <td>{{ user.name }}</td>
-                                <td>{{ user.email }}</td>
-                                <td><span class="status-badge">{{ user.type }}</span></td>
-                                <td><span class="status-badge status-active">{{ user.status }}</span></td>
-                                <td>{{ user.last_login }}</td>
-                                <td>
-                                    <button class="action-btn small" onclick="editUser('{{ user.username }}')">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn small"
-                                        onclick="deleteUser('{{ user.type }}', '{{ user.username }}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="7" style="text-align: center;">No users found</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        <!-- enenenene -->
+                            {% if users %}
+                                {% for user in users %}
+                                <tr>
+                                    <td><input type="checkbox" class="user-checkbox" value="{{ user.id }}"></td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td><span class="status-badge">{{ user.role|capfirst }}</span></td>
+                                    <td><span class="status-badge status-active">{{ user.status }}</span></td>
+                                    <td>{{ user.last_login }}</td>
+                                    <td>
+                                        <button class="action-btn small" onclick="editUser('{{ user.id }}', '{{ user.type }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn small" onclick="deleteUser('{{ user.id }}', '{{ user.type }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <button class="action-btn small" onclick="resetUserPassword('{{ user.id }}', '{{ user.type }}')">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                        <i class="fas fa-users-slash" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                        <p>No users found. Add your first user using the "Add New User" button above.</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- User count display -->
+                <div style="margin-top: 20px; text-align: right; color: var(--gray); font-size: 14px;">
+                    Showing {{ users|length }} user(s) in total
                 </div>
             </section>
 
@@ -314,7 +320,47 @@
                 </div>
 
                 <div class="products-grid" id="productsGrid">
-                    <!-- Products loaded via AJAX -->
+                    {% if products %}
+                        {% for product in products %}
+                        <div class="product-card">
+                            <div class="product-image">
+                                <i class="fas fa-box fa-3x"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4 class="product-title">{{ product.name }}</h4>
+                                <p class="product-category">{{ product.category|capfirst }}</p>
+                                <p class="product-price">${{ product.price }}</p>
+                                <div class="product-stock">
+                                    <span>SKU: {{ product.sku }}</span>
+                                    <span class="stock-level {% if product.in_stock <= product.min_stock_level %}low{% else %}high{% endif %}">
+                                        {{ product.in_stock }} units
+                                    </span>
+                                </div>
+                                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                    <button class="action-btn small" onclick="editProduct('{{ product.id }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn small" onclick="deleteProduct('{{ product.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button class="action-btn small" onclick="viewProductDetails('{{ product.id }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                            <i class="fas fa-box-open" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <p>No products found. Add your first product using the "Add Product" button above.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Product count display -->
+                <div style="margin-top: 20px; text-align: right; color: var(--gray); font-size: 14px;">
+                    Showing {{ products|length }} product(s) in total
                 </div>
             </section>
 
@@ -334,7 +380,7 @@
                     </div>
                     <div class="inventory-card warning">
                         <h4>Low Stock Items</h4>
-                        <p class="inventory-value" id="lowStockItems">7 items</p>
+                        <p class="inventory-value" id="lowStockItems">{{ low_stock_count }} items</p>
                     </div>
                     <div class="inventory-card">
                         <h4>Monthly Turnover</h4>
@@ -352,12 +398,33 @@
                                     <th>Current Stock</th>
                                     <th>Min. Stock</th>
                                     <th>Status</th>
-                                    <th>Last Updated</th>
+                                    <th>Category</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="inventoryTableBody">
-                                <!-- Inventory loaded via AJAX -->
+                                {% for product in products %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.sku }}</td>
+                                    <td>{{ product.in_stock }}</td>
+                                    <td>{{ product.min_stock_level }}</td>
+                                    <td>
+                                        <span class="status-badge {% if product.in_stock <= product.min_stock_level %}status-pending{% else %}status-active{% endif %}">
+                                            {% if product.in_stock <= product.min_stock_level %}Low Stock{% else %}In Stock{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ product.category|capfirst }}</td>
+                                    <td>
+                                        <button class="action-btn small" onclick="adjustStock('{{ product.id }}')">
+                                            <i class="fas fa-edit"></i> Adjust
+                                        </button>
+                                        <button class="action-btn small" onclick="viewInventoryHistory('{{ product.id }}')">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -494,7 +561,7 @@
         </div>
     </div>
 
-    <!-- USER MODAL                                 bro in this modaaal I write the code about add user form !!  -->
+    <!-- USER MODAL -->
     <div id="userModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -502,9 +569,9 @@
                 <button class="close-modal" onclick="closeUserModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="userForm" action="" method="post">
+                <form id="userForm" method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="formType" id="formType" value="userModal">
+                    <input type="hidden" name="formType" value="userModal">
                     <div class="form-group">
                         <label for="userRole">Role</label>
                         <select id="userRole" name="userRole" required>
@@ -522,12 +589,10 @@
                         <label for="userEmail">Email Address</label>
                         <input type="email" id="userEmail" name="userEmail" required>
                     </div>
-
                     <div class="form-group">
-                        <label for="userName">User Name</label>
+                        <label for="userName">Username</label>
                         <input type="text" id="userName" name="userName" required>
                     </div>
-
                     <div class="form-group">
                         <label for="userPassword">Password</label>
                         <input type="password" id="userPassword" name="userPassword" required>
@@ -540,7 +605,6 @@
                         <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
                         <button type="submit" class="btn btn-primary">Add User</button>
                     </div>
-                    <!-- <input type="submit"> -->
                 </form>
             </div>
         </div>
@@ -554,9 +618,9 @@
                 <button class="close-modal" onclick="closeProductModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="productForm" action="" method="post">
+                <form id="productForm" method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="formType" id="formType" value="productModal">
+                    <input type="hidden" name="formType" value="productModal">
                     <div class="form-group">
                         <label for="productName">Product Name</label>
                         <input type="text" id="productName" name="productName" required>
@@ -581,7 +645,7 @@
                     </div>
                     <div class="form-group">
                         <label for="productPrice">Price ($)</label>
-                        <input type="number" id="productPrice" name="productPrice" step="50" required>
+                        <input type="number" id="productPrice" name="productPrice" step="0.01" required>
                     </div>
                     <div class="form-group">
                         <label for="productStock">Initial Stock</label>
@@ -691,6 +755,4 @@
 
     <script src="/static/js/admin_home.js"></script>
 </body>
-
 </html>
-

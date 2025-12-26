@@ -6,6 +6,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import check_password
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import datetime
 
 
 def index(request):
@@ -143,165 +145,153 @@ def cashier_registration(request):
 def admin_home(request):
     # Check if admin is logged in
     if not request.session.get('username'):
-        return redirect('/admin_login')  # Redirect to login if not logged 
-    else:
-        print("------------------->  Login Successfull !! <-------------------")
-        
-    # print("Admin Logged-in uname:",request.session.get('username'))       # bro here i try to fetch admin username
+        return redirect('/admin_login')  # Redirect to login if not logged  
     
-    #Bro here i Counted Total no. of USERS AND PRODUCTS
-    request.session['totaluser'] = None       #first here i clear the cache which will lead to error
-    nadmin=Admin.objects.count()
-    nmanager=Manager.objects.count()
-    ncashier=Cashier.objects.count()
-
-    totuser=nadmin+nmanager+ncashier
-    # print("totuser====",totuser)
-    totpro=Product.objects.count()
-
-    #something about user list
+    # Count total users
+    nadmin = Admin.objects.count()
+    nmanager = Manager.objects.count()
+    ncashier = Cashier.objects.count()
+    totuser = nadmin + nmanager + ncashier
+    
+    # Count total products
+    totpro = Product.objects.count()
+    
+    # Get all users with their details
     admins = Admin.objects.all()
     managers = Manager.objects.all()
     cashiers = Cashier.objects.all()
     
-    # OR combine them (if you want all in one table)
+    # Combine all users into one list with proper formatting
     all_users = []
+    
+    # Process Admins
     for admin in admins:
         all_users.append({
+            'id': admin.id,
             'type': 'Admin',
             'name': admin.fullname,
             'email': admin.email,
             'username': admin.username,
+            'role': 'admin',
             'status': 'Active',
-            'last_login': 'N/A'  # Add this field to your model if needed
+            'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(admin, 'last_login') and admin.last_login else 'Never'
         })
     
+    # Process Managers
     for manager in managers:
         all_users.append({
+            'id': manager.id,
             'type': 'Manager',
             'name': manager.fullname,
             'email': manager.email,
             'username': manager.username,
+            'role': 'manager',
             'status': 'Active',
-            'last_login': 'N/A'
+            'last_login': manager.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(manager, 'last_login') and manager.last_login else 'Never'
         })
     
+    # Process Cashiers
     for cashier in cashiers:
         all_users.append({
+            'id': cashier.id,
             'type': 'Cashier',
             'name': cashier.fullname,
             'email': cashier.email,
             'username': cashier.username,
+            'role': 'cashier',
             'status': 'Active',
-            'last_login': 'N/A'
+            'last_login': cashier.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(cashier, 'last_login') and cashier.last_login else 'Never'
         })
-
-
-    admhm_data={
-            'uname':request.session.get('username'),
-            'email':request.session.get('email'),
-            'totaluser':totuser,
-            'totalpro':totpro,
-            'users':all_users
-        }
     
-    if(request.method=='POST' and request.POST['formType']=='userModal'):                      #formType use kia gya hai as a hidden data which will show that the POST method came from which 'Form' 🐦‍⬛       
-
-        print("--------> New User Details: ")                #bro this print statements are not mcompulsory we can comment it later 
-        print('Role:    ',request.POST['userRole'])
-        print('Full Name:   ',request.POST['fullName'])
-        print('Emmail:  ',request.POST['userEmail'])
-        print('User Name:   ',request.POST['userName'])
-        print('Pass:',request.POST['userPassword'])
-        print('CFM Pass:',request.POST['confirmUserPassword'])
-
-        if request.POST['userRole']=='admin':
-            fullname = request.POST['fullName']
-            email = request.POST['userEmail']
-            username = request.POST.get('userName','').lower()
-            password = request.POST['userPassword']
-            confirm_password = request.POST['confirmUserPassword']
-
-            if(password==confirm_password):
-                hashed_password = make_password(confirm_password)
-                UDO = Admin(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-                UDO.save()
-            else:
-                print("Plss Enter correct Password !")
-                print("Try Again !!!")
-        elif request.POST['userRole']=='manager':
-            fullname = request.POST['fullName']
-            email = request.POST['userEmail']
-            username = request.POST.get('userName', '').lower()
-            password = request.POST['userPassword']
-            confirm_password = request.POST['confirmUserPassword']
-
-            if(password==confirm_password):
-                hashed_password = make_password(confirm_password)
-                UDO = Manager(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-                UDO.save()
-            else:
-                print("Plss Enter correct Password !")
-                print("Try Again !!!")
-        else:
-            fullname = request.POST['fullName']
-            email = request.POST['userEmail']
-            username = request.POST.get('userName', '').lower()
-            password = request.POST['userPassword']
-            confirm_password = request.POST['confirmUserPassword']
-
-            if(password==confirm_password):
-                hashed_password = make_password(confirm_password)
-                UDO = Cashier(fullname=fullname, email=email, username=username, password=hashed_password, confirm_password=hashed_password)
-                UDO.save()
-            else:
-                print("Plss Enter correct Password !")
-                print("Try Again !!!")
-
-
-    if(request.method=='POST' and request.POST['formType']=='productModal'):
-        print("--------> New Product Details: ")               
-        print('Name:    ',request.POST['productName'])
-        print('Category:   ',request.POST['productCategory'])
-        print('SKU:  ',request.POST['productSKU'])
-        print("Brand:",request.POST['productBrand'])
-        print('Price:   ',request.POST['productPrice'])
-        print('Initial Stock:',request.POST['productStock'])
-        print('Minimum Stock Level:',request.POST['productMinStock'])
-        print("Product Description:\n",request.POST['productDescription'])
-
-        pname=request.POST['productName']
-        pcat=request.POST['productCategory']
-        psku=request.POST['productSKU']
-        pbr=request.POST['productBrand']
-        pp=int(request.POST['productPrice'])
-        pis=int(request.POST['productStock'])
-        pmsl=request.POST['productMinStock']
-        pdesc=request.POST['productDescription']
-
-        Pobj=Product(name=pname,sku=psku,category=pcat,brand=pbr,price=pp,in_stock=pis,min_stock_level=pmsl,description=pdesc)
-        Pobj.save()
-
-
-    return render(request, 'admin_home.html',admhm_data)
+    # Get all products for product management
+    all_products = Product.objects.all().values('id', 'name', 'category', 'price', 'in_stock', 'min_stock_level', 'sku')
+    
+    # Calculate dashboard statistics
+    low_stock_count = Product.objects.filter(in_stock__lt=10).count()
+    
+    # Prepare context data
+    context = {
+        'uname': request.session.get('username'),
+        'email': request.session.get('email'),
+        'totaluser': totuser,
+        'totalpro': totpro,
+        'users': all_users,
+        'products': list(all_products),
+        'low_stock_count': low_stock_count,
+    }
+    
+    # Handle new user registration
+    if request.method == 'POST' and request.POST.get('formType') == 'userModal':
+        user_role = request.POST.get('userRole')
+        fullname = request.POST.get('fullName')
+        email = request.POST.get('userEmail')
+        username = request.POST.get('userName', '').lower()
+        password = request.POST.get('userPassword')
+        confirm_password = request.POST.get('confirmUserPassword')
+        
+        if password == confirm_password:
+            hashed_password = make_password(password)
+            
+            if user_role == 'admin':
+                Admin.objects.create(
+                    fullname=fullname,
+                    email=email,
+                    username=username,
+                    password=hashed_password,
+                    confirm_password=hashed_password
+                )
+            elif user_role == 'manager':
+                Manager.objects.create(
+                    fullname=fullname,
+                    email=email,
+                    username=username,
+                    password=hashed_password,
+                    confirm_password=hashed_password
+                )
+            else:  # cashier
+                Cashier.objects.create(
+                    fullname=fullname,
+                    email=email,
+                    username=username,
+                    password=hashed_password,
+                    confirm_password=hashed_password
+                )
+            
+            # Redirect to refresh the page with new data
+            return redirect('/admin_home')
+    
+    # Handle new product addition
+    if request.method == 'POST' and request.POST.get('formType') == 'productModal':
+        Product.objects.create(
+            name=request.POST.get('productName'),
+            category=request.POST.get('productCategory'),
+            sku=request.POST.get('productSKU'),
+            brand=request.POST.get('productBrand'),
+            price=request.POST.get('productPrice'),
+            in_stock=request.POST.get('productStock'),
+            min_stock_level=request.POST.get('productMinStock'),
+            description=request.POST.get('productDescription')
+        )
+        
+        # Redirect to refresh the page with new data
+        return redirect('/admin_home')
+    
+    return render(request, 'admin_home.html', context)
 
 def cashier_home(request):
     # Check if cashier is logged in
     if not request.session.get('cashier_username'):
-        return redirect('/cashier_login')   # redirect to cashier login
+        return redirect('/cashier_login')
     
     return render(request, 'cashier_home.html')
 
 def manager_home(request):
     # Only allow access if manager is logged in
     if not request.session.get('manager_username'):
-        return redirect('/manager_login')  # redirect to login page
+        return redirect('/manager_login')
     
     return render(request, 'manager_home.html')
 
 def logout_view(request):
     request.session.flush()  # clears all session data
     return redirect('manager_login')  # or 'manager_login', 'cashier_login', etc.
-
-
-
