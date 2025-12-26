@@ -10,6 +10,7 @@ from django.utils import timezone
 from datetime import datetime
 
 
+
 def index(request):
     return render(request,'index.html')
 
@@ -65,6 +66,9 @@ def manager_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = request.POST.get('password')
+        dict= {
+            'manager_username':'',
+        }
 
         try:
             # Case-insensitive search
@@ -73,6 +77,9 @@ def manager_login(request):
             if check_password(password, manager.password):
                 # Set session
                 request.session['manager_username'] = manager.username
+                # dict = {
+                #     'manager_username':'manager_username',
+                # }
                 return redirect('manager_home')  # Use named URL
             else:
                 error = "Invalid password"
@@ -285,13 +292,40 @@ def cashier_home(request):
     
     return render(request, 'cashier_home.html')
 
+# def manager_home(request):
+#     # Only allow access if manager is logged in
+#     if not request.session.get('manager_username'):
+#         return redirect('/manager_login')
+    
+#     return render(request, 'manager_home.html')
+
 def manager_home(request):
     # Only allow access if manager is logged in
     if not request.session.get('manager_username'):
         return redirect('/manager_login')
     
-    return render(request, 'manager_home.html')
+    # Get manager details
+    manager_username = request.session.get('manager_username')
+    try:
+        manager = Manager.objects.get(username=manager_username)
+        context = {
+            'manager_name': manager.fullname,
+            'manager_username': manager.username
+        }
+    except Manager.DoesNotExist:
+        context = {
+            'manager_name': 'Manager',
+            'manager_username': 'Unknown'
+        }
+    
+    return render(request, 'manager_home.html', context)
+
+
+
+
 
 def logout_view(request):
     request.session.flush()  # clears all session data
     return redirect('manager_login')  # or 'manager_login', 'cashier_login', etc.
+
+
