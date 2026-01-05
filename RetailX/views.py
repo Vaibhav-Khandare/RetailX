@@ -632,7 +632,7 @@ def cashier_home(request):
 
 def manager_home(request):
     if not request.session.get('manager_username'):
-        return redirect('/manager_login')
+        return render('index.html')
     
     # Get manager details
     manager_username = request.session.get('manager_username')
@@ -654,6 +654,12 @@ def manager_home(request):
 
 
 
+
+
 def logout_view(request):
     request.session.flush()
-    return redirect('manager_login')
+    response = redirect('index')  # Make sure this is the correct URL name
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
