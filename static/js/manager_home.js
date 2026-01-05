@@ -42,11 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Logout button
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
+        // Remove logout button event listener - Let HTML handle it directly
+        // The <a href="/logout"> will work directly
         
         // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', function() {
@@ -862,20 +859,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const pageId = activePage.id.replace('-page', '');
             loadPageData(pageId);
             showToast('Page refreshed!', 'success');
-        }
-    }
-    
-    async function logout() {
-        try {
-            const response = await makeRequest('/api/manager/logout/', 'POST');
-            if (response && response.success) {
-                window.location.href = '/manager_login';
-            } else {
-                window.location.href = '/manager_login';
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-            window.location.href = '/manager_login';
         }
     }
     

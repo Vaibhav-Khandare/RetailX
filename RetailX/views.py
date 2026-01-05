@@ -86,7 +86,12 @@ RetailX Team"""
 
 
 def index(request):
-    return render(request,'index.html')
+    # If user is already logged in as manager, redirect to manager home
+    if request.session.get('manager_username'):
+        return redirect('manager_home')
+    
+    # Otherwise show the landing page
+    return render(request, 'index.html')
 
 def test(request):
     return render(request,'test.html')
@@ -459,12 +464,12 @@ def manager_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = request.POST.get('password')
-        dict= {
-            'manager_username':'',
-        }
+        # dict= {
+        #     'manager_username':'',
+        # }
 
         try:
-            manager = Manager.objects.get(username__iexact=username)
+            manager = Manager.objects.get(username=username)
             
             if check_password(password, manager.password):
                 request.session['manager_username'] = manager.username
@@ -630,9 +635,31 @@ def cashier_home(request):
     
 #     return render(request, 'manager_home.html')
 
+# REPLACE THIS:
 def manager_home(request):
     if not request.session.get('manager_username'):
-        return render('index.html')
+        return render('index.html')  # <-- CHANGE THIS LINE
+    
+    # Get manager details
+    manager_username = request.session.get('manager_username')
+    try:
+        manager = Manager.objects.get(username=manager_username)
+        context = {
+            'manager_name': manager.fullname,
+            'manager_username': manager.username
+        }
+    except Manager.DoesNotExist:
+        context = {
+            'manager_name': 'Manager',
+            'manager_username': 'Unknown'
+        }
+    
+    return render(request, 'manager_home.html', context)
+
+# WITH THIS:
+def manager_home(request):
+    if not request.session.get('manager_username'):
+        return redirect('/')
     
     # Get manager details
     manager_username = request.session.get('manager_username')
@@ -651,14 +678,10 @@ def manager_home(request):
     return render(request, 'manager_home.html', context)
 
 
-
-
-
-
-
 def logout_view(request):
     request.session.flush()
-    response = redirect('index')  # Make sure this is the correct URL name
+    from django.http import HttpResponseRedirect
+    response = HttpResponseRedirect('/')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
