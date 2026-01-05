@@ -13,6 +13,8 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from django.contrib import messages
+from django.views.decorators.cache import never_cache
+# import django.contrib.sessions
 
 
 # OTP storage for admin, manager, and cashier
@@ -86,9 +88,10 @@ RetailX Team"""
 
 
 def index(request):
-    # If user is already logged in as manager, redirect to manager home
+   
     if request.session.get('manager_username'):
-        return redirect('manager_home')
+        # return redirect('manager_home')
+        request.session.flush()
     
     # Otherwise show the landing page
     return render(request, 'index.html')
@@ -464,9 +467,6 @@ def manager_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = request.POST.get('password')
-        # dict= {
-        #     'manager_username':'',
-        # }
 
         try:
             manager = Manager.objects.get(username=username)
@@ -503,6 +503,7 @@ def cashier_login(request):
     return render(request, "cashier_login.html")
 
 @csrf_exempt
+@never_cache
 def admin_home(request):
     if not request.session.get('username'):
         return redirect('/admin_login')
@@ -622,40 +623,15 @@ def admin_home(request):
     
     return render(request, 'admin_home.html', context)
 
+@never_cache
 def cashier_home(request):
     if not request.session.get('cashier_username'):
         return redirect('/cashier_login')
     
     return render(request, 'cashier_home.html')
 
-# def manager_home(request):
-#     # Only allow access if manager is logged in
-#     if not request.session.get('manager_username'):
-#         return redirect('/manager_login')
-    
-#     return render(request, 'manager_home.html')
 
-# REPLACE THIS:
-def manager_home(request):
-    if not request.session.get('manager_username'):
-        return render('index.html')  # <-- CHANGE THIS LINE
-    
-    # Get manager details
-    manager_username = request.session.get('manager_username')
-    try:
-        manager = Manager.objects.get(username=manager_username)
-        context = {
-            'manager_name': manager.fullname,
-            'manager_username': manager.username
-        }
-    except Manager.DoesNotExist:
-        context = {
-            'manager_name': 'Manager',
-            'manager_username': 'Unknown'
-        }
-    
-    return render(request, 'manager_home.html', context)
-
+@never_cache
 # WITH THIS:
 def manager_home(request):
     if not request.session.get('manager_username'):
@@ -680,8 +656,8 @@ def manager_home(request):
 
 def logout_view(request):
     request.session.flush()
-    from django.http import HttpResponseRedirect
-    response = HttpResponseRedirect('/')
+    # from django.http import HttpResponseRedirect
+    response = redirect('/')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
