@@ -12,7 +12,7 @@ import json
 import random
 import smtplib
 from email.mime.text import MIMEText
-from django.contrib import message
+from django.contrib import messages
 
 from django.shortcuts import render
 
