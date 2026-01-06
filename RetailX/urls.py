@@ -17,13 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from RetailX import views
-from . import views_api
+from . import views
 
 
 urlpatterns = [
+<<<<<<< HEAD
     path('admin/', admin.site.urls),cd
     path('',views.index, name='home'),
     path('index/',views.index),
+=======
+    path('admin/', admin.site.urls),
+    path('', views.index, name='index'),
+    # path('index/',views.index),
+>>>>>>> 7b94596c3fe48583a55ddd3c620a57b2c23639d5
     path('test/', views.test),
     path('admin_registration/',views.admin_registration),
     path('manager_login/',views.manager_login,name='manager_login'),
@@ -34,7 +40,7 @@ urlpatterns = [
     path('admin_home/', views.admin_home, name='admin_home'),
     path('cashier_home/',views.cashier_home,name='cashier_home'),
     path('manager_home/',views.manager_home,name='manager_home'),
-    path('logout/',views.logout_view),
+    path('logout/', views.logout_view, name='logout'),
     path('api/manager/dashboard/kpi/', views_api.dashboard_kpi, name='dashboard_kpi'),
     path('api/manager/dashboard/revenue-chart/', views_api.dashboard_revenue_chart, name='revenue_chart'),
     path('api/manager/dashboard/category-chart/', views_api.dashboard_category_chart, name='category_chart'),
