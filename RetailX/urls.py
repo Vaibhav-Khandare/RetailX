@@ -21,15 +21,15 @@ from . import views
 
 
 urlpatterns = [
-<<<<<<< HEAD
+
     path('admin/', admin.site.urls),cd
     path('',views.index, name='home'),
     path('index/',views.index),
-=======
+
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     # path('index/',views.index),
->>>>>>> 7b94596c3fe48583a55ddd3c620a57b2c23639d5
+    
     path('test/', views.test),
     path('admin_registration/',views.admin_registration),
     path('manager_login/',views.manager_login,name='manager_login'),

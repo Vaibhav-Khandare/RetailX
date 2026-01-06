@@ -12,13 +12,13 @@ import json
 import random
 import smtplib
 from email.mime.text import MIMEText
-from django.contrib import messages
-<<<<<<< HEAD
+from django.contrib import message
+
 from django.shortcuts import render
-=======
+
 from django.views.decorators.cache import never_cache
 # import django.contrib.sessions
->>>>>>> 7b94596c3fe48583a55ddd3c620a57b2c23639d5
+
 
 
 # OTP storage for admin, manager, and cashier
