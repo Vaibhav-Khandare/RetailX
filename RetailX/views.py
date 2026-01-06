@@ -13,6 +13,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from django.contrib import messages
+from django.shortcuts import render
 
 
 # OTP storage for admin, manager, and cashier
@@ -663,3 +664,13 @@ def logout_view(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
+
+
+def index(request):
+    return render(request, 'index.html')
+
+def about(request):
+    return render(request, 'about.html')
+
+def contact(request):
+    return render(request, 'contact.html')

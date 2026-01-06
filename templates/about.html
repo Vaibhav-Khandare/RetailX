@@ -1,11 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>About</title>
-</head>
-<body>
-    <h1>About Us</h1>
-    <p>RetailX is a retail management system.</p>
-    <p>This page is created by .</p>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4 text-center">About RetailX</h1>
+
+    <p class="lead text-center">
+        RetailX is an advanced retail management and inventory billing system
+        designed for modern supermarkets and retail businesses.
+    </p>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <h4>🚀 Our Mission</h4>
+            <p>
+                To simplify retail operations using smart technology,
+                automation, and data-driven insights.
+            </p>
+        </div>
+
+        <div class="col-md-4">
+            <h4>📊 What We Offer</h4>
+            <p>
+                Inventory management, smart billing, sales analytics,
+                staff tracking, and AI-based trend prediction.
+            </p>
+        </div>
+
+        <div class="col-md-4">
+            <h4>💡 Why RetailX</h4>
+            <p>
+                RetailX helps businesses reduce losses, improve efficiency,
+                and make better decisions using real-time data.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -21,8 +21,8 @@ from . import views_api
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('',views.index),
+    path('admin/', admin.site.urls),cd
+    path('',views.index, name='home'),
     path('index/',views.index),
     path('test/', views.test),
     path('admin_registration/',views.admin_registration),
@@ -66,6 +66,9 @@ urlpatterns = [
     # Logout API
     path('api/manager/logout/', views_api.manager_logout, name='manager_logout'),
    
+   
+    path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
 
 ]
 
