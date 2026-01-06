@@ -22,14 +22,14 @@ from . import views
 
 urlpatterns = [
 
-    path('admin/', admin.site.urls),cd
+    path('admin/', admin.site.urls),
     path('',views.index, name='home'),
     path('index/',views.index),
 
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     # path('index/',views.index),
-    
+
     path('test/', views.test),
     path('admin_registration/',views.admin_registration),
     path('manager_login/',views.manager_login,name='manager_login'),
