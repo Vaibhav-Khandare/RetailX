@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from RetailX import views
-from . import views
+from . import views_api
 
 
 urlpatterns = [
@@ -75,6 +75,7 @@ urlpatterns = [
    
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
+    path('base/', views.base, name = 'base'),
 
 ]
 

@@ -1,34 +1,39 @@
+{% extends 'base.html' %}
 
-<div class="container mt-5">
-    <div class="text-center mb-4">
-        <h2 class="fw-bold">About RetailX</h2>
-        <p class="text-muted">Smart Retail Management System</p>
-    </div>
+{% block content %}
+<div class="container">
+    <h1>About RetailX</h1>
+    <p style="font-size:18px; max-width:800px;">
+        RetailX is an advanced inventory billing and analytics platform
+        designed specifically for supermarkets and modern retail stores.
+    </p>
 
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow p-4">
-                <p>
-                    <strong>RetailX</strong> is a modern retail management system
-                    developed using the Django framework.
-                </p>
+    <div style="margin-top:40px; display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px;">
+        <div style="background:white; padding:30px; border-radius:10px;">
+            <h3>🚀 Our Mission</h3>
+            <p>
+                To simplify inventory management using AI-powered insights,
+                automation, and future trend prediction.
+            </p>
+        </div>
 
-                <p>
-                    The system helps retail businesses manage inventory,
-                    billing, admin, manager and cashier operations efficiently.
-                </p>
+        <div style="background:white; padding:30px; border-radius:10px;">
+            <h3>📊 What We Offer</h3>
+            <ul>
+                <li>Smart Inventory Tracking</li>
+                <li>Automated Billing</li>
+                <li>Sales Forecasting</li>
+                <li>Analytics Dashboard</li>
+            </ul>
+        </div>
 
-                <p>
-                    Key features include secure authentication, OTP-based
-                    email verification, role-based access control and
-                    real-time product management.
-                </p>
-
-                <p class="mb-0">
-                    This project is developed as an academic project
-                    to demonstrate practical implementation of web technologies.
-                </p>
-            </div>
+        <div style="background:white; padding:30px; border-radius:10px;">
+            <h3>💡 Why RetailX?</h3>
+            <p>
+                Built for scalability, accuracy, and ease of use — RetailX
+                empowers retailers to grow confidently.
+            </p>
         </div>
     </div>
 </div>
+{% endblock %}
