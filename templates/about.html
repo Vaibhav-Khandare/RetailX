@@ -1,21 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>About Us</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-<h2>About RetailX</h2>
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">About RetailX</h2>
+        <p class="text-muted">Smart Retail Management System</p>
+    </div>
 
-<p>
-RetailX  Retail Management System project shops billing, stock management
-customer handling
-</p>
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow p-4">
+                <p>
+                    <strong>RetailX</strong> is a modern retail management system
+                    developed using the Django framework.
+                </p>
 
-<p>
-This project is developed as a final year
-polytechnic computer engineering project.
-</p>
+                <p>
+                    The system helps retail businesses manage inventory,
+                    billing, admin, manager and cashier operations efficiently.
+                </p>
 
-</body>
-</html>
+                <p>
+                    Key features include secure authentication, OTP-based
+                    email verification, role-based access control and
+                    real-time product management.
+                </p>
+
+                <p class="mb-0">
+                    This project is developed as an academic project
+                    to demonstrate practical implementation of web technologies.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

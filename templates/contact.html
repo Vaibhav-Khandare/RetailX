@@ -1,24 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Contact Us</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-<h2>Contact Us</h2>
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Contact Us</h2>
+        <p class="text-muted">We’d love to hear from you</p>
+    </div>
 
-<form>
-    <label>Name:</label><br>
-    <input type="text"><br><br>
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow p-4 h-100">
+                <h5 class="fw-bold mb-3">Get in Touch</h5>
+                <p><i class="fa fa-envelope me-2"></i> support@retailx.com</p>
+                <p><i class="fa fa-phone me-2"></i> +91 12345 67890</p>
+                <p><i class="fa fa-map-marker-alt me-2"></i> Pune, Maharashtra</p>
+            </div>
+        </div>
 
-    <label>Email:</label><br>
-    <input type="email"><br><br>
+        <div class="col-md-7">
+            <div class="card shadow p-4">
+                <h5 class="fw-bold mb-3">Send a Message</h5>
 
-    <label>Message:</label><br>
-    <textarea></textarea><br><br>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <input type="text" class="form-control"
+                               placeholder="Your Name" required>
+                    </div>
 
-    <button type="submit">Submit</button>
-</form>
+                    <div class="mb-3">
+                        <input type="email" class="form-control"
+                               placeholder="Your Email" required>
+                    </div>
 
-</body>
-</html>
+                    <div class="mb-3">
+                        <textarea class="form-control" rows="4"
+                                  placeholder="Your Message" required></textarea>
+                    </div>
+
+                    <button class="btn btn-primary w-100">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
