@@ -5,6 +5,7 @@
     box-sizing: border-box;
 }
 
+/* ORIGINAL */
 :root {
     --primary: #4361ee;
     --primary-dark: #3a56d4;
@@ -19,6 +20,40 @@
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
 }
+
+
+/* GREEN THEME */
+/* :root {
+    --primary: #16A34A;
+    --primary-dark: #15803D;
+    --secondary: #0EA5E9;
+    --accent: #F97316;
+    --light: #F0FDF4;
+    --dark: #052E16;
+    --gray: #475569;
+    --light-gray: #DCFCE7;
+    --success: #22C55E;
+    --border-radius: 10px;
+    --box-shadow: 0 6px 18px rgba(22, 163, 74, 0.12);
+    --transition: all 0.3s ease;
+} */
+
+/* YELLOW- DARK BLUE */
+/* :root {
+    --primary: #EAB308;
+    --primary-dark: #A16207;
+    --secondary: #1E3A8A;
+    --accent: #22D3EE;
+    --light: #FEFCE8;
+    --dark: #1E293B;
+    --gray: #475569;
+    --light-gray: #FEF08A;
+    --success: #16A34A;
+    --border-radius: 10px;
+    --box-shadow: 0 8px 20px rgba(234, 179, 8, 0.25);
+    --transition: all 0.3s ease;
+} */
+
 
 body {
     font-family: 'Poppins', sans-serif;
@@ -167,8 +202,9 @@ p {
 
 /* Hero Section */
 .hero {
-    padding: 150px 0 100px;
-    background: linear-gradient(135deg, #f5f7ff 0%, #e6ebff 100%);
+    padding: 150px 0 100px 0;
+    text-align: left;
+    /* background: linear-gradient(135deg, #f5f7ff 0%, #e6ebff 100%); */
 }
 
 .hero-content {
@@ -176,10 +212,14 @@ p {
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
     align-items: center;
+    width: 100%;
 }
+
+
 
 .hero-text h1 {
     margin-bottom: 1.5rem;
+    color: black;
 }
 
 .hero-text h1 span {
@@ -314,6 +354,7 @@ p {
 
 .section-header h2 {
     margin-bottom: 1rem;
+    color: black;
 }
 
 .section-header p {
@@ -465,10 +506,39 @@ section {
 
 .step-content h3 {
     margin-bottom: 0.5rem;
+    color: black;
+    
 }
 
 .step-content p {
     color: var(--gray);
+}
+
+.parallax {
+  height: 80vh;
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.parallax .connect-us {
+    color: #212529;
+}
+
+/* BACKGROUND IMAGES */
+.parallax-1 {
+  background-image: url("/static/IMAGES/img2.jpg");
+  
+}
+
+.parallax-2 {
+  background-image: url("/static/IMAGES/RetailX-side-logo.png");
 }
 
 /* Testimonials */
