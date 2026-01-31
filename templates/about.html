@@ -1,39 +1,248 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About RetailX</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* ======= ABOUT PAGE STYLES ======= */
+        body {
+            scroll-behavior: smooth;
+        }
 
-{% block content %}
-<div class="container">
-    <h1>About RetailX</h1>
-    <p style="font-size:18px; max-width:800px;">
-        RetailX is an advanced inventory billing and analytics platform
-        designed specifically for supermarkets and modern retail stores.
-    </p>
+        .section {
+            padding: 60px 20px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
 
-    <div style="margin-top:40px; display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px;">
-        <div style="background:white; padding:30px; border-radius:10px;">
-            <h3>🚀 Our Mission</h3>
-            <p>
-                To simplify inventory management using AI-powered insights,
-                automation, and future trend prediction.
-            </p>
+        .section h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .section p {
+            color: var(--gray);
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            line-height: 1.6;
+        }
+
+        /* Lists */
+        .about-list {
+            max-width: 600px;
+            margin: 20px auto 0 auto;
+            list-style: none;
+            padding: 0;
+        }
+
+        .about-list li {
+            font-size: 1rem;
+            color: var(--gray);
+            padding: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .about-list li::before {
+            content: "✔";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Card Grids */
+        .card-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .card p {
+            color: var(--gray);
+        }
+
+        /* Team Grid */
+        .team-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            margin-top: 30px;
+        }
+
+        .team-card {
+            background-color: var(--light);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            transition: transform 0.2s;
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(244, 241, 241, 0.99);
+        }
+
+        .team-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .team-card h3 {
+            margin: 0 0 5px 0;
+            color: var(--primary);
+        }
+
+        .team-card span {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Footer tweaks */
+        .footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 40px 0 20px;
+            border-top: none;
+        }
+
+        .footer, 
+        .footer * {
+            border-top: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======= NAVBAR ======= -->
+<nav class="navbar">
+    <div class="container nav-content">
+        <div class="logo"><h2>Retail<span>X</span></h2></div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="{% url 'about' %}">About</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ======= ABOUT PAGE CONTENT ======= -->
+
+<!-- Problem Statement -->
+<div class="section" id="problem">
+    <h2>Problem Statement</h2>
+    <p>Traditional inventory systems depend on manual record keeping, leading to stock mismatch, billing errors, and inefficient management.</p>
+    <p>Retail businesses face challenges such as inaccurate stock tracking, delayed billing, and lack of real-time inventory insights. RetailX solves these with centralized, automated, user-friendly management.</p>
+</div>
+
+<!-- Project Objectives -->
+<div class="section" id="objectives">
+    <h2>Project Objectives</h2>
+    <ul class="about-list">
+        <li>Automate inventory and billing processes</li>
+        <li>Reduce human errors in stock management</li>
+        <li>Provide real-time inventory updates</li>
+        <li>Improve efficiency of retail operations</li>
+        <li>Support decision-making using analytics</li>
+    </ul>
+</div>
+
+<!-- Features -->
+<div class="section" id="features">
+    <h2>Key Features</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h3>📦 Product Management</h3>
+            <p>Add, update, and manage product details easily.</p>
         </div>
-
-        <div style="background:white; padding:30px; border-radius:10px;">
-            <h3>📊 What We Offer</h3>
-            <ul>
-                <li>Smart Inventory Tracking</li>
-                <li>Automated Billing</li>
-                <li>Sales Forecasting</li>
-                <li>Analytics Dashboard</li>
-            </ul>
+        <div class="card">
+            <h3>📊 Stock Tracking</h3>
+            <p>Monitor inventory levels in real time.</p>
         </div>
-
-        <div style="background:white; padding:30px; border-radius:10px;">
-            <h3>💡 Why RetailX?</h3>
-            <p>
-                Built for scalability, accuracy, and ease of use — RetailX
-                empowers retailers to grow confidently.
-            </p>
+        <div class="card">
+            <h3>🧾 Billing System</h3>
+            <p>Fast and accurate billing with automated calculations.</p>
+        </div>
+        <div class="card">
+            <h3>🤖 AI Insights</h3>
+            <p>Predict trends and manage stock intelligently.</p>
         </div>
     </div>
 </div>
-{% endblock %}
+
+<!-- Our Team -->
+<div class="section" id="team">
+    <h2>Our Team</h2>
+    <div class="team-grid">
+        <div class="team-card">
+            <img src="/static/IMAGES/member1.jpg" alt="Lina Dhande">
+            <h3>Lina Dhande</h3>
+            <span>Backend & AI Developer</span>
+        </div>
+        <div class="team-card">
+            <img src="/static/IMAGES/member2.jpg" alt="Member">
+            <h3>Team Member 2</h3>
+            <span>Frontend Developer</span>
+        </div>
+        <div class="team-card">
+            <img src="/static/IMAGES/member3.jpg" alt="Member">
+            <h3>Team Member 3</h3>
+            <span>Database Manager</span>
+        </div>
+        <div class="team-card">
+            <img src="/static/IMAGES/member4.jpg" alt="Member">
+            <h3>Team Member 4</h3>
+            <span>Testing & Documentation</span>
+        </div>
+        <div class="team-card">
+            <img src="/static/IMAGES/member5.jpg" alt="Member">
+            <h3>Team Member 5</h3>
+            <span>System Analyst</span>
+        </div>
+    </div>
+</div>
+
+<!-- Technologies -->
+<div class="section" id="tech">
+    <h2>Technologies Used</h2>
+    <ul class="about-list">
+        <li>Frontend: HTML, CSS, JavaScript</li>
+        <li>Backend: Python (Django)</li>
+        <li>Database: MySQL / SQLite</li>
+        <li>Tools: VS Code, Git</li>
+    </ul>
+</div>
+
+
+
+
+</body>
+</html>

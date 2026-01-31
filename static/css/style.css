@@ -743,3 +743,101 @@ section {
         grid-template-columns: 1fr;
     }
 }
+/* ========== ABOUT PAGE EXTRA STYLES ========== */
+
+.about-hero {
+    padding-top: 160px;
+}
+
+.about-text {
+    max-width: 900px;
+    margin: auto;
+    font-size: 1.05rem;
+    color: var(--gray);
+    text-align: center;
+}
+
+.about-light {
+    background-color: var(--light);
+}
+
+.about-list {
+    max-width: 600px;
+    margin: auto;
+    list-style: none;
+    padding: 0;
+}
+
+.about-list li {
+    font-size: 1rem;
+    color: var(--gray);
+    padding: 10px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.about-list li::before {
+    content: "✔";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+}
+
+.help-section {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.help-section h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    max-width: 700px;
+    margin: auto;
+    color: #555;
+    font-size: 15px;
+}
+
+.help-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 40px auto;
+}
+
+.help-box {
+    background-color: white;
+    padding: 30px 20px;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.help-box i {
+    font-size: 35px;
+    color: #5a4fcf;
+    margin-bottom: 15px;
+}
+
+.help-box h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.help-box p {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+}

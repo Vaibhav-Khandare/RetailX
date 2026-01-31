@@ -1,11 +1,14 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RetailX - Advanced Inventory Billing System</title>
-    <link rel="shortcut icon" href="/static/images/RetailX logo with fruits in trolly.png" type="logo">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="shortcut icon" href="{% static 'images/RetailX logo with fruits in trolly.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -282,7 +285,7 @@
                 <div class="footer-section">
                     <h3>Company</h3>
                     <ul>
-                        <li><a href="#">About Us</a></li>
+                        <li><a href="{% url 'about' %}">About Us</a></li>
                         <li><a href="#">Careers</a></li>
                         <li><a href="#">Contact</a></li>
                         <li><a href="#">Blog</a></li>

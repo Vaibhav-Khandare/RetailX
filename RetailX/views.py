@@ -14,7 +14,7 @@ import smtplib
 from email.mime.text import MIMEText
 from django.contrib import messages
 
-from django.shortcuts import render
+
 
 from django.views.decorators.cache import never_cache
 # import django.contrib.sessions
@@ -670,8 +670,5 @@ def logout_view(request):
 def about(request):
     return render(request, 'about.html')
 
-def contact(request):
-    return render(request, 'contact.html')
 
-def base(request):
-    return render(request, base.html)
+
