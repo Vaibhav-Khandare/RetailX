@@ -4,83 +4,31 @@
     <meta charset="UTF-8">
     <title>RetailX</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: #f5f7fb;
-            color: #333;
-        }
-
-        /* Navbar */
-        nav {
-            background: #0d1b2a;
-            padding: 15px 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            margin-left: 20px;
-            font-weight: 500;
-        }
-
-        nav a:hover {
-            color: #4da3ff;
-        }
-
-        /* Content */
-        .container {
-            max-width: 1100px;
-            margin: 60px auto;
-            padding: 0 20px;
-        }
-
-        /* Footer */
-        footer {
-            background: #0d1b2a;
-            color: #ccc;
-            padding: 40px 60px;
-            margin-top: 80px;
-        }
-
-        footer h4 {
-            color: #fff;
-        }
-
-        footer p {
-            font-size: 14px;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 13px;
-        }
-    </style>
+    
+    <!-- CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
+<!-- ===== NAVBAR ===== -->
 <nav>
     <h2 style="color:white;">RetailX</h2>
-    <div>
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'about' %}">About</a>
-        <a href="{% url 'contact' %}">Contact</a>
-    </div>
+    
 </nav>
 
-{% block content %}
-{% endblock %}
+<!-- ===== PAGE CONTENT ===== -->
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
 
+<!-- ===== FOOTER ===== -->
 <footer>
     <h4>RetailX</h4>
     <p>Advanced Inventory Billing System with Future Trend Detection.</p>
-
     <div class="footer-bottom">
         © 2025–26 RetailX. All rights reserved.
     </div>

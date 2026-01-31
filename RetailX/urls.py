@@ -81,6 +81,9 @@ urlpatterns = [
 
     # Logout API
     path('api/manager/logout/', views_api.manager_logout),
+     
+    #help page
+    path('help/', views.help, name='help'),
 
 ]
 
