@@ -4,132 +4,226 @@
 {% block content %}
 <section class="help-section">
 
-    <style>
-        /* ===== HELP PAGE STYLES ===== */
-        .help-section {
-            text-align: center;
-            padding: 60px 20px;
-        }
+<style>
+    /* ===== HELP PAGE STYLES ===== */
 
-        .help-section h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
+    :root {
+        --primary: #4f46e5;
+    }
 
-        .subtitle {
-            max-width: 700px;
-            margin: auto;
-            color: #555;
-            font-size: 15px;
-        }
+    /* ======= HERO HEADER ======= */
+    .hero-header {
+        background: #ffffff;
+        padding: 20px 0;   /* 🔧 reduced padding */
+        border-bottom: 1px solid #e5e7eb;
+        animation: fadeDown 0.8s ease;
+    }
 
-        .help-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            max-width: 900px;
-            margin: 40px auto;
-        }
+    .hero-container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* ✅ KEY FIX */
+}
 
-        .help-box {
-            background-color: white;
-            padding: 40px 30px;
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+    .hero-left {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .hero-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .hero-title span {
+        color: var(--primary);
+    }
+
+    .hero-subtitle {
+        font-size: 14px;
+        color: #6b7280;
+    }
+    .hero-right a {
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: 0.3s ease;
+}
+
+.hero-right a:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+
+    @keyframes fadeDown {
+        from {
             opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s forwards;
+            transform: translateY(-10px);
         }
-
-        .help-box:nth-child(1) { animation-delay: 0.2s; }
-        .help-box:nth-child(2) { animation-delay: 0.4s; }
-        .help-box:nth-child(3) { animation-delay: 0.6s; }
-        .help-box:nth-child(4) { animation-delay: 0.8s; }
-
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .help-box i {
-            font-size: 40px;
-            color: #5a4fcf;
-            margin-bottom: 20px;
+    /* ======= HELP SECTION ======= */
+    .help-section {
+        padding: 30px 20px 60px; /* 🔧 reduced top padding */
+        text-align: center;
+    }
+
+    .help-heading {
+        margin-top: 20px;   /* 🔧 controlled spacing */
+    }
+
+    .help-heading h1 {
+        font-size: 36px;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        max-width: 700px;
+        margin: 0 auto;
+        color: #555;
+        font-size: 15px;
+    }
+
+    .help-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        max-width: 900px;
+        margin: 40px auto 0;
+    }
+
+    .help-box {
+        background-color: white;
+        padding: 40px 30px;
+        border-radius: 6px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s forwards;
+    }
+
+    .help-box:nth-child(1) { animation-delay: 0.2s; }
+    .help-box:nth-child(2) { animation-delay: 0.4s; }
+    .help-box:nth-child(3) { animation-delay: 0.6s; }
+    .help-box:nth-child(4) { animation-delay: 0.8s; }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .help-box h3 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
+    .help-box i {
+        font-size: 40px;
+        color: #5a4fcf;
+        margin-bottom: 20px;
+    }
+
+    .help-box h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+        letter-spacing: 1px;
+    }
+
+    .help-box p {
+        color: #555;
+        font-size: 15px;
+        line-height: 1.8;
+    }
+
+    @media (max-width: 850px) {
+        .help-container {
+            grid-template-columns: 1fr;
         }
+    }
+</style>
 
-        .help-box p {
-            color: #555;
-            font-size: 15px;
-            line-height: 1.8;
-        }
+<!-- ===== HEADER ===== -->
+<header class="hero-header">
+    <div class="hero-container">
 
-        @media (max-width: 850px) {
-            .help-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+        <!-- LEFT -->
+        <div class="hero-left">
+            <div class="hero-title">Retail<span>X</span></div>
+            <div class="hero-subtitle">Smart Inventory Management System</div>
+        </div>
 
-    <nav class="navbar">
-    <div class="container nav-content">
-        <div class="logo"><h2>Retail<span>X</span></h2></div>
-        <ul class="nav-links">
-            <li><a href="/">Home</a></li>
-        </ul>
+        <!-- RIGHT -->
+        <div class="hero-right">
+            <a href="/">Home</a>
+
+        </div>
+
     </div>
-</nav>
+</header>
 
-    <!-- ===== HELP PAGE CONTENT ===== -->
+
+<!-- ===== HELP CONTENT ===== -->
+<div class="help-heading">
     <h1>How can we help you?</h1>
     <p class="subtitle">
         If you have any questions related to billing, inventory, reports, or account issues,
         feel free to contact us using the details below.
     </p>
+</div>
 
-    <div class="help-container">
+<div class="help-container">
 
-        <div class="help-box">
-            <i class="fa-solid fa-location-dot"></i>
-            <h3>OUR MAIN OFFICE</h3>
-            <p>
-                Government Polytechnic Road,<br>
-                Khamgaon, Maharashtra
-            </p>
-        </div>
-
-        <div class="help-box">
-            <i class="fa-solid fa-phone"></i>
-            <h3>PHONE NUMBER</h3>
-            <p>
-                +91 98765 43210<br>
-                +91 91234 56789
-            </p>
-        </div>
-
-        <div class="help-box">
-            <i class="fa-solid fa-fax"></i>
-            <h3>FAX</h3>
-            <p>
-                07163-123456
-            </p>
-        </div>
-
-        <div class="help-box">
-            <i class="fa-solid fa-envelope"></i>
-            <h3>EMAIL</h3>
-            <p>
-                support@inventorybilling.com
-            </p>
-        </div>
-
+    <div class="help-box">
+        <i class="fa-solid fa-location-dot"></i>
+        <h3>OUR MAIN OFFICE</h3>
+        <p>
+            Government Polytechnic,<br>
+            Jalamb Road, Khamgaon,<br>
+            District Buldhana,<br>
+            Maharashtra, India,<br>
+            PIN - 444303
+        </p>
     </div>
+
+    <div class="help-box">
+        <i class="fa-solid fa-phone"></i>
+        <h3>PHONE NUMBER</h3>
+        <p>
+            +91 93250 08419<br>
+            +91 96041 84377<br>
+            +91 76664 27976<br>
+            +91 82630 18924<br>
+            +91 78218 33342
+        </p>
+    </div>
+
+    <div class="help-box">
+        <i class="fa-solid fa-fax"></i>
+        <h3>FAQ</h3>
+        <p>
+            ➕ Add New Product<br>
+            📉 Check Low Stock Items<br>
+            📊 View Sales Report<br>
+            🎯 High-Demand Products (AI)
+        </p>
+    </div>
+
+    <div class="help-box">
+        <i class="fa-solid fa-envelope"></i>
+        <h3>EMAIL</h3>
+        <p>support@inventorybilling.com</p>
+    </div>
+
+</div>
 </section>
 {% endblock %}

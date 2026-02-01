@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+            --primary: #2563eb;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7ff;
+            color: #333;
+        }
+
+        /* ======= HERO HEADER ======= */
+        .hero-header {
+            background: #ffffff;
+            padding: 40px 0;
+            border-bottom: 1px solid #e5e7eb;
+            animation: fadeDown 0.8s ease;
+        }
+
+        .hero-container {
+            width: 90%;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 🔥 MAIN FIX */
+        }
+
+        .hero-left {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* Blue X */
+        .hero-title span {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* RIGHT SIDE */
+        .hero-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .home-link {
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: 0.3s ease;
+        }
+
+        .home-link:hover {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+/* ======= TERMS PAGE STYLES ======= */
+.terms-section {
+    background: #f5f7fb;
+    padding: 40px 0;
+}
+
+.terms-box {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    animation: fadeUp 0.8s ease;
+}
+
+.terms-box h2 {
+    font-size: 20px;
+    color: #1f2937;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.terms-box p {
+    font-size: 14px;
+    color: var(--gray);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.terms-box a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.terms-box a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Animation ===== */
+@keyframes fadeUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+<!-- ======= HERO HEADER ======= -->
+<header class="hero-header">
+    <div class="hero-container">
+
+        <!-- LEFT -->
+        <div class="hero-left">
+            <div>
+                <div class="hero-title">Retail<span>X</span></div>
+                <div class="hero-subtitle">Smart Inventory Management System</div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="hero-right">
+            <a href="/" class="home-link">Home</a>
+        </div>
+
+    </div>
+</header>
+
+<!-- ======= TERMS CONTENT ======= -->
+<section class="terms-section">
+    <div class="hero-container">
+        <div class="terms-box">
+            <h1 class="hero-title">Terms of <span>Service</span></h1>
+            <p class="hero-subtitle">Please read these terms carefully before using our website.</p>
+            <h2>1. Acceptance of Terms</h2>
+            <p>By accessing or using our website, you agree to be bound by these Terms of Service and our Privacy Policy.</p>
+
+            <h2>2. Use of Website</h2>
+            <p>You agree to use the website for lawful purposes only and not to engage in any activity that could harm the website or its users.</p>
+
+            <h2>3. User Accounts</h2>
+            <p>Some services may require you to create an account. You are responsible for maintaining the confidentiality of your account information.</p>
+
+            <h2>4. Intellectual Property</h2>
+            <p>All content on this website, including text, images, logos, and software, is the property of RetailX or its licensors.</p>
+
+            <h2>5. Limitation of Liability</h2>
+            <p>We are not liable for any damages arising from your use of the website. Use the website at your own risk.</p>
+
+            <h2>6. Changes to Terms</h2>
+            <p>We may update these Terms from time to time. Continued use of the website constitutes acceptance of any changes.</p>
+
+            <h2>7. Contact Us</h2>
+            <p>If you have questions about these Terms, please <a href="/help/">contact us</a>.</p>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}

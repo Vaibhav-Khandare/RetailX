@@ -5,13 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>RetailX - Advanced Inventory Billing System</title>
-    <link rel="shortcut icon" href="{% static 'images/RetailX logo with fruits in trolly.png' %}">
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-=======
     <title>RetailX | AI-Powered Retail Intelligence</title>
     <link rel="shortcut icon" href="/static/images/RetailX logo with fruits in trolly.png" type="image/png">
     
@@ -19,7 +13,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     
->>>>>>> e1cf264eb189a599806b54bd40880554d733b30c
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -274,56 +267,12 @@
         </div>
     </section>
 
-<<<<<<< HEAD
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <div class="logo">
-                        <h2>Retail<span>X</span></h2>
-                    </div>
-                    <p>Advanced Inventory Billing System with Future Trend Detection for modern retailers.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>Product</h3>
-                    <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#how-it-works">How It Works</a></li>
-                        <li><a href="#login-options">Get Started</a></li>
-                        <li><a href="#testimonials">Testimonials</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Company</h3>
-                    <ul>
-                        <li><a href="{% url 'about' %}">About Us</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Contact</a></li>
-                        <li><a href="#">Blog</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Support</h3>
-                    <ul>
-                        <li><a href="{% url 'help' %}">Help</a></li>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">API Reference</a></li>
-                        <li><a href="#">Status</a></li>
-                    </ul>
-=======
+
     <footer>
         <div class="container footer-container">
             <div class="footer-col brand-col">
                 <div class="logo" >
                     <h2 id="f_logo" style="color: aliceblue;" class="main-l">Retail<span>X</span></h2>
->>>>>>> e1cf264eb189a599806b54bd40880554d733b30c
                 </div>
                 <p>Empowering retailers with next-gen technology.</p>
             </div>
@@ -337,15 +286,14 @@
 
             <div class="footer-col">
                 <h4>Company</h4>
-                <a href="#">About Us</a>
-                <a href="#">Careers</a>
-                <a href="#">Contact Us</a>
+                <li><a href="{% url 'about' %}">About Us</a></li>
+                <li><a href="{% url 'help' %}">Help</a></li>
             </div>
 
             <div class="footer-col">
                 <h4>Legal</h4>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
+                <a href="{% url 'terms' %}">Terms of Service</a>
             </div>
         </div>
         <div class="footer-bottom">

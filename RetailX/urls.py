@@ -84,6 +84,10 @@ urlpatterns = [
      
     #help page
     path('help/', views.help, name='help'),
+    
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    
+    path('terms/', views.terms, name='terms'),
 
 ]
 
