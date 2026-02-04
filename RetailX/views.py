@@ -632,7 +632,21 @@ def cashier_home(request):
     if not request.session.get('cashier_username'):
         return redirect('/cashier_login')
     
-    return render(request, 'cashier_home.html')
+    # Get manager details
+    cashier_username = request.session.get('cashier_username')
+    try:
+        cashier = Cashier.objects.get(username=cashier_username)
+        context = {
+            'cashier_name': cashier.fullname,
+            'cashier_username': cashier.username
+        }
+    except Cashier.DoesNotExist:
+        context = {
+            'cashier_name': 'Cashier',
+            'cashier_username': 'Unknown'
+        }
+        
+    return render(request, 'cashier_home.html', context)
 
 
 @never_cache
