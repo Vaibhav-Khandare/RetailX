@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RetailX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav>
+    <h2 style="color:white;">RetailX</h2>
+    
+</nav>
+
+<!-- ===== PAGE CONTENT ===== -->
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+    <h4>RetailX</h4>
+    <p>Advanced Inventory Billing System with Future Trend Detection.</p>
+    <div class="footer-bottom">
+        © 2025–26 RetailX. All rights reserved.
+    </div>
+</footer>
+
+</body>
+</html>

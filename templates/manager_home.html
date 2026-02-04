@@ -8,8 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 </head>
-<body data-manager="{{ manager_name }}">
+<body data-manager="{{ manager_name }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 <!-- python code for session -->
     
     <!-- SIDEBAR -->
@@ -56,11 +58,12 @@
                 <i class="fas fa-cog"></i>
                 <span>Store Settings</span>
             </a>
-            <div class="menu-divider"></div>
-            <a href="/logout" class="menu-item logout" id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
+           <div class="menu-divider"></div>
+            <a href="{% url 'logout' %}" class="menu-item logout" id="logoutBtn" onclick="window.location.href='/logout'; return false;">
+             <i class="fas fa-sign-out-alt"></i>
+             <span>Logout</span>
             </a>
+
         </nav>
 
         <div class="sidebar-footer">
@@ -708,6 +711,13 @@
     <!-- TOAST NOTIFICATION -->
     <div class="toast" id="toast"></div>
 
-    <script src="/static/js/manager_home.js"></script>
+    <script src="/static/js/manager_home.js">
+        window.history.forward();
+        function noBack() {
+            window.history.forward();
+        }
+    </script>
+
+
 </body>
 </html>
