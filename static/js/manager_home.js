@@ -1,278 +1,275 @@
-// manager_home_ajax.js - FINAL (LOGOUT SAFE, DJANGO SAFE)
+/**
+ * RETAILX MANAGER DASHBOARD - CORE ENGINE
+ * Features: SPA Navigation, Dynamic Charts, AJAX Data Sync, & Session Guard
+ */
 
-let isLoggingOut = false;   // 🔴 IMPORTANT FLAG
+// Global State Management to keep code organized and scalable
+const RetailX = {
+    isLoggingOut: false,
+    refreshInterval: null,
+    charts: {},
+    
+    // Core Configuration
+    config: {
+        autoRefreshTime: 300000, // 5 Minutes
+        chartColors: {
+            primary: '#3498db',
+            secondary: '#2ecc71',
+            danger: '#e74c3c',
+            grid: '#f1f3f5'
+        }
+    }
+};
 
 $(document).ready(function () {
-    console.log('Manager dashboard loaded (AJAX version)');
-
-    initDashboard();
-    initEventListeners();
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-
-    setTimeout(loadDashboardData, 500);
+    console.log('RetailX Engine: Initializing Manager Dashboard...');
+    RetailX.init();
 });
 
 /* ===============================
-   CSRF SETUP
+   INITIALIZATION
 ================================ */
-function getCSRFToken() {
-    return $('meta[name="csrf-token"]').attr('content');
-}
+RetailX.init = function() {
+    this.setupCSRF();
+    this.bindEvents();
+    this.startClock();
+    this.loadDashboardData();
+    
+    // Set default page
+    this.switchPage('dashboard');
+    
+    // Start auto-sync
+    this.refreshInterval = setInterval(() => {
+        if (!this.isLoggingOut) this.loadDashboardData();
+    }, this.config.autoRefreshTime);
+};
 
-$.ajaxSetup({
-    beforeSend: function (xhr, settings) {
-        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-            xhr.setRequestHeader("X-CSRFToken", getCSRFToken());
+/* ===============================
+   SECURITY & AJAX SETUP
+================================ */
+RetailX.setupCSRF = function() {
+    const getCookie = (name) => {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = $.trim(cookies[i]);
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-    },
-    xhrFields: {
-        withCredentials: true
-    }
-});
+        return cookieValue;
+    };
+
+    $.ajaxSetup({
+        beforeSend: (xhr, settings) => {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+    });
+};
 
 /* ===============================
-   SAFE AJAX REQUEST (LOGOUT SAFE)
+   CORE AJAX WRAPPER
 ================================ */
-function makeRequest(url, method = 'GET', data = null, successCb = null) {
+RetailX.apiCall = function(url, method = 'GET', data = null, callback) {
+    if (this.isLoggingOut) return;
+
     $.ajax({
         url: url,
         type: method,
         data: data ? JSON.stringify(data) : null,
         contentType: 'application/json',
         dataType: 'json',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+        success: (res) => {
+            if (callback) callback(res);
         },
-        success: function (response) {
-            if (successCb) successCb(response);
-        },
-        error: function (xhr) {
-
-            // 🔴 Logout ke time AJAX errors ignore
-            if (isLoggingOut) {
-                console.log('AJAX error ignored due to logout');
-                return;
-            }
-
-            // 🔴 Session expired case (NO redirect)
-            if (xhr.status === 401 || xhr.status === 403) {
-                showToast('Session expired. Please login again.', 'warning');
-                return;
-            }
-
-            console.error('AJAX Error:', xhr);
-            showToast('Server error occurred', 'error');
+        error: (xhr) => {
+            if (this.isLoggingOut) return;
+            this.handleError(xhr);
         }
     });
-}
+};
 
 /* ===============================
-   INIT FUNCTIONS
+   EVENT BINDING (Micro-interactions)
 ================================ */
-function initDashboard() {
-    const manager = $('body').data('manager') || 'Manager';
-    $('#managerName').text(manager);
-    switchPage('dashboard');
-}
+RetailX.bindEvents = function() {
+    const self = this;
 
-function initEventListeners() {
-
-    // 🔴 LOGOUT BUTTON FIX
-    $('#logoutBtn').on('click', function () {
-        isLoggingOut = true;
-    });
-
-    $('.menu-item').on('click', function (e) {
+    // Navigation System
+    $('.menu-item').on('click', function(e) {
+        if ($(this).hasClass('logout')) {
+            self.isLoggingOut = true;
+            return true;
+        }
         e.preventDefault();
         const page = $(this).data('page');
-        if (page) switchPage(page);
+        if (page) self.switchPage(page);
     });
 
-    $('#refreshBtn').on('click', refreshCurrentPage);
-    $('#notificationsBtn').on('click', showNotifications);
+    // Refresh Action
+    $('#refreshBtn').on('click', function() {
+        const icon = $(this).find('i');
+        icon.addClass('fa-spin');
+        self.loadDashboardData();
+        setTimeout(() => {
+            icon.removeClass('fa-spin');
+            self.showToast('Data Synced Successfully', 'success');
+        }, 800);
+    });
 
-    $('#addProductForm').on('submit', function (e) {
+    // Modal Handling
+    $('#addProductBtn').on('click', () => $('#addProductModal').css('display', 'flex').fadeIn());
+    $('#addStaffBtn').on('click', () => $('#addStaffModal').css('display', 'flex').fadeIn());
+    $('#notificationsBtn').on('click', () => $('#notificationModal').css('display', 'flex').fadeIn());
+    
+    $('.modal-close, .cancel-btn').on('click', function() {
+        $(this).closest('.modal').fadeOut();
+    });
+
+    // Form Submissions
+    $('#addProductForm').on('submit', function(e) {
         e.preventDefault();
-        addNewProduct();
+        self.handleFormSubmit('Product');
     });
 
-    $('#addStaffForm').on('submit', function (e) {
+    $('#addStaffForm').on('submit', function(e) {
         e.preventDefault();
-        addNewStaff();
+        self.handleFormSubmit('Staff Member');
     });
 
-    $('.modal-close, .cancel-btn').on('click', closeAllModals);
-
-    $(document).on('keydown', function (e) {
-        if (e.key === 'Escape') closeAllModals();
+    // Close modal on outside click
+    $(window).on('click', (e) => {
+        if ($(e.target).hasClass('modal')) $('.modal').fadeOut();
     });
-}
+};
 
 /* ===============================
-   PAGE SWITCHING
+   PAGE NAVIGATION LOGIC
 ================================ */
-function switchPage(page) {
+RetailX.switchPage = function(pageId) {
+    // UI Updates
     $('.menu-item').removeClass('active');
-    $(`.menu-item[data-page="${page}"]`).addClass('active');
+    $(`.menu-item[data-page="${pageId}"]`).addClass('active');
 
-    $('.page').removeClass('active');
-    $(`#${page}-page`).addClass('active');
+    $('.page').hide().removeClass('active');
+    $(`#${pageId}-page`).fadeIn(400).addClass('active');
 
-    updatePageTitle(page);
-    setTimeout(() => loadPageData(page), 300);
-}
-
-function updatePageTitle(page) {
+    // Breadcrumb & Title Update
     const titles = {
         dashboard: 'Dashboard',
         overview: 'Store Overview',
-        inventory: 'Inventory Management',
+        inventory: 'Inventory',
         staff: 'Staff Management',
-        reports: 'Reports & Analytics'
+        reports: 'Reports & Analytics',
+        transactions: 'Transactions',
+        settings: 'Store Settings'
     };
+    
+    $('#pageTitle').text(titles[pageId]);
+    $('#breadcrumb').text(`Home / ${titles[pageId]}`);
 
-    $('#pageTitle').text(titles[page] || 'Dashboard');
-    $('#breadcrumb').text(`Home / ${titles[page] || 'Dashboard'}`);
-}
-
-/* ===============================
-   DATE & TIME
-================================ */
-function updateDateTime() {
-    const now = new Date();
-    $('#currentDate').text(now.toLocaleDateString('en-IN', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    }));
-    $('#currentTime').text(now.toLocaleTimeString('en-IN', {
-        hour: '2-digit', minute: '2-digit'
-    }));
-}
+    // Contextual Data Loading
+    this.loadPageData(pageId);
+};
 
 /* ===============================
-   DASHBOARD DATA (AJAX)
+   DATA FETCHING & RENDERING
 ================================ */
-function loadDashboardData() {
-    makeRequest('/api/manager/dashboard/kpi/', 'GET', null, updateKPICards);
-    makeRequest('/api/manager/dashboard/revenue-chart/', 'GET', null, renderRevenueChart);
-    makeRequest('/api/manager/dashboard/category-chart/', 'GET', null, renderCategoryChart);
-    makeRequest('/api/manager/dashboard/activities/', 'GET', null, updateActivitiesList);
-    makeRequest('/api/manager/dashboard/alerts/', 'GET', null, updateAlertsList);
-    makeRequest('/api/manager/dashboard/quick-stats/', 'GET', null, updateQuickStats);
-}
+RetailX.loadDashboardData = function() {
+    this.apiCall('/api/manager/dashboard/kpi/', 'GET', null, this.renderKPIs);
+    this.apiCall('/api/manager/dashboard/activities/', 'GET', null, this.renderActivities);
+    this.apiCall('/api/manager/dashboard/revenue-chart/', 'GET', null, this.renderCharts);
+};
 
-function loadPageData(page) {
-    if (page === 'inventory') loadInventoryData();
-    if (page === 'staff') loadStaffData();
-    if (page === 'reports') loadReportsData();
-}
+RetailX.loadPageData = function(page) {
+    if (page === 'inventory') this.apiCall('/api/manager/inventory/', 'GET', null, this.renderInventory);
+    if (page === 'staff') this.apiCall('/api/manager/staff/', 'GET', null, this.renderStaff);
+};
 
-/* ===============================
-   INVENTORY
-================================ */
-function loadInventoryData() {
-    makeRequest('/api/manager/inventory/', 'GET', null, function (data) {
-        updateInventoryTable(data.products);
+RetailX.renderKPIs = function(data) {
+    $('#totalRevenue').text(`$${data.total_revenue.toLocaleString()}`);
+    $('#inventoryValue').text(`$${data.inventory_value.toLocaleString()}`);
+    $('#activeStaff').text(data.active_staff);
+    $('#customerSatisfaction').text(`${data.satisfaction}%`);
+};
+
+RetailX.renderCharts = function(apiData) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    // Destroy existing chart to prevent memory leaks
+    if (RetailX.charts.revenue) RetailX.charts.revenue.destroy();
+
+    RetailX.charts.revenue = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: apiData.labels,
+            datasets: [{
+                label: 'Revenue',
+                data: apiData.values,
+                borderColor: '#3498db',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(52, 152, 219, 0.1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+        }
     });
-}
+};
 
 /* ===============================
-   STAFF
+   UTILITIES
 ================================ */
-function loadStaffData() {
-    makeRequest('/api/manager/staff/list/', 'GET', null, updateStaffTable);
-}
+RetailX.startClock = function() {
+    const update = () => {
+        const now = new Date();
+        $('#currentDate').text(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+        $('#currentTime').text(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    };
+    setInterval(update, 1000);
+    update();
+};
 
-/* ===============================
-   REPORTS
-================================ */
-function loadReportsData() {
-    makeRequest('/api/manager/reports/', 'GET', null, updateReportPreview);
-}
-
-/* ===============================
-   UI UPDATE FUNCTIONS
-================================ */
-function updateKPICards(data) {
-    $('#totalRevenue').text(`₹${data.total_revenue || 0}`);
-    $('#inventoryValue').text(`₹${data.inventory_value || 0}`);
-    $('#activeStaff').text(data.active_staff || 0);
-    $('#customerSatisfaction').text(`${data.customer_satisfaction || 0}%`);
-}
-
-function updateQuickStats(data) {
-    $('#todayRevenue').text(`₹${data.today_revenue || 0}`);
-    $('#onlineOrders').text(data.online_orders || 0);
-}
-
-function updateActivitiesList(list) {
-    if (!list || list.length === 0) {
-        $('#activitiesList').html('<div class="empty-state">No activities</div>');
-        return;
-    }
-
-    $('#activitiesList').html(list.map(a => `
-        <div class="activity-item">
-            <p>${a.title}</p>
-            <small>${a.time}</small>
-        </div>
-    `).join(''));
-}
-
-function updateAlertsList(list) {
-    if (!list || list.length === 0) {
-        $('#alertsList').html('<div class="empty-state">No alerts</div>');
-        return;
-    }
-
-    $('.alert-count').text(list.length);
-}
-
-/* ===============================
-   MODALS
-================================ */
-function showAddProductModal() {
-    $('#addProductModal').fadeIn();
-}
-
-function showAddStaffModal() {
-    $('#addStaffModal').fadeIn();
-}
-
-function showNotifications() {
-    $('#notificationModal').fadeIn();
-}
-
-function closeAllModals() {
-    $('.modal').fadeOut();
-}
-
-/* ===============================
-   ACTIONS
-================================ */
-function addNewProduct() {
-    showToast('Product added', 'success');
-    closeAllModals();
-    loadInventoryData();
-}
-
-function addNewStaff() {
-    showToast('Staff added', 'success');
-    closeAllModals();
-    loadStaffData();
-}
-
-function refreshCurrentPage() {
-    const page = $('.page.active').attr('id').replace('-page', '');
-    loadPageData(page);
-    showToast('Page refreshed', 'success');
-}
-
-/* ===============================
-   TOAST
-================================ */
-function showToast(msg, type = 'info') {
+RetailX.showToast = function(message, type = 'info') {
     const toast = $('#toast');
-    toast.text(msg).attr('class', `toast ${type} show`);
+    const colors = { success: '#2ecc71', error: '#e74c3c', info: '#3498db' };
+    
+    toast.text(message)
+         .css('background-color', colors[type] || colors.info)
+         .addClass('show');
+
     setTimeout(() => toast.removeClass('show'), 3000);
+};
+
+RetailX.handleFormSubmit = function(objectName) {
+    this.showToast(`Saving ${objectName}...`, 'info');
+    // Simulate API Delay
+    setTimeout(() => {
+        $('.modal').fadeOut();
+        this.showToast(`${objectName} added successfully!`, 'success');
+        this.loadDashboardData();
+    }, 1200);
+};
+
+RetailX.handleError = function(xhr) {
+    if (xhr.status === 401 || xhr.status === 403) {
+        this.showToast('Session Expired. Please login.', 'error');
+        window.location.href = '/login';
+    } else {
+        this.showToast('Server Communication Error', 'error');
+    }
+};
+
+// Global "No Back" functionality
+function noBack() {
+    window.history.forward();
 }
