@@ -646,6 +646,11 @@ def cashier_home(request):
             'cashier_username': 'Unknown'
         }
         
+        #############################################
+
+        
+
+        #######################################
     return render(request, 'cashier_home.html', context)
 
 
