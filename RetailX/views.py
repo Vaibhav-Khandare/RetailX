@@ -1,8 +1,8 @@
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from AccountsDB.models import Admin, Cashier, Manager
-# from productsDB.models import Product
-from DatasetDB.models import Product
+from productsDB.models import Product
+# from DatasetDB.models import Product
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import check_password
