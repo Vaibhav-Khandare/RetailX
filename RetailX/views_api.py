@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 # from .models import Manager, Cashier, Product
 from AccountsDB.models import Manager, Cashier
-from productsDB.models import Product
+from DatasetDB.models import Product
 
 import random
 

@@ -7,9 +7,15 @@
     <link rel="stylesheet" href="/static/css/cashier_home.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for graphs and charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR - Contains navigation menu and user profile -->
     <div class="sidebar">
         <div class="sidebar-header">
             <div class="user-profile">
@@ -17,38 +23,40 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="user-info">
-                    <h3 id="cashierName">Cashier Name</h3>
-                    <p id="cashierId">ID: #CSH001</p>
+                    <h3 id="cashierName">{{cashier_name}}</h3>
+                    <p id="cashierId">{{cashier_username}}</p>
                 </div>
             </div>
         </div>
 
         <nav class="sidebar-menu">
+            <!-- Dashboard page link -->
             <a href="#" class="menu-item active" data-page="dashboard">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
+            <!-- Billing page link -->
             <a href="#" class="menu-item" data-page="billing">
                 <i class="fas fa-cash-register"></i>
                 <span>Billing</span>
             </a>
+            <!-- Sales Entry page link -->
             <a href="#" class="menu-item" data-page="sales">
                 <i class="fas fa-chart-line"></i>
                 <span>Sales Entry</span>
             </a>
-            <a href="#" class="menu-item" data-page="inventory">
-                <i class="fas fa-boxes"></i>
-                <span>Quick Inventory</span>
-            </a>
+            <!-- Transactions page link -->
             <a href="#" class="menu-item" data-page="transactions">
                 <i class="fas fa-history"></i>
                 <span>Transactions</span>
             </a>
+            <!-- Daily Summary page link -->
             <a href="#" class="menu-item" data-page="summary">
                 <i class="fas fa-file-alt"></i>
                 <span>Daily Summary</span>
             </a>
             <div class="menu-divider"></div>
+            <!-- Logout button -->
             <a href="#" class="menu-item logout" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
@@ -63,9 +71,9 @@
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT AREA -->
     <div class="main">
-        <!-- TOP BAR -->
+        <!-- TOP BAR - Contains page title and user controls -->
         <div class="topbar">
             <div class="topbar-left">
                 <h1 id="pageTitle">Dashboard</h1>
@@ -86,54 +94,11 @@
             </div>
         </div>
 
-        <!-- PAGE CONTENT -->
+        <!-- PAGE CONTENT - Dynamic content area that changes based on navigation -->
         <div class="page-content">
-            <!-- DASHBOARD PAGE -->
+            <!-- DASHBOARD PAGE - Main landing page with quick actions -->
             <div class="page active" id="dashboard-page">
-                <!-- STATS CARDS -->
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(255, 123, 84, 0.2); color: #FF7B54;">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="todaySales">₹0.00</h3>
-                            <p>Today's Sales</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(255, 74, 45, 0.2); color: #FF4A2D;">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="totalBills">0</h3>
-                            <p>Bills Today</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(52, 152, 219, 0.2); color: #3498db;">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="customersServed">0</h3>
-                            <p>Customers Served</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="itemsSold">0</h3>
-                            <p>Items Sold</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- QUICK ACTIONS -->
+                <!-- QUICK ACTIONS - Fast access to common tasks -->
                 <div class="quick-actions">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="action-buttons">
@@ -156,7 +121,7 @@
                     </div>
                 </div>
 
-                <!-- RECENT TRANSACTIONS -->
+                <!-- RECENT TRANSACTIONS - Shows latest 5 transactions -->
                 <div class="recent-transactions">
                     <div class="section-header">
                         <h2 class="section-title">Recent Transactions</h2>
@@ -174,21 +139,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Transactions will be loaded via AJAX -->
+                                <!-- Transactions will be loaded via JavaScript -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- BILLING PAGE -->
+            <!-- BILLING PAGE - For creating and processing bills -->
             <div class="page" id="billing-page">
                 <div class="billing-container">
-                    <!-- PRODUCT SCANNER -->
+                    <!-- PRODUCT SCANNER - Input for product codes/barcodes -->
                     <div class="scanner-section">
                         <h2 class="section-title">Product Scanner</h2>
                         <div class="scanner-input">
-                            <input type="text" id="productCode" placeholder="Scan or Enter Product Code/Barcode">
+                            <input type="text" id="productCode" placeholder="Scan or Enter Product Code/Barcode" autocomplete="off">
                             <button class="scan-btn" id="scanBtn">
                                 <i class="fas fa-camera"></i> Scan
                             </button>
@@ -196,10 +161,10 @@
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
-                        <div id="scannerFeedback"></div>
+                        <div id="scannerFeedback" class="scanner-feedback"></div>
                     </div>
 
-                    <!-- BILL ITEMS -->
+                    <!-- BILL ITEMS - Current bill items table -->
                     <div class="bill-section">
                         <div class="bill-header">
                             <h2>Current Bill</h2>
@@ -221,12 +186,12 @@
                                     </tr>
                                 </thead>
                                 <tbody id="billItems">
-                                    <!-- Bill items will be added here -->
+                                    <!-- Bill items will be added dynamically -->
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- BILL SUMMARY -->
+                        <!-- BILL SUMMARY - Calculations for the bill -->
                         <div class="bill-summary">
                             <div class="summary-row">
                                 <span>Subtotal:</span>
@@ -239,7 +204,7 @@
                             <div class="summary-row">
                                 <span>Discount:</span>
                                 <div class="discount-input">
-                                    <input type="number" id="discountInput" placeholder="%" min="0" max="100">
+                                    <input type="number" id="discountInput" placeholder="%" min="0" max="100" step="0.1">
                                     <button id="applyDiscount">Apply</button>
                                 </div>
                                 <span id="discountAmount">₹0.00</span>
@@ -250,7 +215,7 @@
                             </div>
                         </div>
 
-                        <!-- PAYMENT SECTION -->
+                        <!-- PAYMENT SECTION - Payment method and amount processing -->
                         <div class="payment-section">
                             <h3>Payment</h3>
                             <div class="payment-methods">
@@ -266,7 +231,7 @@
                             </div>
                             
                             <div class="payment-input">
-                                <input type="number" id="amountReceived" placeholder="Amount Received">
+                                <input type="number" id="amountReceived" placeholder="Amount Received" step="0.01">
                                 <div id="changeAmount">Change: ₹0.00</div>
                             </div>
                             
@@ -286,12 +251,12 @@
                 </div>
             </div>
 
-            <!-- SALES ENTRY PAGE -->
+            <!-- SALES ENTRY PAGE - View and manage sales history -->
             <div class="page" id="sales-page">
                 <div class="sales-container">
                     <h2 class="section-title">Sales History</h2>
                     
-                    <!-- FILTERS -->
+                    <!-- FILTERS - For filtering sales data -->
                     <div class="filters">
                         <input type="date" id="salesDateFilter" class="filter-input">
                         <select id="salesTypeFilter" class="filter-input">
@@ -304,11 +269,14 @@
                             <i class="fas fa-filter"></i> Apply Filter
                         </button>
                         <button class="export-btn" id="exportSalesBtn">
-                            <i class="fas fa-download"></i> Export CSV
+                            <i class="fas fa-download"></i> Export Excel
+                        </button>
+                        <button class="export-btn" id="printSalesBtn">
+                            <i class="fas fa-print"></i> Print Report
                         </button>
                     </div>
                     
-                    <!-- SALES TABLE -->
+                    <!-- SALES TABLE - Displays all sales records -->
                     <div class="table-container">
                         <table id="salesTable">
                             <thead>
@@ -323,14 +291,58 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Sales data will be loaded via AJAX -->
+                                <!-- Sales data will be loaded via JavaScript -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- DAILY SUMMARY PAGE -->
+            <!-- TRANSACTIONS PAGE - View all transactions -->
+            <div class="page" id="transactions-page">
+                <div class="transactions-container">
+                    <h2 class="section-title">All Transactions</h2>
+                    
+                    <!-- FILTERS - For filtering transactions -->
+                    <div class="filters">
+                        <input type="date" id="transDateFilter" class="filter-input">
+                        <select id="transStatusFilter" class="filter-input">
+                            <option value="all">All Status</option>
+                            <option value="success">Success</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <button class="filter-btn" id="applyTransFilter">
+                            <i class="fas fa-filter"></i> Apply Filter
+                        </button>
+                        <button class="export-btn" id="exportTransBtn">
+                            <i class="fas fa-download"></i> Export Excel
+                        </button>
+                    </div>
+                    
+                    <!-- TRANSACTIONS TABLE - Displays all transactions -->
+                    <div class="table-container">
+                        <table id="transactionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Bill No</th>
+                                    <th>Date & Time</th>
+                                    <th>Payment Method</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Transactions will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAILY SUMMARY PAGE - Daily statistics and reports -->
             <div class="page" id="summary-page">
                 <div class="summary-container">
                     <div class="summary-header">
@@ -341,17 +353,60 @@
                         </div>
                     </div>
 
-                    <!-- SUMMARY STATS -->
+                    <!-- SUMMARY STATS CARDS - 4 main statistics -->
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(255, 123, 84, 0.2); color: #FF7B54;">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="todaySales">₹0.00</h3>
+                                <p>Today's Sales</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(255, 74, 45, 0.2); color: #FF4A2D;">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalBills">0</h3>
+                                <p>Bills Today</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.2); color: #3498db;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="customersServed">0</h3>
+                                <p>Customers Served</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="itemsSold">0</h3>
+                                <p>Items Sold</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAILED SUMMARY STATS - Charts and detailed breakdown -->
                     <div class="summary-stats">
                         <div class="summary-stat-card">
-                            <div class="stat-chart" id="salesChart"></div>
+                            <canvas id="salesChart" class="stat-chart"></canvas>
                             <h3>Sales Trend</h3>
                             <p>Today vs Yesterday</p>
                         </div>
                         
                         <div class="summary-stat-card">
                             <h3 id="cashCollection">₹0.00</h3>
-                            <p>Cash Collection</p>
+                            <p>Total Collection</p>
                             <div class="stat-detail">
                                 <span><i class="fas fa-money-bill-wave"></i> Cash: <span id="cashAmount">₹0.00</span></span>
                                 <span><i class="fas fa-credit-card"></i> Card: <span id="cardAmount">₹0.00</span></span>
@@ -364,21 +419,21 @@
                             <p>Total Transactions</p>
                             <div class="stat-detail">
                                 <span>Successful: <span id="successfulTx">0</span></span>
-                                <span>Refunded: <span id="refundedTx">0</span></span>
-                                <span>Void: <span id="voidTx">0</span></span>
+                                <span>Pending: <span id="pendingTx">0</span></span>
+                                <span>Failed: <span id="failedTx">0</span></span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- TOP PRODUCTS -->
+                    <!-- TOP PRODUCTS - Best selling products list -->
                     <div class="top-products">
                         <h3 class="section-title">Top Selling Products</h3>
                         <div class="products-list" id="topProductsList">
-                            <!-- Top products will be loaded via AJAX -->
+                            <!-- Top products will be loaded via JavaScript -->
                         </div>
                     </div>
 
-                    <!-- SUMMARY REPORT -->
+                    <!-- SUMMARY REPORT - Report generation buttons -->
                     <div class="summary-report">
                         <div class="report-actions">
                             <button class="report-btn" id="generateReportBtn">
@@ -397,7 +452,9 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- MODALS - Popup windows for additional functionality -->
+
+    <!-- Product Search Modal - For searching products -->
     <div class="modal" id="productSearchModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -405,7 +462,9 @@
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <input type="text" id="productSearchInput" placeholder="Search by name, code or category">
+                <div class="search-input-container">
+                    <input type="text" id="productSearchInput" placeholder="Search by name, code or category" autocomplete="off">
+                </div>
                 <div class="search-results" id="searchResults">
                     <!-- Search results will appear here -->
                 </div>
@@ -413,6 +472,7 @@
         </div>
     </div>
 
+    <!-- Notification Modal - Shows all notifications -->
     <div class="modal" id="notificationModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -427,8 +487,37 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
+    <!-- Bill Receipt Modal - For printing/viewing bill receipts -->
+    <div class="modal" id="receiptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bill Receipt</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="receiptContent">
+                    <!-- Receipt content will be generated here -->
+                </div>
+                <div class="receipt-actions">
+                    <button class="btn-primary" id="printReceiptBtn">
+                        <i class="fas fa-print"></i> Print Receipt
+                    </button>
+                    <button class="btn-secondary" id="downloadReceiptBtn">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION - Temporary notification popup -->
     <div class="toast" id="toast"></div>
+
+    <!-- Loading Overlay - Shows during processing -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
+    </div>
 
     <script src="/static/js/cashier_home.js"></script>
 </body>
