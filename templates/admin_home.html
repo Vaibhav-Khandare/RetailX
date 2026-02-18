@@ -440,80 +440,84 @@
     <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
     <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
 
-    <div class="analytics-grid">
+    <div class="analytics-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px; align-items: stretch;">
 
         <!-- ================= SEARCH CARD ================= -->
-        <div class="analytics-card">
-            <div class="card-header">
-                <h3><i class="fas fa-search"></i> Festival Sales Prediction</h3>
-                <p style="font-size:13px;color:var(--gray);margin-top:4px;">
-                    Choose a festival OR enter a date to predict demand
-                </p>
+        <!-- ================= SEARCH CARD ================= -->
+<div class="analytics-card" style="width: 100%; min-width: 1200px; height:500px;">
+    <div class="card-header" style="padding: 18px 25px;">
+        <h3 style="margin: 0; font-size: 20px;"><i class="fas fa-search"></i> Festival Sales Prediction</h3>
+        <p style="font-size:14px; color:var(--gray); margin: 8px 0 0 0;">
+            Choose a festival OR enter a date to predict demand
+        </p>
+    </div>
+
+    <div class="card-body" style="padding: 20px 25px 25px 25px;">
+
+        <form method="get" action="" id="festivalSearchForm" style="display: flex; flex-direction: column; gap: 20px;">
+
+            <!-- DROPDOWN -->
+            <div style="width: 100%;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
+                    <i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--primary);"></i> Select Festival
+                </label>
+                <select name="festival" id="festival_select" 
+                        style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
+                    <option value="">-- Choose a festival --</option>
+                    {% for festival in festival_choices %}
+                        <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
+                            {{ festival }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="card-body">
-
-                <form method="get" action="" id="festivalSearchForm">
-
-                    <!-- DROPDOWN -->
-                    <div class="ux-field">
-                        <label for="festival_select">
-                            <i class="fas fa-calendar-alt"></i> Select Festival
-                        </label>
-                        <select name="festival" id="festival_select" class="filter-select ux-input">
-                            <option value="">-- Choose a festival --</option>
-                            {% for festival in festival_choices %}
-                                <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
-                                    {{ festival }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- OR DIVIDER -->
-                    <div class="ux-divider">
-                        <span>OR</span>
-                    </div>
-
-                    <!-- DATE INPUT -->
-                    <div class="ux-field">
-                        <label for="festival_date">
-                            <i class="fas fa-calendar"></i> Enter Date
-                        </label>
-                        <input type="text" name="festival_date" id="festival_date"
-                               placeholder="DD-MM-YYYY  (example: 25-12-2025)"
-                               class="ux-input">
-                        <small class="ux-help">Leave blank if using dropdown above</small>
-                    </div>
-
-                    <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
-
-                    <button type="submit" class="ux-btn-primary">
-                        <i class="fas fa-search"></i> Predict Sales
-                    </button>
-                </form>
-
-                <!-- keep your script unchanged -->
-                <script>
-                    document.getElementById('festivalSearchForm').addEventListener('submit', function(e) {
-                        const selectValue = document.getElementById('festival_select').value;
-                        const dateValue = document.getElementById('festival_date').value;
-                        const hiddenInput = document.getElementById('festival_hidden');
-
-                        if (dateValue) {
-                            hiddenInput.value = dateValue;
-                        } else if (selectValue) {
-                            hiddenInput.value = selectValue;
-                        } else {
-                            e.preventDefault();
-                            alert('Please select a festival or enter a date');
-                        }
-                    });
-                </script>
-
+            <!-- OR DIVIDER -->
+            <div style="text-align: center; margin: 5px 0; position: relative;">
+                <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--gray-light);"></div>
+                <span style="background: var(--white); padding: 0 20px; position: relative; color: var(--gray); font-size: 15px; font-weight: 500;">OR</span>
             </div>
-        </div>
 
+            <!-- DATE INPUT -->
+            <div style="width: 100%;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
+                    <i class="fas fa-calendar" style="margin-right: 8px; color: var(--primary);"></i> Enter Date
+                </label>
+                <input type="text" name="festival_date" id="festival_date"
+                       placeholder="DD-MM-YYYY (example: 25-12-2025)"
+                       style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
+                <small style="display: block; margin-top: 8px; color: var(--gray); font-size: 13px; padding-left: 5px;">
+                    Leave blank if using dropdown above
+                </small>
+            </div>
+
+            <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
+
+            <button type="submit" 
+                    style="width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);">
+                <i class="fas fa-search" style="font-size: 18px;"></i> Predict Sales
+            </button>
+        </form>
+
+        <script>
+            document.getElementById('festivalSearchForm').addEventListener('submit', function(e) {
+                const selectValue = document.getElementById('festival_select').value;
+                const dateValue = document.getElementById('festival_date').value;
+                const hiddenInput = document.getElementById('festival_hidden');
+
+                if (dateValue) {
+                    hiddenInput.value = dateValue;
+                } else if (selectValue) {
+                    hiddenInput.value = selectValue;
+                } else {
+                    e.preventDefault();
+                    alert('Please select a festival or enter a date');
+                }
+            });
+        </script>
+
+    </div>
+</div> 
         <!-- ================= RESULT CARD ================= -->
         <div class="analytics-card full">
             <div class="card-header">
@@ -537,14 +541,14 @@
                         <small>Expected Sales Analysis</small>
                     </div>
 
-                    <!-- ================= CHARTS ================= -->
-                    <div class="ux-chart-grid">
+                    <!-- ================= CHARTS ONLY (No Product Lists) ================= -->
+                    <div class="ux-chart-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10;">
 
                         <div class="ux-chart-card">
                             <h4 class="ux-chart-title fire">
                                 <i class="fas fa-fire"></i> Top Selling Products
                             </h4>
-                            <div class="ux-chart-box">
+                            <div class="ux-chart-box" style="height: 350px;">
                                 <canvas id="topSellingChart"></canvas>
                             </div>
                         </div>
@@ -553,59 +557,17 @@
                             <h4 class="ux-chart-title cool">
                                 <i class="fas fa-snowflake"></i> Least Selling Products
                             </h4>
-                            <div class="ux-chart-box">
+                            <div class="ux-chart-box" style="height: 350px;">
                                 <canvas id="leastSellingChart"></canvas>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- ================= PRODUCT LISTS ================= -->
-                    <div class="ux-product-grid">
-
-                        <!-- TOP -->
-                        <div class="ux-product-card">
-                            <h4 class="fire-border"><i class="fas fa-list"></i> Top Products</h4>
-
-                            {% if top_products %}
-                                <div class="ux-product-list">
-                                    {% for item in top_products %}
-                                        <div class="ux-product-item warm">
-                                            <span>{{ forloop.counter }}. {{ item.product }}</span>
-                                            <b>{{ item.predicted_sales|floatformat:0 }} units</b>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="ux-empty">No top selling data available</p>
-                            {% endif %}
-                        </div>
-
-                        <!-- LEAST -->
-                        <div class="ux-product-card">
-                            <h4 class="cool-border"><i class="fas fa-list"></i> Least Products</h4>
-
-                            {% if least_products %}
-                                <div class="ux-product-list">
-                                    {% for item in least_products %}
-                                        <div class="ux-product-item cool">
-                                            <span>{{ forloop.counter }}. {{ item.product }}</span>
-                                            <b>{{ item.predicted_sales|floatformat:0 }} units</b>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="ux-empty">No least selling data available</p>
-                            {% endif %}
-                        </div>
-
-                    </div>
-
+                    <!-- Optional: Add a simple summary if needed -->
                     {% if top_products %}
-                    <div class="ux-summary">
+                    <div class="ux-summary" style="margin-top: 20px; padding: 12px; text-align: center; background: #f5f5f5; border-radius: 6px;">
                         <i class="fas fa-chart-line"></i>
-                        Total products analyzed:
-                        <strong>{{ top_products|length|add:least_products|length }}</strong>
                     </div>
                     {% endif %}
 
@@ -626,7 +588,6 @@
 
     </div>
 </section>
-
 
             <!-- SETTINGS SECTION -->
             <section id="settings" class="content-section">
