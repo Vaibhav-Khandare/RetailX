@@ -1,31 +1,307 @@
-from django.http import HttpResponse,JsonResponse
-from django.shortcuts import render, HttpResponseRedirect, redirect
-from AccountsDB.models import Admin, Cashier, Manager
-from productsDB.models import Product
-# from DatasetDB.models import Product
-from django.contrib.auth.hashers import make_password, check_password
-from django.shortcuts import render, redirect
-from django.contrib.auth.hashers import check_password
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from datetime import datetime
+import os
 import json
 import random
 import smtplib
 from email.mime.text import MIMEText
+from datetime import datetime
+
+import pandas as pd
+import numpy as np
+from prophet import Prophet
+import joblib
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import make_password, check_password
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-
-
-
 from django.views.decorators.cache import never_cache
-# import django.contrib.sessions
+from django.conf import settings
 
+from AccountsDB.models import Admin, Cashier, Manager
+from productsDB.models import Product
 
+# ------------------------------
+# Path to trained models folder
+# ------------------------------
+BASE_DIR = settings.BASE_DIR
+MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models')
 
-# OTP storage for admin, manager, and cashier
+# ------------------------------
+# Festival list for dropdown
+# ------------------------------
+FESTIVAL_CHOICES = [
+    "Diwali",
+    "Holi", 
+    "Christmas",
+    "Eid",
+    "Navratri",
+    "Raksha Bandhan",
+    "Ganesh Chaturthi",
+    "Makar Sankranti",
+    "Onam",
+    "Pongal",
+    "Karva Chauth",
+    "Valentine",
+    "New Year"
+]
+
+# ------------------------------
+# Festival date mappings
+# ------------------------------
+def get_festival_from_date(date_obj):
+    """
+    Map a date to the correct festival name based on actual model file naming.
+    Returns the festival name as it appears in your model files.
+    """
+    month = date_obj.month
+    day = date_obj.day
+    
+    # Exact date mappings based on your festival_dates dictionary
+    date_mapping = {
+        (1, 1): "New Year",
+        (1, 14): "Makar Sankranti",
+        (1, 15): "Pongal",
+        (1, 26): "Republic Day",
+        (2, 14): "Valentine",
+        (3, 8): "Holi",
+        (3, 15): "Holi",
+        (3, 18): "Holi",
+        (3, 25): "Holi",
+        (3, 29): "Holi",
+        (4, 10): "Eid",
+        (4, 11): "Eid",
+        (4, 22): "Eid",
+        (5, 3): "Eid",
+        (5, 14): "Eid",
+        (8, 11): "Raksha Bandhan",
+        (8, 15): "Independence Day",
+        (8, 19): "Raksha Bandhan",
+        (8, 21): "Onam",
+        (8, 22): "Raksha Bandhan",
+        (8, 29): "Onam",
+        (8, 30): "Raksha Bandhan",
+        (8, 31): "Ganesh Chaturthi",
+        (9, 1): "Ganesh Chaturthi",
+        (9, 7): "Ganesh Chaturthi",
+        (9, 8): "Onam",
+        (9, 10): "Ganesh Chaturthi",
+        (9, 15): "Onam",
+        (9, 19): "Ganesh Chaturthi",
+        (10, 2): "Gandhi Jayanti",
+        (10, 3): "Navratri",
+        (10, 7): "Navratri",
+        (10, 13): "Karva Chauth",
+        (10, 15): "Navratri",
+        (10, 20): "Karva Chauth",
+        (10, 24): "Karva Chauth",
+        (10, 24): "Diwali",
+        (10, 26): "Navratri",
+        (11, 1): "Diwali",
+        (11, 1): "Karva Chauth",
+        (11, 4): "Diwali",
+        (11, 12): "Diwali",
+        (12, 25): "Christmas",
+        (12, 31): "New Year",
+    }
+    
+    # Check for exact match first
+    festival = date_mapping.get((month, day))
+    if festival:
+        return festival
+    
+    # Month-based fallback
+    month_mapping = {
+        1: "New Year",
+        2: "Valentine",
+        3: "Holi",
+        4: "Eid",
+        5: "Eid",
+        8: "Independence Day",
+        9: "Ganesh Chaturthi",
+        10: "Diwali",
+        11: "Diwali",
+        12: "Christmas",
+    }
+    
+    return month_mapping.get(month)
+
+# ------------------------------
+# Helper: get festival sales predictions
+# ------------------------------
+def get_festival_sales(festival_name):
+    """
+    Load all Prophet models for a given festival, predict sales for the next
+    occurrence of that festival (or a default future date), and return top and
+    least selling products.
+    """
+    if not os.path.exists(MODEL_FOLDER):
+        return {
+            'error': 'Model folder not found.',
+            'top_products': [],
+            'least_products': [],
+            'festival': festival_name
+        }
+
+    # Normalize festival name for model matching
+    festival_clean = festival_name.strip()
+    
+    # Handle different naming patterns
+    possible_formats = [
+        festival_clean,
+        festival_clean.lower(),
+        festival_clean.title(),
+        festival_clean.replace(' ', '_'),
+        festival_clean.replace(' ', '_').lower(),
+        festival_clean.replace(' ', '_').title(),
+    ]
+    
+    # Add special mappings for common variations
+    if festival_clean.lower() == "new year":
+        possible_formats.extend(["new_year", "New_Year", "new year", "New Year", "newyear", "Newyear"])
+    elif festival_clean.lower() == "valentine":
+        possible_formats.extend(["valentine", "Valentine", "valentines", "Valentines", "valentines_day", "Valentines_Day"])
+    elif festival_clean.lower() == "diwali":
+        possible_formats.extend(["diwali", "Diwali", "deepawali", "Deepawali"])
+    elif festival_clean.lower() == "christmas":
+        possible_formats.extend(["christmas", "Christmas", "xmas", "Xmas"])
+    elif festival_clean.lower() == "holi":
+        possible_formats.extend(["holi", "Holi"])
+    elif festival_clean.lower() == "eid":
+        possible_formats.extend(["eid", "Eid", "eid_ul_fitr", "Eid_Ul_Fitr"])
+    
+    # Remove duplicates
+    seen = set()
+    possible_formats = [x for x in possible_formats if not (x.lower() in seen or seen.add(x.lower()))]
+    
+    # Find all model files that match any of the possible formats
+    festival_models = []
+    all_models = []
+    
+    for fname in os.listdir(MODEL_FOLDER):
+        if not fname.endswith('.pkl'):
+            continue
+            
+        all_models.append(fname)
+        fname_lower = fname.lower()
+        
+        for format_name in possible_formats:
+            format_lower = format_name.lower()
+            if fname_lower.startswith(format_lower):
+                festival_models.append(fname)
+                break
+            elif fname_lower.startswith(format_lower.replace('_', '') + '_'):
+                festival_models.append(fname)
+                break
+
+    if not festival_models:
+        print(f"Looking for festival: {festival_name}")
+        print(f"Tried formats: {possible_formats}")
+        return {
+            'error': f'No models found for festival "{festival_name}". Please check the festival name.',
+            'top_products': [],
+            'least_products': [],
+            'festival': festival_name
+        }
+
+    print(f"Found {len(festival_models)} models for festival {festival_name}")
+    predictions = []
+
+    for model_file in festival_models:
+        model_path = os.path.join(MODEL_FOLDER, model_file)
+        try:
+            model = joblib.load(model_path)
+        except Exception as e:
+            print(f"Error loading model {model_file}: {e}")
+            continue
+
+        # Extract product name from filename
+        product_name = model_file.replace('.pkl', '')
+        
+        for format_name in possible_formats:
+            if product_name.lower().startswith(format_name.lower()):
+                product_name = product_name[len(format_name):]
+                if product_name and (product_name[0] == '_' or product_name[0] == ' '):
+                    product_name = product_name[1:]
+                break
+        
+        product_name = product_name.replace('_', ' ').strip()
+        
+        if not product_name:
+            product_name = model_file.replace('.pkl', '').replace('_', ' ')
+            for format_name in possible_formats:
+                if product_name.lower().startswith(format_name.lower()):
+                    product_name = product_name[len(format_name):].strip()
+                    break
+
+        # Determine future date for prediction
+        if hasattr(model, 'history') and 'ds' in model.history.columns:
+            last_date = model.history['ds'].max()
+            future_date = last_date + pd.DateOffset(days=365)
+        else:
+            current_year = datetime.now().year
+            festival_lower = festival_name.lower()
+            
+            if 'diwali' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-11-01')
+            elif 'christmas' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-12-25')
+            elif 'new year' in festival_lower or 'new_year' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year+1}-01-01')
+            elif 'holi' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-03-15')
+            elif 'eid' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-04-10')
+            elif 'ganesh' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-09-01')
+            elif 'valentine' in festival_lower:
+                future_date = pd.to_datetime(f'{current_year}-02-14')
+            else:
+                future_date = pd.to_datetime(f'{current_year+1}-01-01')
+
+        future = pd.DataFrame({'ds': [future_date]})
+
+        try:
+            forecast = model.predict(future)
+            predicted_sales = forecast['yhat'].iloc[0]
+            if np.isnan(predicted_sales) or predicted_sales < 0:
+                predicted_sales = 0
+        except Exception as e:
+            print(f"Prediction failed for {model_file}: {e}")
+            continue
+
+        predictions.append({
+            'product': product_name,
+            'predicted_sales': round(predicted_sales, 0)
+        })
+
+    if not predictions:
+        return {
+            'error': 'Could not generate predictions.',
+            'top_products': [],
+            'least_products': [],
+            'festival': festival_name
+        }
+
+    # Sort predictions by predicted sales
+    predictions.sort(key=lambda x: x['predicted_sales'], reverse=True)
+
+    # Take top 10 and least 10
+    top_products = predictions[:10]
+    least_products = predictions[-10:] if len(predictions) >= 10 else predictions[::-1]
+
+    return {
+        'festival': festival_name,
+        'top_products': top_products,
+        'least_products': least_products,
+        'error': None
+    }
+
+# -------------------------------------------------------------------
+# OTP Storage and Email Functions
+# -------------------------------------------------------------------
 otp_storage = {}
-manager_otp_storage = {}  # Separate storage for manager OTPs
-cashier_otp_storage = {}  # Separate storage for cashier OTPs
+manager_otp_storage = {}
+cashier_otp_storage = {}
 
 def send_email_otp(receiver_email, otp, user_type="admin"):
     """Send OTP email for admin, manager, or cashier registration"""
@@ -91,14 +367,13 @@ RetailX Team"""
         print("Error sending email:", e)
         return False
 
-
+# -------------------------------------------------------------------
+# Public Pages
+# -------------------------------------------------------------------
 def index(request):
-   
     if request.session.get('manager_username'):
-        # return redirect('manager_home')
         request.session.flush()
     
-    # Otherwise show the landing page
     return render(request, 'index.html')
 
 def test(request):
@@ -110,6 +385,21 @@ def test(request):
     print(e.sku)
     return render(request,'test.html', dic)
 
+def about(request):
+    return render(request, 'about.html')
+
+def help(request):
+    return render(request, 'help.html')
+
+def privacy_policy(request):
+    return render(request, 'privacy_policy.html')
+
+def terms(request):
+    return render(request, 'terms.html')
+
+# -------------------------------------------------------------------
+# Authentication Views
+# -------------------------------------------------------------------
 def admin_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').lower()
@@ -238,11 +528,30 @@ def admin_registration(request):
     
     return render(request, 'admin_register.html')
 
+def manager_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '')
+        password = request.POST.get('password')
+
+        try:
+            manager = Manager.objects.get(username=username)
+            
+            if check_password(password, manager.password):
+                request.session['manager_username'] = manager.username
+                return redirect('manager_home')
+            else:
+                error = "Invalid password"
+        except Manager.DoesNotExist:
+            error = "Manager not found"
+
+        return render(request, 'manager_login.html', {'error': error})
+
+    return render(request, 'manager_login.html')
+
 @csrf_exempt
 def manager_registration(request):
     """Handle manager registration with OTP verification"""
     
-    # AJAX requests for OTP handling
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
             data = json.loads(request.body)
@@ -253,14 +562,12 @@ def manager_registration(request):
                 if not email:
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
                 
-                # Check if email already exists
                 if Manager.objects.filter(email=email).exists():
                     return JsonResponse({
                         'status': 'error', 
                         'message': 'This email is already registered'
                     }, status=400)
                 
-                # Generate and store OTP
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "manager"):
                     manager_otp_storage[f'email_{email}'] = otp
@@ -315,7 +622,6 @@ def manager_registration(request):
                 'message': 'Server error'
             }, status=500)
     
-    # Handle form submission (after OTP verification)
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         email = request.POST.get('email')
@@ -323,22 +629,18 @@ def manager_registration(request):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
-        # Validate passwords match
         if password != confirm_password:
             messages.error(request, "Passwords do not match!")
             return render(request, 'manager_register.html')
         
-        # Check if username already exists
         if Manager.objects.filter(username=username).exists():
             messages.error(request, "Username already exists!")
             return render(request, 'manager_register.html')
         
-        # Check if email already exists
         if Manager.objects.filter(email=email).exists():
             messages.error(request, "Email already registered!")
             return render(request, 'manager_register.html')
 
-        # Hash password and create manager
         hashed_password = make_password(password)
         
         manager = Manager(
@@ -353,14 +655,31 @@ def manager_registration(request):
         messages.success(request, "Registration successful! Please login.")
         return redirect('/manager_login')
     
-    # GET request - show registration form
     return render(request, 'manager_register.html')
+
+def cashier_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').lower()
+        password = request.POST.get('password', '')
+
+        try:
+            user = Cashier.objects.get(username=username)
+        except Cashier.DoesNotExist:
+            return render(request, 'cashier_login.html', {'error': 'Invalid username'})
+
+        if check_password(password, user.password):  
+            request.session['cashier_username'] = user.username
+            request.session['cashier_email'] = user.email
+            return redirect('/cashier_home')
+        else:
+            return render(request, 'cashier_login.html', {'error': 'Invalid username or password'})
+
+    return render(request, "cashier_login.html")
 
 @csrf_exempt
 def cashier_registration(request):
     """Handle cashier registration with OTP verification"""
     
-    # AJAX requests for OTP handling
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
             data = json.loads(request.body)
@@ -371,14 +690,12 @@ def cashier_registration(request):
                 if not email:
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
                 
-                # Check if email already exists
                 if Cashier.objects.filter(email=email).exists():
                     return JsonResponse({
                         'status': 'error', 
                         'message': 'This email is already registered'
                     }, status=400)
                 
-                # Generate and store OTP
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "cashier"):
                     cashier_otp_storage[f'email_{email}'] = otp
@@ -433,7 +750,6 @@ def cashier_registration(request):
                 'message': 'Server error'
             }, status=500)
     
-    # Handle form submission (after OTP verification)
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         email = request.POST.get('email')
@@ -441,22 +757,18 @@ def cashier_registration(request):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
-        # Validate passwords match
         if password != confirm_password:
             messages.error(request, "Passwords do not match!")
             return render(request, 'cashier_register.html')
         
-        # Check if username already exists
         if Cashier.objects.filter(username=username).exists():
             messages.error(request, "Username already exists!")
             return render(request, 'cashier_register.html')
         
-        # Check if email already exists
         if Cashier.objects.filter(email=email).exists():
             messages.error(request, "Email already registered!")
             return render(request, 'cashier_register.html')
 
-        # Hash password and create cashier
         hashed_password = make_password(password)
         
         cashier = Cashier(
@@ -471,66 +783,29 @@ def cashier_registration(request):
         messages.success(request, "Registration successful! Please login.")
         return redirect('/cashier_login')
     
-    # GET request - show registration form
     return render(request, 'cashier_register.html')
 
-def manager_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username', '')
-        password = request.POST.get('password')
-
-        try:
-            manager = Manager.objects.get(username=username)
-            
-            if check_password(password, manager.password):
-                request.session['manager_username'] = manager.username
-                return redirect('manager_home')
-            else:
-                error = "Invalid password"
-        except Manager.DoesNotExist:
-            error = "Manager not found"
-
-        return render(request, 'manager_login.html', {'error': error})
-
-    return render(request, 'manager_login.html')
-
-def cashier_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username', '').lower()
-        password = request.POST.get('password', '')
-
-        try:
-            user = Cashier.objects.get(username=username)
-        except Cashier.DoesNotExist:
-            return render(request, 'cashier_login.html', {'error': 'Invalid username'})
-
-        if check_password(password, user.password):  
-            request.session['cashier_username'] = user.username
-            request.session['cashier_email'] = user.email
-            return redirect('/cashier_home')
-        else:
-            return render(request, 'cashier_login.html', {'error': 'Invalid username or password'})
-
-    return render(request, "cashier_login.html")
-
+# -------------------------------------------------------------------
+# Dashboard Views
+# -------------------------------------------------------------------
 @csrf_exempt
 @never_cache
 def admin_home(request):
     if not request.session.get('username'):
         return redirect('/admin_login')
-    
+
+    # ================== USER & PRODUCT DATA =====================
     nadmin = Admin.objects.count()
     nmanager = Manager.objects.count()
     ncashier = Cashier.objects.count()
     totuser = nadmin + nmanager + ncashier
     totpro = Product.objects.count()
-    
+
     admins = Admin.objects.all()
     managers = Manager.objects.all()
     cashiers = Cashier.objects.all()
-    
+
     all_users = []
-    
     for admin in admins:
         all_users.append({
             'id': admin.id,
@@ -542,7 +817,6 @@ def admin_home(request):
             'status': 'Active',
             'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(admin, 'last_login') and admin.last_login else 'Never'
         })
-    
     for manager in managers:
         all_users.append({
             'id': manager.id,
@@ -554,7 +828,6 @@ def admin_home(request):
             'status': 'Active',
             'last_login': manager.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(manager, 'last_login') and manager.last_login else 'Never'
         })
-    
     for cashier in cashiers:
         all_users.append({
             'id': cashier.id,
@@ -566,9 +839,56 @@ def admin_home(request):
             'status': 'Active',
             'last_login': cashier.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(cashier, 'last_login') and cashier.last_login else 'Never'
         })
-    
-    all_products = Product.objects.all().values('id', 'name', 'category', 'price', 'in_stock', 'min_stock_level', 'sku')
+
+    all_products = Product.objects.all().values(
+        'id', 'name', 'category', 'price', 'in_stock', 'min_stock_level', 'sku'
+    )
     low_stock_count = Product.objects.filter(in_stock__lt=10).count()
+    # ============================================================
+
+    # ================== FESTIVAL SALES ANALYTICS =================
+    festival_input = (request.GET.get('festival') or '').strip()
+    print("FESTIVAL INPUT:", festival_input)
+    detected_festival = None
+    top_products = []
+    least_products = []
+    festival_error = None
+
+    if festival_input:
+        # Check if input is a date (DD-MM-YYYY format)
+        try:
+            # Try to parse as date
+            input_date = datetime.strptime(festival_input, '%d-%m-%Y')
+            
+            # Get the correct festival name based on actual model naming
+            festival_name = get_festival_from_date(input_date)
+            
+            if festival_name:
+                print(f"Date {festival_input} mapped to festival: {festival_name}")
+                # Get predictions for that festival
+                festival_result = get_festival_sales(festival_name)
+                top_products = festival_result.get("top_products", [])
+                least_products = festival_result.get("least_products", [])
+                detected_festival = festival_name
+                festival_error = festival_result.get("error")
+            else:
+                festival_error = f"No festival found for date {festival_input}"
+                    
+        except ValueError:
+            # Not a valid date, treat as festival name
+            print(f"Treating '{festival_input}' as festival name")
+            festival_result = get_festival_sales(festival_input)
+            top_products = festival_result.get("top_products", [])
+            least_products = festival_result.get("least_products", [])
+            detected_festival = festival_result.get("festival")
+            festival_error = festival_result.get("error")
+    # ============================================================
+
+    # ================== CONTEXT ================================
+    # Convert products to JSON-safe format
+    import json
+    top_products_json = json.dumps(list(top_products)) if top_products else '[]'
+    least_products_json = json.dumps(list(least_products)) if least_products else '[]'
     
     context = {
         'uname': request.session.get('username'),
@@ -578,8 +898,15 @@ def admin_home(request):
         'users': all_users,
         'products': list(all_products),
         'low_stock_count': low_stock_count,
+        'top_products': top_products_json,  # Send as JSON string
+        'least_products': least_products_json,  # Send as JSON string
+        'detected_festival': detected_festival,
+        'festival_error': festival_error,
+        'festival_choices': FESTIVAL_CHOICES,
     }
-    
+    # ============================================================
+
+    # ================== USER MODAL POST =========================
     if request.method == 'POST' and request.POST.get('formType') == 'userModal':
         user_role = request.POST.get('userRole')
         fullname = request.POST.get('fullName')
@@ -587,10 +914,10 @@ def admin_home(request):
         username = request.POST.get('userName', '').lower()
         password = request.POST.get('userPassword')
         confirm_password = request.POST.get('confirmUserPassword')
-        
+
         if password == confirm_password:
             hashed_password = make_password(password)
-            
+
             if user_role == 'admin':
                 Admin.objects.create(
                     fullname=fullname,
@@ -615,9 +942,10 @@ def admin_home(request):
                     password=hashed_password,
                     confirm_password=hashed_password
                 )
-            
+
             return redirect('/admin_home')
-    
+
+    # ================== PRODUCT MODAL POST ======================
     if request.method == 'POST' and request.POST.get('formType') == 'productModal':
         Product.objects.create(
             name=request.POST.get('productName'),
@@ -629,9 +957,9 @@ def admin_home(request):
             min_stock_level=request.POST.get('productMinStock'),
             description=request.POST.get('productDescription')
         )
-        
         return redirect('/admin_home')
-    
+    # ============================================================
+
     return render(request, 'admin_home.html', context)
 
 @never_cache
@@ -639,7 +967,6 @@ def cashier_home(request):
     if not request.session.get('cashier_username'):
         return redirect('/cashier_login')
     
-    # Get manager details
     cashier_username = request.session.get('cashier_username')
     try:
         cashier = Cashier.objects.get(username=cashier_username)
@@ -652,22 +979,13 @@ def cashier_home(request):
             'cashier_name': 'Cashier',
             'cashier_username': 'Unknown'
         }
-        
-        #############################################
-
-        
-
-        #######################################
     return render(request, 'cashier_home.html', context)
 
-
 @never_cache
-# WITH THIS:
 def manager_home(request):
     if not request.session.get('manager_username'):
         return redirect('/')
     
-    # Get manager details
     manager_username = request.session.get('manager_username')
     try:
         manager = Manager.objects.get(username=manager_username)
@@ -683,27 +1001,10 @@ def manager_home(request):
     
     return render(request, 'manager_home.html', context)
 
-
 def logout_view(request):
     request.session.flush()
-    # from django.http import HttpResponseRedirect
     response = redirect('/')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
-
-def about(request):
-    return render(request, 'about.html')
-
-
-def help(request):
-    return render(request, 'help.html')
-
-def privacy_policy(request):
-    return render(request, 'privacy_policy.html')
-
-
-
-def terms(request):
-    return render(request, 'terms.html')  

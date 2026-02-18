@@ -3,6 +3,10 @@ let currentUser = 'admin@retailx.com';
 let salesChart, analyticsChart, categoryChart;
 let notificationCount = 3;
 
+// Make chart variables globally accessible
+window.topSellingChart = null;
+window.leastSellingChart = null;
+
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', function() {
     // Set current date
@@ -27,6 +31,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup search functionality
     setupSearch();
+    
+    // Check if we have festival data to display
+    setTimeout(function() {
+        const hasFestivalData = document.getElementById('detected-festival') && 
+                                 document.getElementById('detected-festival').dataset.festival;
+        
+        if (hasFestivalData) {
+            console.log('Festival data detected on page load, initializing charts...');
+            if (typeof initFestivalCharts === 'function') {
+                initFestivalCharts();
+            }
+        }
+    }, 500);
     
     // Close notification panel when clicking outside
     document.addEventListener('click', function(e) {
@@ -88,6 +105,16 @@ function initNavigation() {
             
             // Load section-specific data
             loadSectionData(sectionId);
+            
+            // If analytics section, re-initialize festival charts
+            if (sectionId === 'analytics') {
+                setTimeout(function() {
+                    if (typeof initFestivalCharts === 'function') {
+                        console.log('Analytics section activated, re-initializing charts...');
+                        initFestivalCharts();
+                    }
+                }, 300);
+            }
         });
     });
 }
@@ -140,6 +167,15 @@ function setupFormHandlers() {
         inventoryForm.addEventListener('submit', function(e) {
             e.preventDefault();
             saveInventoryAdjustment();
+        });
+    }
+    
+    // Festival Search Form
+    const festivalForm = document.getElementById('festivalSearchForm');
+    if (festivalForm) {
+        festivalForm.addEventListener('submit', function(e) {
+            showLoading();
+            // Form will submit normally, but we show loading
         });
     }
 }
@@ -227,9 +263,9 @@ function filterUsers() {
     });
     
     // Update user count display
-    const userCountElement = document.querySelector('#users + .table-container');
-    if (userCountElement && userCountElement.nextElementSibling) {
-        userCountElement.nextElementSibling.textContent = `Showing ${visibleCount} user(s) in total`;
+    const userCountElement = document.querySelector('.content-section#users .table-container + div');
+    if (userCountElement) {
+        userCountElement.textContent = `Showing ${visibleCount} user(s) in total`;
     }
 }
 
@@ -284,7 +320,7 @@ function filterProducts() {
     });
     
     // Update product count display
-    const productCountElement = document.querySelector('#productsGrid').nextElementSibling;
+    const productCountElement = document.querySelector('#productsGrid + div');
     if (productCountElement) {
         productCountElement.textContent = `Showing ${visibleCount} product(s) in total`;
     }
@@ -325,12 +361,327 @@ function loadAnalytics() {
     setTimeout(() => {
         initAnalyticsChart();
         initCategoryChart();
-        loadPredictionData();
-        loadReportsTable();
         hideLoading();
     }, 1000);
 }
 
+// ============= IMPROVED FESTIVAL CHART FUNCTIONS =============
+
+// Initialize Festival Charts from Django template data
+function initFestivalCharts() {
+    console.log('initFestivalCharts called');
+    
+    // Check if we have festival data
+    const topProductsElement = document.getElementById('top-products-data');
+    const leastProductsElement = document.getElementById('least-products-data');
+    const festivalNameElement = document.getElementById('detected-festival');
+    
+    if (!topProductsElement || !leastProductsElement) {
+        console.log('Data elements not found');
+        return;
+    }
+    
+    console.log('Top products raw data:', topProductsElement.dataset.products);
+    console.log('Least products raw data:', leastProductsElement.dataset.products);
+    
+    // Parse the data from data attributes
+    try {
+        let topProducts = [];
+        let leastProducts = [];
+        
+        // Parse top products
+        if (topProductsElement.dataset.products && topProductsElement.dataset.products !== 'None' && topProductsElement.dataset.products !== '') {
+            try {
+                // Try to parse as JSON
+                const rawData = topProductsElement.dataset.products;
+                // Handle escaped quotes
+                const cleanedData = rawData.replace(/&quot;/g, '"');
+                topProducts = JSON.parse(cleanedData);
+                console.log('Parsed top products:', topProducts);
+            } catch (e) {
+                console.error('Failed to parse top products JSON:', e);
+                console.log('Raw data:', topProductsElement.dataset.products);
+            }
+        }
+        
+        // Parse least products
+        if (leastProductsElement.dataset.products && leastProductsElement.dataset.products !== 'None' && leastProductsElement.dataset.products !== '') {
+            try {
+                const rawData = leastProductsElement.dataset.products;
+                const cleanedData = rawData.replace(/&quot;/g, '"');
+                leastProducts = JSON.parse(cleanedData);
+                console.log('Parsed least products:', leastProducts);
+            } catch (e) {
+                console.error('Failed to parse least products JSON:', e);
+            }
+        }
+        
+        // Ensure we have arrays
+        if (!Array.isArray(topProducts)) topProducts = [];
+        if (!Array.isArray(leastProducts)) leastProducts = [];
+        
+        const festivalName = festivalNameElement?.dataset.festival || 'Festival';
+        
+        console.log('Final top products:', topProducts);
+        console.log('Final least products:', leastProducts);
+        
+        if (topProducts.length > 0 || leastProducts.length > 0) {
+            createFestivalCharts(topProducts, leastProducts, festivalName);
+        } else {
+            console.log('No product data found for charts');
+            // Clear canvases and show empty state
+            ['topSellingChart', 'leastSellingChart'].forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.font = '14px Poppins, sans-serif';
+                    ctx.fillStyle = '#999';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Error in initFestivalCharts:', e);
+    }
+}
+
+// Create separate horizontal bar charts for top and least products
+function createFestivalCharts(topProducts, leastProducts, festivalName) {
+    console.log('Creating charts with:', { topProducts, leastProducts });
+    
+    // Format data properly
+    const formattedTop = Array.isArray(topProducts) ? topProducts.map(item => ({
+        product: item.product || 'Unknown',
+        units: parseFloat(item.predicted_sales) || 0
+    })) : [];
+    
+    const formattedLeast = Array.isArray(leastProducts) ? leastProducts.map(item => ({
+        product: item.product || 'Unknown',
+        units: parseFloat(item.predicted_sales) || 0
+    })) : [];
+    
+    console.log('Formatted top:', formattedTop);
+    console.log('Formatted least:', formattedLeast);
+    
+    // Create top selling chart
+    if (formattedTop.length > 0) {
+        createHorizontalBarChart(
+            'topSellingChart',
+            formattedTop,
+            '#e67e22',
+            'Top Selling Products'
+        );
+    } else {
+        console.log('No top products to display');
+        // Clear canvas if no data
+        const canvas = document.getElementById('topSellingChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px Poppins, sans-serif';
+            ctx.fillStyle = '#999';
+            ctx.textAlign = 'center';
+            ctx.fillText('No top products data', canvas.width/2, canvas.height/2);
+        }
+    }
+    
+    // Create least selling chart
+    if (formattedLeast.length > 0) {
+        createHorizontalBarChart(
+            'leastSellingChart',
+            formattedLeast,
+            '#3498db',
+            'Least Selling Products'
+        );
+    } else {
+        console.log('No least products to display');
+        // Clear canvas if no data
+        const canvas = document.getElementById('leastSellingChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px Poppins, sans-serif';
+            ctx.fillStyle = '#999';
+            ctx.textAlign = 'center';
+            ctx.fillText('No least products data', canvas.width/2, canvas.height/2);
+        }
+    }
+}
+
+// Create a horizontal bar chart - IMPROVED VERSION
+function createHorizontalBarChart(canvasId, data, color, label) {
+    console.log(`Creating ${canvasId} with data:`, data);
+    
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.log(`Canvas ${canvasId} not found`);
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (canvasId === 'topSellingChart' && window.topSellingChart) {
+        window.topSellingChart.destroy();
+    } else if (canvasId === 'leastSellingChart' && window.leastSellingChart) {
+        window.leastSellingChart.destroy();
+    }
+    
+    // Make sure we have valid data
+    if (!data || data.length === 0) {
+        console.log(`No data for ${canvasId}, showing empty message`);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px Poppins, sans-serif';
+        ctx.fillStyle = '#999';
+        ctx.textAlign = 'center';
+        ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
+        return;
+    }
+    
+    // Sort data by units descending for better visualization
+    const sortedData = [...data].sort((a, b) => b.units - a.units);
+    
+    // Prepare chart data
+    const labels = sortedData.map(item => {
+        // Truncate long product names
+        return item.product && item.product.length > 20 
+            ? item.product.substring(0, 17) + '...' 
+            : item.product || 'Unknown';
+    });
+    
+    const values = sortedData.map(item => {
+        // Ensure we have a valid number
+        const val = parseFloat(item.units) || 0;
+        return Math.max(0, val); // No negative values
+    });
+    
+    console.log('Chart labels:', labels);
+    console.log('Chart values:', values);
+    
+    // Create gradient colors based on value
+    const backgroundColors = values.map((value, index) => {
+        const opacity = 0.7 - (index * 0.04);
+        return color.replace('#', `rgba(${hexToRgb(color)}, ${Math.max(opacity, 0.3)})`);
+    });
+    
+    // Create new chart
+    const newChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Expected Units',
+                data: values,
+                backgroundColor: backgroundColors,
+                borderColor: color,
+                borderWidth: 1,
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            indexAxis: 'y', // This makes it horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 20,
+                    top: 10,
+                    bottom: 10
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            // Show full product name in tooltip
+                            const fullProduct = sortedData[context.dataIndex].product || 'Unknown';
+                            return fullProduct + ': ' + context.raw.toLocaleString() + ' units';
+                        },
+                        title: function() {
+                            return ''; // Remove default title
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Expected Units',
+                        color: '#666',
+                        font: {
+                            size: 11,
+                            family: 'Poppins, sans-serif'
+                        }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        },
+                        font: {
+                            size: 10,
+                            family: 'Poppins, sans-serif'
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11,
+                            family: 'Poppins, sans-serif'
+                        },
+                        maxRotation: 0,
+                        autoSkip: true,
+                        autoSkipPadding: 10
+                    }
+                }
+            }
+        }
+    });
+    
+    // Store chart reference globally
+    if (canvasId === 'topSellingChart') {
+        window.topSellingChart = newChart;
+    } else {
+        window.leastSellingChart = newChart;
+    }
+    
+    console.log(`Chart ${canvasId} created successfully with ${sortedData.length} items`);
+}
+
+// Helper function to convert hex to rgb
+function hexToRgb(hex) {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse hex values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    return `${r}, ${g}, ${b}`;
+}
+
+// ============= END OF FESTIVAL CHART FUNCTIONS =============
+
+// Load prediction data
 function loadPredictionData() {
     const predictions = {
         nextWeek: 3250,
@@ -871,21 +1222,35 @@ function loadProductDropdown() {
     
     select.innerHTML = '<option value="">Select Product</option>';
     
-    // Simulate loading products
-    const products = [
-        { id: 1, name: 'Laptop Pro' },
-        { id: 2, name: 'Wireless Mouse' },
-        { id: 3, name: 'T-Shirt' },
-        { id: 4, name: 'Coffee Maker' },
-        { id: 5, name: 'Organic Coffee' }
-    ];
-    
-    products.forEach(product => {
-        const option = document.createElement('option');
-        option.value = product.id;
-        option.textContent = product.name;
-        select.appendChild(option);
-    });
+    // Get products from the page
+    const productCards = document.querySelectorAll('.product-card');
+    if (productCards.length > 0) {
+        productCards.forEach((card, index) => {
+            const title = card.querySelector('.product-title');
+            if (title) {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = title.textContent;
+                select.appendChild(option);
+            }
+        });
+    } else {
+        // Fallback products
+        const products = [
+            { id: 1, name: 'Laptop Pro' },
+            { id: 2, name: 'Wireless Mouse' },
+            { id: 3, name: 'T-Shirt' },
+            { id: 4, name: 'Coffee Maker' },
+            { id: 5, name: 'Organic Coffee' }
+        ];
+        
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = product.name;
+            select.appendChild(option);
+        });
+    }
 }
 
 function loadRecentAlerts() {
@@ -968,14 +1333,13 @@ function bulkResetPassword() {
         selected.forEach(checkbox => {
             const row = checkbox.closest('tr');
             const roleBadge = row.querySelector('.status-badge');
-            const role = roleBadge.textContent.toLowerCase();
+            const role = roleBadge ? roleBadge.textContent.toLowerCase() : 'user';
             usersToReset.push({
                 id: checkbox.value,
                 type: role
             });
         });
         
-        // In a real implementation, you would send this data to the server
         setTimeout(() => {
             showToast('Passwords reset emails sent!', 'success');
             hideLoading();
