@@ -1,3 +1,7 @@
+
+console.log("ADMIN JS LOADED");
+alert("JS LOADED");
+
 // Global Variables
 let currentUser = 'admin@retailx.com';
 let salesChart, analyticsChart, categoryChart;
@@ -1593,4 +1597,140 @@ function saveSettings() {
     
     localStorage.setItem('retailx-settings', JSON.stringify(settings));
     showToast('Settings saved!', 'success');
+}
+
+/* ======================================================
+   🤖 CHATBOT SCRIPT - CORRECTED VERSION
+====================================================== */
+
+document.addEventListener("DOMContentLoaded", function() {
+    const button = document.getElementById("chatbot-button");
+    const box = document.getElementById("chatbot-box");
+
+    // ✅ Toggle chatbot open/close
+    if (button && box) {
+        button.addEventListener("click", function() {
+            if (box.style.display === "flex" || box.style.display === "block") {
+                box.style.display = "none";
+            } else {
+                box.style.display = "flex";
+            }
+        });
+    }
+
+    // ✅ Allow Enter key to send message
+    const input = document.getElementById("chatbot-input");
+    if (input) {
+        input.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+});
+
+/* =========================
+   GET CSRF TOKEN FUNCTION (Single version)
+========================= */
+function getCSRFToken() {
+    let cookieValue = null;
+    const name = "csrftoken";
+    
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+/* =========================
+   SEND MESSAGE FUNCTION
+========================= */
+function sendMessage() {
+    const input = document.getElementById("chatbot-input");
+    const messages = document.getElementById("chatbot-messages");
+
+    if (!input || !messages) return;
+
+    const message = input.value.trim();
+    if (message === "") return;
+
+    // ✅ Show user message
+    messages.innerHTML += `
+        <div class="chat-user">
+            <span>${escapeHtml(message)}</span>
+        </div>
+    `;
+
+    input.value = "";
+    messages.scrollTop = messages.scrollHeight;
+
+    // ✅ Show typing indicator
+    const typingId = "typing-" + Date.now();
+    messages.innerHTML += `
+        <div class="chat-bot" id="${typingId}">
+            <span>🤖 Typing...</span>
+        </div>
+    `;
+    messages.scrollTop = messages.scrollHeight;
+
+    // ✅ Send message to Django backend
+    fetch("/chatbot/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return res.json();
+    })
+    .then(data => {
+        // Remove typing indicator
+        const typingElement = document.getElementById(typingId);
+        if (typingElement) typingElement.remove();
+
+        // Add bot response
+        messages.innerHTML += `
+            <div class="chat-bot">
+                <span>${escapeHtml(data.reply)}</span>
+            </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+    })
+    .catch(error => {
+        console.error("Chatbot error:", error);
+        
+        // Remove typing indicator
+        const typingElement = document.getElementById(typingId);
+        if (typingElement) typingElement.remove();
+
+        // Show error message
+        messages.innerHTML += `
+            <div class="chat-bot">
+                <span>⚠️ Sorry, I'm having trouble connecting. Please try again.</span>
+            </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+    });
+}
+
+/* =========================
+   HELPER: Escape HTML to prevent XSS
+========================= */
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }

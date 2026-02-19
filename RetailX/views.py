@@ -20,6 +20,8 @@ from django.conf import settings
 from AccountsDB.models import Admin, Cashier, Manager
 from productsDB.models import Product
 
+from .gemini_chat import ask_gemini
+
 # ------------------------------
 # Path to trained models folder
 # ------------------------------
@@ -989,14 +991,71 @@ def manager_home(request):
     manager_username = request.session.get('manager_username')
     try:
         manager = Manager.objects.get(username=manager_username)
+        
+        # ================== FESTIVAL SALES ANALYTICS =================
+        festival_input = (request.GET.get('festival') or '').strip()
+        print("MANAGER - FESTIVAL INPUT:", festival_input)
+        detected_festival = None
+        top_products = []
+        least_products = []
+        festival_error = None
+
+        if festival_input:
+            # Check if input is a date (DD-MM-YYYY format)
+            try:
+                # Try to parse as date
+                input_date = datetime.strptime(festival_input, '%d-%m-%Y')
+                
+                # Get the correct festival name based on actual model naming
+                festival_name = get_festival_from_date(input_date)
+                
+                if festival_name:
+                    print(f"Date {festival_input} mapped to festival: {festival_name}")
+                    # Get predictions for that festival
+                    festival_result = get_festival_sales(festival_name)
+                    top_products = festival_result.get("top_products", [])
+                    least_products = festival_result.get("least_products", [])
+                    detected_festival = festival_name
+                    festival_error = festival_result.get("error")
+                else:
+                    festival_error = f"No festival found for date {festival_input}"
+                        
+            except ValueError:
+                # Not a valid date, treat as festival name
+                print(f"Treating '{festival_input}' as festival name")
+                festival_result = get_festival_sales(festival_input)
+                top_products = festival_result.get("top_products", [])
+                least_products = festival_result.get("least_products", [])
+                detected_festival = festival_result.get("festival")
+                festival_error = festival_result.get("error")
+        # ============================================================
+
+        # ================== CONTEXT ================================
+        # Convert products to JSON-safe format
+        import json
+        top_products_json = json.dumps(list(top_products)) if top_products else '[]'
+        least_products_json = json.dumps(list(least_products)) if least_products else '[]'
+        
         context = {
             'manager_name': manager.fullname,
-            'manager_username': manager.username
+            'manager_username': manager.username,
+            'top_products': top_products_json,  # Send as JSON string
+            'least_products': least_products_json,  # Send as JSON string
+            'detected_festival': detected_festival,
+            'festival_error': festival_error,
+            'festival_choices': FESTIVAL_CHOICES,
         }
+        # ============================================================
+        
     except Manager.DoesNotExist:
         context = {
             'manager_name': 'Manager',
-            'manager_username': 'Unknown'
+            'manager_username': 'Unknown',
+            'top_products': '[]',
+            'least_products': '[]',
+            'detected_festival': None,
+            'festival_error': None,
+            'festival_choices': FESTIVAL_CHOICES,
         }
     
     return render(request, 'manager_home.html', context)
@@ -1008,3 +1067,34 @@ def logout_view(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
+
+@csrf_exempt
+def chatbot_api(request):
+    if request.method == "POST":
+        try:
+            print("✅ CHATBOT REQUEST RECEIVED")
+            
+            # Parse JSON data
+            data = json.loads(request.body)
+            message = data.get("message", "")
+            
+            print(f"📝 USER MESSAGE: {message}")
+            
+            if not message:
+                return JsonResponse({"reply": "Please send a message."}, status=400)
+            
+            # Get response from Gemini
+            reply = ask_gemini(message)
+            
+            print(f"🤖 BOT REPLY: {reply[:100]}...")  # Print first 100 chars
+            
+            return JsonResponse({"reply": reply})
+            
+        except json.JSONDecodeError:
+            print("❌ Invalid JSON")
+            return JsonResponse({"reply": "Invalid request format."}, status=400)
+        except Exception as e:
+            print(f"❌ CHATBOT ERROR: {str(e)}")
+            return JsonResponse({"reply": "Server error. Please try again."}, status=500)
+    
+    return JsonResponse({"reply": "Only POST requests are allowed."}, status=405)

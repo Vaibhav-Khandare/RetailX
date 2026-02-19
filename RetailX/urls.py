@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from RetailX import views
 from . import views_api
+from .views import chatbot_api
 
 urlpatterns = [
 
@@ -88,6 +89,8 @@ urlpatterns = [
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     
     path('terms/', views.terms, name='terms'),
+    
+    path("chatbot/", views.chatbot_api, name="chatbot_api"),
 
 ]
 
