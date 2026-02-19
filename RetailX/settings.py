@@ -135,3 +135,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 
 GENAI_API_KEY = os.getenv('GENAI_API_KEY')
+# GENAI_API_KEY ='AIzaSyDNaODBv71hNqzKqMZb9676SFcapOlyQhI'

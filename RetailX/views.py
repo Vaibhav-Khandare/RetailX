@@ -10,12 +10,15 @@ import numpy as np
 from prophet import Prophet
 import joblib
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.conf import settings
+from django.core import serializers
+from django.db import IntegrityError
+from django.db.models import Q
 
 from AccountsDB.models import Admin, Cashier, Manager
 from productsDB.models import Product
@@ -900,8 +903,8 @@ def admin_home(request):
         'users': all_users,
         'products': list(all_products),
         'low_stock_count': low_stock_count,
-        'top_products': top_products_json,  # Send as JSON string
-        'least_products': least_products_json,  # Send as JSON string
+        'top_products': top_products_json,
+        'least_products': least_products_json,
         'detected_festival': detected_festival,
         'festival_error': festival_error,
         'festival_choices': FESTIVAL_CHOICES,
@@ -983,6 +986,10 @@ def cashier_home(request):
         }
     return render(request, 'cashier_home.html', context)
 
+# ====================================================================
+# ENHANCED MANAGER HOME WITH COMPLETE CASHIER CRUD OPERATIONS
+# ====================================================================
+
 @never_cache
 def manager_home(request):
     if not request.session.get('manager_username'):
@@ -1030,8 +1037,19 @@ def manager_home(request):
                 festival_error = festival_result.get("error")
         # ============================================================
 
+        # ================== GET ALL CASHIERS FOR STAFF MANAGEMENT =================
+        all_cashiers = Cashier.objects.all().order_by('-id')
+        cashiers_list = []
+        for cashier in all_cashiers:
+            cashiers_list.append({
+                'id': cashier.id,
+                'fullname': cashier.fullname,
+                'email': cashier.email,
+                'username': cashier.username,
+            })
+        # ============================================================
+
         # ================== CONTEXT ================================
-        # Convert products to JSON-safe format
         import json
         top_products_json = json.dumps(list(top_products)) if top_products else '[]'
         least_products_json = json.dumps(list(least_products)) if least_products else '[]'
@@ -1039,11 +1057,13 @@ def manager_home(request):
         context = {
             'manager_name': manager.fullname,
             'manager_username': manager.username,
-            'top_products': top_products_json,  # Send as JSON string
-            'least_products': least_products_json,  # Send as JSON string
+            'top_products': top_products_json,
+            'least_products': least_products_json,
             'detected_festival': detected_festival,
             'festival_error': festival_error,
             'festival_choices': FESTIVAL_CHOICES,
+            'cashiers': json.dumps(cashiers_list),
+            'total_cashiers': len(cashiers_list),
         }
         # ============================================================
         
@@ -1056,10 +1076,251 @@ def manager_home(request):
             'detected_festival': None,
             'festival_error': None,
             'festival_choices': FESTIVAL_CHOICES,
+            'cashiers': '[]',
+            'total_cashiers': 0,
         }
     
     return render(request, 'manager_home.html', context)
 
+# ====================================================================
+# CASHIER MANAGEMENT API ENDPOINTS (AJAX)
+# ====================================================================
+
+@csrf_exempt
+@never_cache
+def get_all_cashiers(request):
+    """API endpoint to get all cashiers (AJAX)"""
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'GET':
+        cashiers = Cashier.objects.all().order_by('-id')
+        cashiers_data = []
+        
+        for cashier in cashiers:
+            cashiers_data.append({
+                'id': cashier.id,
+                'fullname': cashier.fullname,
+                'email': cashier.email,
+                'username': cashier.username,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'cashiers': cashiers_data,
+            'total': len(cashiers_data)
+        })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+@never_cache
+def add_cashier(request):
+    """API endpoint to add a new cashier"""
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Extract data
+            fullname = data.get('fullname', '')
+            email = data.get('email', '')
+            username = data.get('username', '').lower()
+            password = data.get('password', '')
+            
+            # Validation
+            if not fullname or not email or not username or not password:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'All required fields must be filled'
+                }, status=400)
+            
+            # Check if username already exists
+            if Cashier.objects.filter(username=username).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Username already exists'
+                }, status=400)
+            
+            # Check if email already exists
+            if Cashier.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Email already registered'
+                }, status=400)
+            
+            # Hash password
+            hashed_password = make_password(password)
+            
+            # Create cashier
+            cashier = Cashier(
+                fullname=fullname,
+                email=email,
+                username=username,
+                password=hashed_password,
+                confirm_password=hashed_password
+            )
+            cashier.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Cashier added successfully',
+                'cashier': {
+                    'id': cashier.id,
+                    'fullname': cashier.fullname,
+                    'email': cashier.email,
+                    'username': cashier.username,
+                }
+            })
+            
+        except IntegrityError as e:
+            return JsonResponse({
+                'success': False,
+                'error': 'Database error. Username or email may already exist.'
+            }, status=400)
+        except Exception as e:
+            print(f"Error adding cashier: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+@never_cache
+def edit_cashier(request, cashier_id):
+    """API endpoint to edit an existing cashier"""
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            
+            # Get cashier
+            cashier = get_object_or_404(Cashier, id=cashier_id)
+            
+            # Extract data
+            fullname = data.get('fullname', '')
+            email = data.get('email', '')
+            username = data.get('username', '').lower()
+            password = data.get('password', '')
+            
+            # Validation
+            if not fullname or not email or not username:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Required fields cannot be empty'
+                }, status=400)
+            
+            # Check if username already exists (excluding current cashier)
+            if Cashier.objects.filter(username=username).exclude(id=cashier_id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Username already taken by another cashier'
+                }, status=400)
+            
+            # Check if email already exists (excluding current cashier)
+            if Cashier.objects.filter(email=email).exclude(id=cashier_id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Email already registered to another cashier'
+                }, status=400)
+            
+            # Update fields
+            cashier.fullname = fullname
+            cashier.email = email
+            cashier.username = username
+            
+            # Update password if provided
+            if password and password.strip():
+                cashier.password = make_password(password)
+                cashier.confirm_password = cashier.password
+            
+            cashier.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Cashier updated successfully'
+            })
+            
+        except Exception as e:
+            print(f"Error updating cashier: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+@never_cache
+def delete_cashier(request, cashier_id):
+    """API endpoint to delete a cashier"""
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'DELETE':
+        try:
+            cashier = get_object_or_404(Cashier, id=cashier_id)
+            cashier_name = cashier.fullname
+            cashier.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Cashier {cashier_name} deleted successfully'
+            })
+            
+        except Exception as e:
+            print(f"Error deleting cashier: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+@never_cache
+def get_cashier_details(request, cashier_id):
+    """API endpoint to get details of a specific cashier"""
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'GET':
+        try:
+            cashier = get_object_or_404(Cashier, id=cashier_id)
+            
+            return JsonResponse({
+                'success': True,
+                'cashier': {
+                    'id': cashier.id,
+                    'fullname': cashier.fullname,
+                    'email': cashier.email,
+                    'username': cashier.username,
+                }
+            })
+            
+        except Exception as e:
+            print(f"Error fetching cashier details: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# -------------------------------------------------------------------
+# Logout View
+# -------------------------------------------------------------------
 def logout_view(request):
     request.session.flush()
     response = redirect('/')
@@ -1086,7 +1347,7 @@ def chatbot_api(request):
             # Get response from Gemini
             reply = ask_gemini(message)
             
-            print(f"🤖 BOT REPLY: {reply[:100]}...")  # Print first 100 chars
+            print(f"🤖 BOT REPLY: {reply[:100]}...")
             
             return JsonResponse({"reply": reply})
             

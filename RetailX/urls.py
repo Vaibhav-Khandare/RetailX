@@ -1,6 +1,13 @@
 """
 URL configuration for RetailX project.
 
+
+
+
+
+
+
+
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
 Examples:
@@ -20,10 +27,20 @@ from RetailX import views
 from . import views_api
 from .views import chatbot_api
 
+
+
+
 urlpatterns = [
 
     # Admin
     path('admin/', admin.site.urls),
+
+    path('api/cashiers/', views.get_all_cashiers, name='get_all_cashiers'),
+    path('api/cashiers/add/', views.add_cashier, name='add_cashier'),
+    path('api/cashiers/<int:cashier_id>/', views.get_cashier_details, name='get_cashier_details'),
+    path('api/cashiers/<int:cashier_id>/edit/', views.edit_cashier, name='edit_cashier'),
+    path('api/cashiers/<int:cashier_id>/delete/', views.delete_cashier, name='delete_cashier'),
+
 
     # Public Pages
     path('', views.index, name='home'),

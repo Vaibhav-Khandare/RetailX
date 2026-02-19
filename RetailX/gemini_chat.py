@@ -1,12 +1,11 @@
-import os
 import google.generativeai as genai
 from django.conf import settings
 import traceback
 
 # ------------------------------------------------------------
-# Load API key from Django settings or environment variable
+# Load API key directly from Django settings
 # ------------------------------------------------------------
-API_KEY = getattr(settings, 'GENAI_API_KEY', os.getenv('GENAI_API_KEY'))
+API_KEY = getattr(settings, 'GENAI_API_KEY', None)
 
 # List of models to try, in order of preference (newest first)
 MODEL_NAMES = [
@@ -47,7 +46,7 @@ if API_KEY:
         print(f"❌ Gemini configuration error: {e}")
         model = None
 else:
-    print("⚠️ GENAI_API_KEY not set. Chatbot will not work.")
+    print("⚠️ GENAI_API_KEY not set in settings. Chatbot will not work.")
 
 def ask_gemini(message):
     """
@@ -56,7 +55,7 @@ def ask_gemini(message):
     if not model:
         return (
             "⚠️ AI model not configured.\n"
-            "Please set the GENAI_API_KEY environment variable or add it to your .env file.\n"
+            "Please add GENAI_API_KEY to your Django settings.py file.\n"
             "Contact your project admin for the key."
         )
 
@@ -83,5 +82,3 @@ def ask_gemini(message):
         print(f"❌ GEMINI ERROR: {str(e)}")
         print(traceback.format_exc())
         return f"Sorry, I encountered an error: {str(e)[:100]}"
-
-        
