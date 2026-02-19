@@ -1524,7 +1524,7 @@ tbody tr:hover {
 .ux-empty{color:var(--gray);text-align:center;padding:18px}
 
 /* ======================================================
-   🤖 AI CHATBOT STYLES
+   🤖 AI CHATBOT STYLES (FIXED)
 ====================================================== */
 
 /* Simple chatbot styles */
@@ -1554,7 +1554,7 @@ tbody tr:hover {
     max-width: 80%;
 }
 
-/* Force visible styles - with !important to override any conflicts */
+/* Force visible styles - but without !important on display */
 #chatbot-button {
     position: fixed !important;
     bottom: 25px !important;
@@ -1592,7 +1592,7 @@ tbody tr:hover {
     height: 460px !important;
     background: white !important;
     border-radius: 12px !important;
-    display: none !important;
+    display: none; /* no !important – allows JS to toggle */
     flex-direction: column !important;
     z-index: 999999 !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;

@@ -1,6 +1,4 @@
-
 console.log("ADMIN JS LOADED");
-alert("JS LOADED");
 
 // Global Variables
 let currentUser = 'admin@retailx.com';
@@ -38,9 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if we have festival data to display
     setTimeout(function() {
-        const hasFestivalData = document.getElementById('detected-festival') && 
-                                 document.getElementById('detected-festival').dataset.festival;
-        
+        const festivalEl = document.getElementById('detected-festival');
+        const hasFestivalData = festivalEl && festivalEl.dataset.festival;
         if (hasFestivalData) {
             console.log('Festival data detected on page load, initializing charts...');
             if (typeof initFestivalCharts === 'function') {
@@ -63,7 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-refresh data every 30 seconds
     setInterval(() => {
-        if (document.querySelector('#dashboard') && document.querySelector('#dashboard').classList.contains('active')) {
+        const dash = document.querySelector('#dashboard');
+        if (dash && dash.classList.contains('active')) {
             loadDashboardData();
         }
     }, 30000);
@@ -237,8 +235,10 @@ function loadUsers() {
 }
 
 function filterUsers() {
-    const filterValue = document.getElementById('userFilter')?.value || 'all';
-    const searchValue = document.getElementById('userSearch')?.value.toLowerCase() || '';
+    const filterEl = document.getElementById('userFilter');
+    const filterValue = filterEl ? filterEl.value : 'all';
+    const searchEl = document.getElementById('userSearch');
+    const searchValue = searchEl ? searchEl.value.toLowerCase() : '';
     
     const rows = document.querySelectorAll('#usersTableBody tr');
     let visibleCount = 0;
@@ -290,8 +290,10 @@ function loadProducts() {
 }
 
 function filterProducts() {
-    const categoryValue = document.getElementById('categoryFilter')?.value || 'all';
-    const stockValue = document.getElementById('stockFilter')?.value || 'all';
+    const catEl = document.getElementById('categoryFilter');
+    const categoryValue = catEl ? catEl.value : 'all';
+    const stockEl = document.getElementById('stockFilter');
+    const stockValue = stockEl ? stockEl.value : 'all';
     
     const productCards = document.querySelectorAll('.product-card');
     let visibleCount = 0;
@@ -424,7 +426,7 @@ function initFestivalCharts() {
         if (!Array.isArray(topProducts)) topProducts = [];
         if (!Array.isArray(leastProducts)) leastProducts = [];
         
-        const festivalName = festivalNameElement?.dataset.festival || 'Festival';
+        const festivalName = festivalNameElement ? festivalNameElement.dataset.festival : 'Festival';
         
         console.log('Final top products:', topProducts);
         console.log('Final least products:', leastProducts);
@@ -1119,11 +1121,11 @@ function saveUser() {
     showLoading();
     
     const userData = {
-        name: document.getElementById('userName')?.value || '',
-        email: document.getElementById('userEmail')?.value || '',
-        role: document.getElementById('userRole')?.value || '',
-        password: document.getElementById('userPassword')?.value || '',
-        status: document.getElementById('userStatus')?.value || 'active'
+        name: document.getElementById('userName') ? document.getElementById('userName').value : '',
+        email: document.getElementById('userEmail') ? document.getElementById('userEmail').value : '',
+        role: document.getElementById('userRole') ? document.getElementById('userRole').value : '',
+        password: document.getElementById('userPassword') ? document.getElementById('userPassword').value : '',
+        status: document.getElementById('userStatus') ? document.getElementById('userStatus').value : 'active'
     };
     
     // Simulate API call
@@ -1139,13 +1141,13 @@ function saveProduct() {
     showLoading();
     
     const productData = {
-        name: document.getElementById('productName')?.value || '',
-        category: document.getElementById('productCategory')?.value || '',
-        sku: document.getElementById('productSKU')?.value || '',
-        price: parseFloat(document.getElementById('productPrice')?.value || 0),
-        stock: parseInt(document.getElementById('productStock')?.value || 0),
-        minStock: parseInt(document.getElementById('productMinStock')?.value || 0),
-        description: document.getElementById('productDescription')?.value || ''
+        name: document.getElementById('productName') ? document.getElementById('productName').value : '',
+        category: document.getElementById('productCategory') ? document.getElementById('productCategory').value : '',
+        sku: document.getElementById('productSKU') ? document.getElementById('productSKU').value : '',
+        price: parseFloat(document.getElementById('productPrice') ? document.getElementById('productPrice').value : 0),
+        stock: parseInt(document.getElementById('productStock') ? document.getElementById('productStock').value : 0),
+        minStock: parseInt(document.getElementById('productMinStock') ? document.getElementById('productMinStock').value : 0),
+        description: document.getElementById('productDescription') ? document.getElementById('productDescription').value : ''
     };
     
     // Simulate API call
@@ -1161,11 +1163,11 @@ function saveInventoryAdjustment() {
     showLoading();
     
     const adjustmentData = {
-        type: document.getElementById('adjustmentType')?.value || '',
-        productId: document.getElementById('inventoryProduct')?.value || '',
-        quantity: parseInt(document.getElementById('adjustmentQuantity')?.value || 0),
-        reason: document.getElementById('adjustmentReason')?.value || '',
-        date: document.getElementById('adjustmentDate')?.value || ''
+        type: document.getElementById('adjustmentType') ? document.getElementById('adjustmentType').value : '',
+        productId: document.getElementById('inventoryProduct') ? document.getElementById('inventoryProduct').value : '',
+        quantity: parseInt(document.getElementById('adjustmentQuantity') ? document.getElementById('adjustmentQuantity').value : 0),
+        reason: document.getElementById('adjustmentReason') ? document.getElementById('adjustmentReason').value : '',
+        date: document.getElementById('adjustmentDate') ? document.getElementById('adjustmentDate').value : ''
     };
     
     // Simulate API call
@@ -1480,7 +1482,7 @@ function deleteUser(id, type) {
         form.method = 'POST';
         form.action = `/delete-user/${type}/${id}/`;
         
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
         if (csrfToken) {
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
@@ -1503,7 +1505,7 @@ function resetUserPassword(id, type) {
         form.method = 'POST';
         form.action = `/reset-password/${type}/${id}/`;
         
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
         if (csrfToken) {
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
@@ -1530,7 +1532,7 @@ function deleteProduct(id) {
         form.method = 'POST';
         form.action = `/delete-product/${id}/`;
         
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
         if (csrfToken) {
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
@@ -1568,7 +1570,8 @@ function toggleAllUsers() {
 }
 
 function updateSalesChart() {
-    const period = document.getElementById('salesPeriod')?.value;
+    const periodEl = document.getElementById('salesPeriod');
+    const period = periodEl ? periodEl.value : null;
     showLoading();
     
     setTimeout(() => {
@@ -1578,7 +1581,8 @@ function updateSalesChart() {
 }
 
 function updateAnalytics() {
-    const period = document.getElementById('reportPeriod')?.value;
+    const periodEl = document.getElementById('reportPeriod');
+    const period = periodEl ? periodEl.value : null;
     showLoading();
     
     setTimeout(() => {
@@ -1589,49 +1593,21 @@ function updateAnalytics() {
 }
 
 function saveSettings() {
+    const emailCheck = document.getElementById('emailNotifications');
+    const lowStockCheck = document.getElementById('lowStockAlerts');
+    const newUserCheck = document.getElementById('newUserAlerts');
     const settings = {
-        emailNotifications: document.getElementById('emailNotifications')?.checked || false,
-        lowStockAlerts: document.getElementById('lowStockAlerts')?.checked || false,
-        newUserAlerts: document.getElementById('newUserAlerts')?.checked || false
+        emailNotifications: emailCheck ? emailCheck.checked : false,
+        lowStockAlerts: lowStockCheck ? lowStockCheck.checked : false,
+        newUserAlerts: newUserCheck ? newUserCheck.checked : false
     };
     
     localStorage.setItem('retailx-settings', JSON.stringify(settings));
     showToast('Settings saved!', 'success');
 }
 
-/* ======================================================
-   🤖 CHATBOT SCRIPT - CORRECTED VERSION
-====================================================== */
-
-document.addEventListener("DOMContentLoaded", function() {
-    const button = document.getElementById("chatbot-button");
-    const box = document.getElementById("chatbot-box");
-
-    // ✅ Toggle chatbot open/close
-    if (button && box) {
-        button.addEventListener("click", function() {
-            if (box.style.display === "flex" || box.style.display === "block") {
-                box.style.display = "none";
-            } else {
-                box.style.display = "flex";
-            }
-        });
-    }
-
-    // ✅ Allow Enter key to send message
-    const input = document.getElementById("chatbot-input");
-    if (input) {
-        input.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-});
-
 /* =========================
-   GET CSRF TOKEN FUNCTION (Single version)
+   GET CSRF TOKEN FUNCTION
 ========================= */
 function getCSRFToken() {
     let cookieValue = null;
@@ -1662,7 +1638,7 @@ function sendMessage() {
     const message = input.value.trim();
     if (message === "") return;
 
-    // ✅ Show user message
+    // Show user message
     messages.innerHTML += `
         <div class="chat-user">
             <span>${escapeHtml(message)}</span>
@@ -1672,7 +1648,7 @@ function sendMessage() {
     input.value = "";
     messages.scrollTop = messages.scrollHeight;
 
-    // ✅ Show typing indicator
+    // Show typing indicator
     const typingId = "typing-" + Date.now();
     messages.innerHTML += `
         <div class="chat-bot" id="${typingId}">
@@ -1681,7 +1657,7 @@ function sendMessage() {
     `;
     messages.scrollTop = messages.scrollHeight;
 
-    // ✅ Send message to Django backend
+    // Send message to Django backend
     fetch("/chatbot/", {
         method: "POST",
         headers: {
@@ -1727,10 +1703,30 @@ function sendMessage() {
 }
 
 /* =========================
-   HELPER: Escape HTML to prevent XSS
+   HELPER: Escape HTML
 ========================= */
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+/* =========================
+   CHATBOT TOGGLE (FIXED)
+========================= */
+function toggleChatbot() {
+    const box = document.getElementById("chatbot-box");
+
+    if (!box) {
+        console.log("Chatbot box not found");
+        return;
+    }
+
+    if (box.style.display === "none" || box.style.display === "") {
+        box.style.display = "flex";
+        console.log("Opening chatbot");
+    } else {
+        box.style.display = "none";
+        console.log("Closing chatbot");
+    }
 }

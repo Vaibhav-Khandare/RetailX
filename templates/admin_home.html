@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RetailX - Advanced Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/css/admin_home.css">
+    <link rel="stylesheet" href="{% static 'css/admin_home.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,7 +21,7 @@
         <div class="logo">
             <div class="logo-circle">
                 <div class="logo-image">
-                    <img src="/static/images/RetailX logo with fruits and bar design.png" alt="RetailX Logo">
+                    <img src="{% static 'images/RetailX logo with fruits and bar design.png' %}" alt="RetailX Logo">
                 </div>
             </div>
             <h2>RetailX</h2>
@@ -31,8 +31,8 @@
         <div class="user-info">
             <div class="avatar">A</div>
             <div class="user-details">
-                <h4>{{uname}}</h4>
-                <p>{{email}}</p>
+                <h4>{{ uname }}</h4>
+                <p>{{ email }}</p>
             </div>
         </div>
 
@@ -124,7 +124,7 @@
                         </div>
                         <div class="stat-content">
                             <h3>Total Users</h3>
-                            <p class="stat-value" id="totalUsers">{{totaluser}}</p>
+                            <p class="stat-value" id="totalUsers">{{ totaluser }}</p>
                             <span class="stat-change positive">
                                 <i class="fas fa-arrow-up"></i> Updated
                             </span>
@@ -434,163 +434,161 @@
                 </div>
             </section>
 
-            {% comment %}Analysis table  {% endcomment %}
+            <!-- Analysis table -->
+            <section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
 
-<section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
+                <!-- Hidden data elements for JavaScript -->
+                <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
+                <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
+                <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
 
-    <!-- Hidden data elements for JavaScript -->
-    <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
-    <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
-    <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
+                <div class="analytics-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px; align-items: stretch;">
 
-    <div class="analytics-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px; align-items: stretch;">
-
-        <!-- ================= SEARCH CARD ================= -->
-        <!-- ================= SEARCH CARD ================= -->
-<div class="analytics-card" style="width: 100%; min-width: 1200px; height:500px;">
-    <div class="card-header" style="padding: 18px 25px;">
-        <h3 style="margin: 0; font-size: 20px;"><i class="fas fa-search"></i> Festival Sales Prediction</h3>
-        <p style="font-size:14px; color:var(--gray); margin: 8px 0 0 0;">
-            Choose a festival OR enter a date to predict demand
-        </p>
-    </div>
-
-    <div class="card-body" style="padding: 20px 25px 25px 25px;">
-
-        <form method="get" action="" id="festivalSearchForm" style="display: flex; flex-direction: column; gap: 20px;">
-
-            <!-- DROPDOWN -->
-            <div style="width: 100%;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
-                    <i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--primary);"></i> Select Festival
-                </label>
-                <select name="festival" id="festival_select" 
-                        style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
-                    <option value="">-- Choose a festival --</option>
-                    {% for festival in festival_choices %}
-                        <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
-                            {{ festival }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- OR DIVIDER -->
-            <div style="text-align: center; margin: 5px 0; position: relative;">
-                <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--gray-light);"></div>
-                <span style="background: var(--white); padding: 0 20px; position: relative; color: var(--gray); font-size: 15px; font-weight: 500;">OR</span>
-            </div>
-
-            <!-- DATE INPUT -->
-            <div style="width: 100%;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
-                    <i class="fas fa-calendar" style="margin-right: 8px; color: var(--primary);"></i> Enter Date
-                </label>
-                <input type="text" name="festival_date" id="festival_date"
-                       placeholder="DD-MM-YYYY (example: 25-12-2025)"
-                       style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
-                <small style="display: block; margin-top: 8px; color: var(--gray); font-size: 13px; padding-left: 5px;">
-                    Leave blank if using dropdown above
-                </small>
-            </div>
-
-            <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
-
-            <button type="submit" 
-                    style="width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);">
-                <i class="fas fa-search" style="font-size: 18px;"></i> Predict Sales
-            </button>
-        </form>
-
-        <script>
-            document.getElementById('festivalSearchForm').addEventListener('submit', function(e) {
-                const selectValue = document.getElementById('festival_select').value;
-                const dateValue = document.getElementById('festival_date').value;
-                const hiddenInput = document.getElementById('festival_hidden');
-
-                if (dateValue) {
-                    hiddenInput.value = dateValue;
-                } else if (selectValue) {
-                    hiddenInput.value = selectValue;
-                } else {
-                    e.preventDefault();
-                    alert('Please select a festival or enter a date');
-                }
-            });
-        </script>
-
-    </div>
-</div> 
-        <!-- ================= RESULT CARD ================= -->
-        <div class="analytics-card full">
-            <div class="card-header">
-                <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
-            </div>
-
-            <div class="card-body">
-
-                {% if festival_error %}
-                    <div class="ux-error">
-                        <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
-                    </div>
-                {% endif %}
-
-                {% if detected_festival %}
-
-                    <!-- FESTIVAL BADGE -->
-                    <div class="ux-festival-banner">
-                        <i class="fas fa-glass-cheers"></i>
-                        <span>{{ detected_festival }}</span>
-                        <small>Expected Sales Analysis</small>
-                    </div>
-
-                    <!-- ================= CHARTS ONLY (No Product Lists) ================= -->
-                    <div class="ux-chart-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10;">
-
-                        <div class="ux-chart-card">
-                            <h4 class="ux-chart-title fire">
-                                <i class="fas fa-fire"></i> Top Selling Products
-                            </h4>
-                            <div class="ux-chart-box" style="height: 350px;">
-                                <canvas id="topSellingChart"></canvas>
-                            </div>
+                    <!-- ================= SEARCH CARD ================= -->
+                    <div class="analytics-card" style="width: 100%; min-width: 1200px; height:500px;">
+                        <div class="card-header" style="padding: 18px 25px;">
+                            <h3 style="margin: 0; font-size: 20px;"><i class="fas fa-search"></i> Festival Sales Prediction</h3>
+                            <p style="font-size:14px; color:var(--gray); margin: 8px 0 0 0;">
+                                Choose a festival OR enter a date to predict demand
+                            </p>
                         </div>
 
-                        <div class="ux-chart-card">
-                            <h4 class="ux-chart-title cool">
-                                <i class="fas fa-snowflake"></i> Least Selling Products
-                            </h4>
-                            <div class="ux-chart-box" style="height: 350px;">
-                                <canvas id="leastSellingChart"></canvas>
-                            </div>
+                        <div class="card-body" style="padding: 20px 25px 25px 25px;">
+
+                            <form method="get" action="" id="festivalSearchForm" style="display: flex; flex-direction: column; gap: 20px;">
+
+                                <!-- DROPDOWN -->
+                                <div style="width: 100%;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
+                                        <i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--primary);"></i> Select Festival
+                                    </label>
+                                    <select name="festival" id="festival_select" 
+                                            style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
+                                        <option value="">-- Choose a festival --</option>
+                                        {% for festival in festival_choices %}
+                                            <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
+                                                {{ festival }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- OR DIVIDER -->
+                                <div style="text-align: center; margin: 5px 0; position: relative;">
+                                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--gray-light);"></div>
+                                    <span style="background: var(--white); padding: 0 20px; position: relative; color: var(--gray); font-size: 15px; font-weight: 500;">OR</span>
+                                </div>
+
+                                <!-- DATE INPUT -->
+                                <div style="width: 100%;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
+                                        <i class="fas fa-calendar" style="margin-right: 8px; color: var(--primary);"></i> Enter Date
+                                    </label>
+                                    <input type="text" name="festival_date" id="festival_date"
+                                           placeholder="DD-MM-YYYY (example: 25-12-2025)"
+                                           style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
+                                    <small style="display: block; margin-top: 8px; color: var(--gray); font-size: 13px; padding-left: 5px;">
+                                        Leave blank if using dropdown above
+                                    </small>
+                                </div>
+
+                                <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
+
+                                <button type="submit" 
+                                        style="width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);">
+                                    <i class="fas fa-search" style="font-size: 18px;"></i> Predict Sales
+                                </button>
+                            </form>
+
+                            <script>
+                                document.getElementById('festivalSearchForm').addEventListener('submit', function(e) {
+                                    const selectValue = document.getElementById('festival_select').value;
+                                    const dateValue = document.getElementById('festival_date').value;
+                                    const hiddenInput = document.getElementById('festival_hidden');
+
+                                    if (dateValue) {
+                                        hiddenInput.value = dateValue;
+                                    } else if (selectValue) {
+                                        hiddenInput.value = selectValue;
+                                    } else {
+                                        e.preventDefault();
+                                        alert('Please select a festival or enter a date');
+                                    }
+                                });
+                            </script>
+
+                        </div>
+                    </div> 
+                    <!-- ================= RESULT CARD ================= -->
+                    <div class="analytics-card full">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
                         </div>
 
+                        <div class="card-body">
+
+                            {% if festival_error %}
+                                <div class="ux-error">
+                                    <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
+                                </div>
+                            {% endif %}
+
+                            {% if detected_festival %}
+
+                                <!-- FESTIVAL BADGE -->
+                                <div class="ux-festival-banner">
+                                    <i class="fas fa-glass-cheers"></i>
+                                    <span>{{ detected_festival }}</span>
+                                    <small>Expected Sales Analysis</small>
+                                </div>
+
+                                <!-- ================= CHARTS ONLY (No Product Lists) ================= -->
+                                <div class="ux-chart-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10;">
+
+                                    <div class="ux-chart-card">
+                                        <h4 class="ux-chart-title fire">
+                                            <i class="fas fa-fire"></i> Top Selling Products
+                                        </h4>
+                                        <div class="ux-chart-box" style="height: 350px;">
+                                            <canvas id="topSellingChart"></canvas>
+                                        </div>
+                                    </div>
+
+                                    <div class="ux-chart-card">
+                                        <h4 class="ux-chart-title cool">
+                                            <i class="fas fa-snowflake"></i> Least Selling Products
+                                        </h4>
+                                        <div class="ux-chart-box" style="height: 350px;">
+                                            <canvas id="leastSellingChart"></canvas>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Optional: Add a simple summary if needed -->
+                                {% if top_products %}
+                                <div class="ux-summary" style="margin-top: 20px; padding: 12px; text-align: center; background: #f5f5f5; border-radius: 6px;">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                {% endif %}
+
+                            {% else %}
+
+                                <!-- EMPTY STATE -->
+                                <div class="ux-empty-state">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <h4>No Prediction Yet</h4>
+                                    <p>Select a festival or enter a date to view forecast</p>
+                                    <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
+                                </div>
+
+                            {% endif %}
+
+                        </div>
                     </div>
 
-                    <!-- Optional: Add a simple summary if needed -->
-                    {% if top_products %}
-                    <div class="ux-summary" style="margin-top: 20px; padding: 12px; text-align: center; background: #f5f5f5; border-radius: 6px;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    {% endif %}
-
-                {% else %}
-
-                    <!-- EMPTY STATE -->
-                    <div class="ux-empty-state">
-                        <i class="fas fa-chart-pie"></i>
-                        <h4>No Prediction Yet</h4>
-                        <p>Select a festival or enter a date to view forecast</p>
-                        <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
-                    </div>
-
-                {% endif %}
-
-            </div>
-        </div>
-
-    </div>
-</section>
+                </div>
+            </section>
 
             <!-- SETTINGS SECTION -->
             <section id="settings" class="content-section">
@@ -849,10 +847,18 @@
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="toast"></div>
 
-    <!-- 🤖 SIMPLE CHATBOT - GUARANTEED TO WORK -->
-    <div id="chatbot-button" style="position:fixed; bottom:25px; right:25px; width:60px; height:60px; background:#6C63FF; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; z-index:999999; box-shadow:0 4px 12px rgba(0,0,0,0.2);">💬</div>
+    <!-- 🤖 CHATBOT - FIXED -->
+    <div id="chatbot-button" onclick="toggleChatbot()"
+        style="position:fixed; bottom:25px; right:25px; width:60px; height:60px;
+        background:#6C63FF; color:white; border-radius:50%; display:flex;
+        align-items:center; justify-content:center; cursor:pointer; font-size:24px;">
+        💬
+    </div>
 
-    <div id="chatbot-box" style="position:fixed; bottom:100px; right:25px; width:340px; height:460px; background:white; border-radius:12px; display:none; flex-direction:column; z-index:999999; box-shadow:0 8px 24px rgba(0,0,0,0.2); overflow:hidden;">
+    <div id="chatbot-box"
+        style="position:fixed; bottom:100px; right:25px; width:340px; height:460px;
+        background:white; border-radius:12px; display:none; flex-direction:column;
+        z-index:999999;">
         <div style="background:#6C63FF; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center;">
             <span>🤖 RetailX Assistant</span>
             <span style="cursor:pointer; font-size:20px;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
@@ -860,1503 +866,11 @@
         <div id="chatbot-messages" style="flex:1; padding:15px; overflow-y:auto; background:#f5f7fb;"></div>
         <div style="display:flex; padding:10px; background:white; border-top:1px solid #e0e0e0;">
             <input type="text" id="chatbot-input" placeholder="Type message..." style="flex:1; padding:10px; border:1px solid #e0e0e0; border-radius:20px; margin-right:10px;" autocomplete="off">
-            <button onclick="sendChatMessage()" style="background:#6C63FF; color:white; border:none; padding:0 20px; border-radius:20px; cursor:pointer;">Send</button>
+            <button onclick="sendMessage()" style="background:#6C63FF; color:white; border:none; padding:0 20px; border-radius:20px; cursor:pointer;">Send</button>
         </div>
     </div>
 
-    <script>
-    // Global Variables
-    let currentUser = 'admin@retailx.com';
-    let salesChart, analyticsChart, categoryChart;
-    let notificationCount = 3;
-
-    // Make chart variables globally accessible
-    window.topSellingChart = null;
-    window.leastSellingChart = null;
-
-    // Initialize Dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set current date
-        updateCurrentDate();
-        
-        // Initialize navigation
-        initNavigation();
-        
-        // Initialize dashboard
-        initDashboard();
-        
-        // Load initial data
-        loadDashboardData();
-        loadUsers();
-        loadProducts();
-        loadInventory();
-        loadAnalytics();
-        loadNotifications();
-        
-        // Setup form handlers
-        setupFormHandlers();
-        
-        // Setup search functionality
-        setupSearch();
-        
-        // Check if we have festival data to display
-        setTimeout(function() {
-            const hasFestivalData = {% if detected_festival %}true{% else %}false{% endif %};
-            const topProductsElement = document.getElementById('top-products-data');
-            const leastProductsElement = document.getElementById('least-products-data');
-            
-            if (hasFestivalData && topProductsElement && leastProductsElement) {
-                console.log('Festival data detected, parsing...');
-                parseFestivalData();
-            }
-        }, 500);
-        
-        // Close notification panel when clicking outside
-        document.addEventListener('click', function(e) {
-            const notificationPanel = document.getElementById('notificationPanel');
-            const notificationBtn = document.querySelector('.notification-btn');
-            
-            if (notificationPanel && notificationBtn) {
-                if (!notificationPanel.contains(e.target) && !notificationBtn.contains(e.target)) {
-                    notificationPanel.classList.remove('show');
-                }
-            }
-        });
-        
-        // Auto-refresh data every 30 seconds
-        setInterval(() => {
-            if (document.querySelector('#dashboard') && document.querySelector('#dashboard').classList.contains('active')) {
-                loadDashboardData();
-            }
-        }, 30000);
-    });
-
-    // Parse festival data from hidden elements
-    function parseFestivalData() {
-        const topProductsElement = document.getElementById('top-products-data');
-        const leastProductsElement = document.getElementById('least-products-data');
-        
-        try {
-            let topProducts = [];
-            let leastProducts = [];
-            
-            // Parse top products
-            if (topProductsElement && topProductsElement.dataset.products && topProductsElement.dataset.products !== 'None' && topProductsElement.dataset.products !== '[]') {
-                try {
-                    const rawData = topProductsElement.dataset.products;
-                    const cleanedData = rawData.replace(/&quot;/g, '"');
-                    topProducts = JSON.parse(cleanedData);
-                    console.log('Parsed top products:', topProducts);
-                } catch (e) {
-                    console.error('Failed to parse top products JSON:', e);
-                }
-            }
-            
-            // Parse least products
-            if (leastProductsElement && leastProductsElement.dataset.products && leastProductsElement.dataset.products !== 'None' && leastProductsElement.dataset.products !== '[]') {
-                try {
-                    const rawData = leastProductsElement.dataset.products;
-                    const cleanedData = rawData.replace(/&quot;/g, '"');
-                    leastProducts = JSON.parse(cleanedData);
-                    console.log('Parsed least products:', leastProducts);
-                } catch (e) {
-                    console.error('Failed to parse least products JSON:', e);
-                }
-            }
-            
-            // Create charts with the data
-            createManualCharts(topProducts, leastProducts);
-            
-        } catch (e) {
-            console.error('Error parsing festival data:', e);
-            showEmptyCharts();
-        }
-    }
-
-    // Manual chart creation function
-    function createManualCharts(topProducts, leastProducts) {
-        console.log('Creating manual charts with:', {topProducts, leastProducts});
-        
-        // Format the data properly
-        const formattedTop = Array.isArray(topProducts) ? topProducts.map(item => ({
-            product: item.product || 'Unknown',
-            units: parseFloat(item.predicted_sales) || 0
-        })) : [];
-        
-        const formattedLeast = Array.isArray(leastProducts) ? leastProducts.map(item => ({
-            product: item.product || 'Unknown',
-            units: parseFloat(item.predicted_sales) || 0
-        })) : [];
-        
-        // Create top selling chart
-        if (formattedTop.length > 0) {
-            createHorizontalBarChart(
-                'topSellingChart',
-                formattedTop,
-                '#e67e22',
-                'Top Selling Products'
-            );
-        } else {
-            showEmptyMessage('topSellingChart', 'No top products data');
-        }
-        
-        // Create least selling chart
-        if (formattedLeast.length > 0) {
-            createHorizontalBarChart(
-                'leastSellingChart',
-                formattedLeast,
-                '#3498db',
-                'Least Selling Products'
-            );
-        } else {
-            showEmptyMessage('leastSellingChart', 'No least products data');
-        }
-    }
-
-    // Function to show empty message on chart
-    function showEmptyMessage(canvasId, message) {
-        const canvas = document.getElementById(canvasId);
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '14px Poppins, sans-serif';
-            ctx.fillStyle = '#999';
-            ctx.textAlign = 'center';
-            ctx.fillText(message || 'No prediction data available', canvas.width/2, canvas.height/2);
-        }
-    }
-
-    // Function to show empty on both charts
-    function showEmptyCharts() {
-        showEmptyMessage('topSellingChart', 'No prediction data available');
-        showEmptyMessage('leastSellingChart', 'No prediction data available');
-    }
-
-    // Create a horizontal bar chart
-    function createHorizontalBarChart(canvasId, data, color, label) {
-        console.log(`Creating ${canvasId} with data:`, data);
-        
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) {
-            console.log(`Canvas ${canvasId} not found`);
-            return;
-        }
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Destroy existing chart if it exists
-        if (canvasId === 'topSellingChart' && window.topSellingChart) {
-            window.topSellingChart.destroy();
-        } else if (canvasId === 'leastSellingChart' && window.leastSellingChart) {
-            window.leastSellingChart.destroy();
-        }
-        
-        // Make sure we have valid data
-        if (!data || data.length === 0) {
-            console.log(`No data for ${canvasId}, showing empty message`);
-            showEmptyMessage(canvasId, 'No prediction data available');
-            return;
-        }
-        
-        // Sort data by units descending
-        const sortedData = [...data].sort((a, b) => b.units - a.units);
-        
-        // Prepare chart data
-        const labels = sortedData.map(item => {
-            return item.product && item.product.length > 20 
-                ? item.product.substring(0, 17) + '...' 
-                : item.product || 'Unknown';
-        });
-        
-        const values = sortedData.map(item => {
-            const val = parseFloat(item.units) || 0;
-            return Math.max(0, val);
-        });
-        
-        console.log('Chart labels:', labels);
-        console.log('Chart values:', values);
-        
-        // Create new chart
-        const newChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Expected Units',
-                    data: values,
-                    backgroundColor: color + '80', // Add transparency
-                    borderColor: color,
-                    borderWidth: 1,
-                    borderRadius: 5,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const fullProduct = sortedData[context.dataIndex].product || 'Unknown';
-                                return fullProduct + ': ' + context.raw.toLocaleString() + ' units';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Expected Units',
-                            color: '#666',
-                            font: {
-                                size: 11
-                            }
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 11
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Store chart reference globally
-        if (canvasId === 'topSellingChart') {
-            window.topSellingChart = newChart;
-        } else {
-            window.leastSellingChart = newChart;
-        }
-    }
-
-    // Update Current Date
-    function updateCurrentDate() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        };
-        const dateElement = document.getElementById('currentDate');
-        if (dateElement) {
-            dateElement.textContent = now.toLocaleDateString('en-US', options);
-        }
-    }
-
-    // Navigation
-    function initNavigation() {
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = document.querySelectorAll('.content-section');
-        
-        navItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all
-                navItems.forEach(nav => nav.classList.remove('active'));
-                sections.forEach(section => section.classList.remove('active'));
-                
-                // Add active class to clicked
-                this.classList.add('active');
-                
-                // Show corresponding section
-                const sectionId = this.dataset.section;
-                const sectionElement = document.getElementById(sectionId);
-                if (sectionElement) {
-                    sectionElement.classList.add('active');
-                }
-                
-                // Load section-specific data
-                loadSectionData(sectionId);
-                
-                // If analytics section, re-initialize festival charts
-                if (sectionId === 'analytics') {
-                    setTimeout(function() {
-                        parseFestivalData();
-                    }, 300);
-                }
-            });
-        });
-    }
-
-    // Load Section Data
-    function loadSectionData(sectionId) {
-        switch(sectionId) {
-            case 'dashboard':
-                loadDashboardData();
-                break;
-            case 'users':
-                loadUsers();
-                break;
-            case 'products':
-                loadProducts();
-                break;
-            case 'inventory':
-                loadInventory();
-                break;
-            case 'analytics':
-                loadAnalytics();
-                break;
-            case 'settings':
-                loadSettings();
-                break;
-        }
-    }
-
-    // Setup Form Handlers
-    function setupFormHandlers() {
-        // User Form
-        const userForm = document.getElementById('userForm');
-        if (userForm) {
-            userForm.addEventListener('submit', function(e) {
-                // Form will submit normally to Django
-            });
-        }
-        
-        // Product Form
-        const productForm = document.getElementById('productForm');
-        if (productForm) {
-            productForm.addEventListener('submit', function(e) {
-                // Form will submit normally to Django
-            });
-        }
-        
-        // Inventory Form
-        const inventoryForm = document.getElementById('inventoryForm');
-        if (inventoryForm) {
-            inventoryForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveInventoryAdjustment();
-            });
-        }
-        
-        // Festival Search Form
-        const festivalForm = document.getElementById('festivalSearchForm');
-        if (festivalForm) {
-            festivalForm.addEventListener('submit', function(e) {
-                showLoading();
-                // Form will submit normally, but we show loading
-            });
-        }
-    }
-
-    // Setup Search
-    function setupSearch() {
-        const globalSearch = document.getElementById('globalSearch');
-        if (globalSearch) {
-            globalSearch.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                if (searchTerm.length >= 2) {
-                    performGlobalSearch(searchTerm);
-                }
-            });
-        }
-    }
-
-    // AJAX Load Dashboard Data
-    function loadDashboardData() {
-        showLoading();
-        
-        // Simulate API call with setTimeout
-        setTimeout(() => {
-            // Update stats
-            updateStats();
-            
-            // Load alerts
-            loadRecentAlerts();
-            
-            // Load activity
-            loadRecentActivity();
-            
-            // Initialize charts
-            initSalesChart();
-            
-            hideLoading();
-        }, 1000);
-    }
-
-    function updateStats() {
-        hideLoading();
-    }
-
-    // AJAX Load Users (for client-side filtering)
-    function loadUsers() {
-        const userFilter = document.getElementById('userFilter');
-        if (userFilter) {
-            filterUsers();
-        }
-    }
-
-    function filterUsers() {
-        const filterValue = document.getElementById('userFilter')?.value || 'all';
-        const searchValue = document.getElementById('userSearch')?.value.toLowerCase() || '';
-        
-        const rows = document.querySelectorAll('#usersTableBody tr');
-        let visibleCount = 0;
-        
-        rows.forEach(row => {
-            const role = row.querySelector('.status-badge').textContent.toLowerCase();
-            const text = row.textContent.toLowerCase();
-            
-            let shouldShow = true;
-            
-            if (filterValue !== 'all' && !role.includes(filterValue)) {
-                shouldShow = false;
-            }
-            
-            if (searchValue && !text.includes(searchValue)) {
-                shouldShow = false;
-            }
-            
-            row.style.display = shouldShow ? '' : 'none';
-            
-            if (shouldShow) {
-                visibleCount++;
-            }
-        });
-        
-        const userCountElement = document.querySelector('.content-section#users .table-container + div');
-        if (userCountElement) {
-            userCountElement.textContent = `Showing ${visibleCount} user(s) in total`;
-        }
-    }
-
-    function searchUsers() {
-        filterUsers();
-    }
-
-    // AJAX Load Products (for client-side filtering)
-    function loadProducts() {
-        const categoryFilter = document.getElementById('categoryFilter');
-        if (categoryFilter) {
-            updateCategoryFilter();
-            filterProducts();
-        }
-    }
-
-    function filterProducts() {
-        const categoryValue = document.getElementById('categoryFilter')?.value || 'all';
-        const stockValue = document.getElementById('stockFilter')?.value || 'all';
-        
-        const productCards = document.querySelectorAll('.product-card');
-        let visibleCount = 0;
-        
-        productCards.forEach(card => {
-            const category = card.querySelector('.product-category').textContent.toLowerCase();
-            const stockLevel = card.querySelector('.stock-level');
-            const stockText = stockLevel.textContent;
-            const stockNumber = parseInt(stockText);
-            
-            let shouldShow = true;
-            
-            if (categoryValue !== 'all' && !category.includes(categoryValue)) {
-                shouldShow = false;
-            }
-            
-            if (stockValue === 'low' && !stockLevel.classList.contains('low')) {
-                shouldShow = false;
-            } else if (stockValue === 'out' && stockNumber > 0) {
-                shouldShow = false;
-            }
-            
-            card.style.display = shouldShow ? '' : 'none';
-            
-            if (shouldShow) {
-                visibleCount++;
-            }
-        });
-        
-        const productCountElement = document.querySelector('#productsGrid + div');
-        if (productCountElement) {
-            productCountElement.textContent = `Showing ${visibleCount} product(s) in total`;
-        }
-    }
-
-    function updateCategoryFilter() {
-        const filter = document.getElementById('categoryFilter');
-        if (!filter) return;
-        
-        const categories = new Set();
-        document.querySelectorAll('.product-category').forEach(element => {
-            categories.add(element.textContent.trim());
-        });
-        
-        filter.innerHTML = '<option value="all">All Categories</option>';
-        
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.toLowerCase();
-            option.textContent = category;
-            filter.appendChild(option);
-        });
-    }
-
-    // AJAX Load Inventory
-    function loadInventory() {
-        // Inventory data is already loaded by Django
-    }
-
-    // AJAX Load Analytics
-    function loadAnalytics() {
-        showLoading();
-        
-        setTimeout(() => {
-            initAnalyticsChart();
-            initCategoryChart();
-            hideLoading();
-        }, 1000);
-    }
-
-    // Chart Initialization
-    function initSalesChart() {
-        const ctx = document.getElementById('salesChart');
-        if (!ctx) return;
-        
-        const canvas = ctx.getContext('2d');
-        
-        if (salesChart) {
-            salesChart.destroy();
-        }
-        
-        const data = {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Sales ($)',
-                data: [1200, 1900, 3000, 5000, 2845, 3200, 1800],
-                borderColor: '#6C63FF',
-                backgroundColor: 'rgba(108, 99, 255, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        };
-        
-        salesChart = new Chart(canvas, {
-            type: 'line',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function initAnalyticsChart() {
-        const ctx = document.getElementById('analyticsChart');
-        if (!ctx) return;
-        
-        const canvas = ctx.getContext('2d');
-        
-        if (analyticsChart) {
-            analyticsChart.destroy();
-        }
-        
-        const data = {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Revenue',
-                data: [12000, 19000, 15000, 25000, 22000, 30000],
-                borderColor: '#6C63FF',
-                backgroundColor: 'rgba(108, 99, 255, 0.1)',
-                borderWidth: 2,
-                fill: true
-            }, {
-                label: 'Profit',
-                data: [4000, 7000, 5000, 9000, 8000, 12000],
-                borderColor: '#4CAF50',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                borderWidth: 2,
-                fill: true
-            }]
-        };
-        
-        analyticsChart = new Chart(canvas, {
-            type: 'line',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function initCategoryChart() {
-        const ctx = document.getElementById('categoryChart');
-        if (!ctx) return;
-        
-        const canvas = ctx.getContext('2d');
-        
-        if (categoryChart) {
-            categoryChart.destroy();
-        }
-        
-        const data = {
-            labels: ['Electronics', 'Clothing', 'Groceries', 'Home', 'Others'],
-            datasets: [{
-                data: [40, 20, 15, 15, 10],
-                backgroundColor: [
-                    '#6C63FF',
-                    '#FF6B6B',
-                    '#4CAF50',
-                    '#FF9800',
-                    '#9C27B0'
-                ]
-            }]
-        };
-        
-        categoryChart = new Chart(canvas, {
-            type: 'doughnut',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
-                    }
-                }
-            }
-        });
-    }
-
-    // Notification Functions
-    function toggleNotifications() {
-        const notificationPanel = document.getElementById('notificationPanel');
-        if (notificationPanel) {
-            notificationPanel.classList.toggle('show');
-        }
-    }
-
-    function loadNotifications() {
-        const notifications = [
-            {
-                id: 1,
-                type: 'warning',
-                icon: 'exclamation-triangle',
-                title: 'Low Stock Alert',
-                message: 'T-Shirt stock is critically low (5 units remaining)',
-                time: '2 hours ago',
-                unread: true
-            },
-            {
-                id: 2,
-                type: 'info',
-                icon: 'user-plus',
-                title: 'New User Registration',
-                message: 'Charlie Davis has been registered as a new manager',
-                time: '4 hours ago',
-                unread: true
-            },
-            {
-                id: 3,
-                type: 'success',
-                icon: 'chart-line',
-                title: 'Daily Target Achieved',
-                message: 'Daily sales target has been exceeded by 15%',
-                time: '6 hours ago',
-                unread: true
-            },
-            {
-                id: 4,
-                type: 'info',
-                icon: 'box',
-                title: 'Product Added',
-                message: 'New product "Wireless Headphones" has been added to inventory',
-                time: '1 day ago',
-                unread: false
-            },
-            {
-                id: 5,
-                type: 'warning',
-                icon: 'exclamation-circle',
-                title: 'System Maintenance',
-                message: 'Scheduled maintenance this Sunday from 2:00 AM to 4:00 AM',
-                time: '2 days ago',
-                unread: false
-            }
-        ];
-        
-        renderNotifications(notifications);
-    }
-
-    function renderNotifications(notifications) {
-        const notificationList = document.getElementById('notificationList');
-        if (!notificationList) return;
-        
-        notificationList.innerHTML = '';
-        
-        notifications.forEach(notification => {
-            const item = document.createElement('div');
-            item.className = `notification-item ${notification.unread ? 'unread' : ''}`;
-            item.innerHTML = `
-                <div style="display: flex; align-items: flex-start; gap: 12px;">
-                    <div class="notification-icon ${notification.type}">
-                        <i class="fas fa-${notification.icon}"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h5>${notification.title}</h5>
-                        <p>${notification.message}</p>
-                        <span class="notification-time">${notification.time}</span>
-                    </div>
-                    ${notification.unread ? '<span class="unread-dot"></span>' : ''}
-                </div>
-            `;
-            
-            item.addEventListener('click', () => markNotificationAsRead(notification.id));
-            notificationList.appendChild(item);
-        });
-        
-        const unreadCount = notifications.filter(n => n.unread).length;
-        notificationCount = unreadCount;
-        const notificationCountElement = document.querySelector('.notification-count');
-        if (notificationCountElement) {
-            notificationCountElement.textContent = unreadCount;
-            
-            if (unreadCount === 0) {
-                notificationCountElement.style.display = 'none';
-            } else {
-                notificationCountElement.style.display = 'flex';
-            }
-        }
-    }
-
-    function markNotificationAsRead(id) {
-        showLoading();
-        
-        setTimeout(() => {
-            notificationCount = Math.max(0, notificationCount - 1);
-            const notificationCountElement = document.querySelector('.notification-count');
-            if (notificationCountElement) {
-                notificationCountElement.textContent = notificationCount;
-                
-                if (notificationCount === 0) {
-                    notificationCountElement.style.display = 'none';
-                }
-            }
-            
-            showToast('Notification marked as read', 'success');
-            hideLoading();
-        }, 500);
-    }
-
-    function markAllAsRead() {
-        showLoading();
-        
-        setTimeout(() => {
-            notificationCount = 0;
-            const notificationCountElement = document.querySelector('.notification-count');
-            if (notificationCountElement) {
-                notificationCountElement.textContent = '0';
-                notificationCountElement.style.display = 'none';
-            }
-            
-            showToast('All notifications marked as read', 'success');
-            hideLoading();
-            
-            const notificationPanel = document.getElementById('notificationPanel');
-            if (notificationPanel) {
-                notificationPanel.classList.remove('show');
-            }
-        }, 500);
-    }
-
-    function viewAllNotifications() {
-        showToast('Viewing all notifications - Feature coming soon!', 'info');
-        const notificationPanel = document.getElementById('notificationPanel');
-        if (notificationPanel) {
-            notificationPanel.classList.remove('show');
-        }
-    }
-
-    // Modal Functions
-    function openUserModal() {
-        const modal = document.getElementById('userModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeUserModal() {
-        const modal = document.getElementById('userModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-        const userForm = document.getElementById('userForm');
-        if (userForm) {
-            userForm.reset();
-        }
-    }
-
-    function openProductModal() {
-        const modal = document.getElementById('productModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeProductModal() {
-        const modal = document.getElementById('productModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-        const productForm = document.getElementById('productForm');
-        if (productForm) {
-            productForm.reset();
-        }
-    }
-
-    function openInventoryModal() {
-        loadProductDropdown();
-        const modal = document.getElementById('inventoryModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeInventoryModal() {
-        const modal = document.getElementById('inventoryModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-        const inventoryForm = document.getElementById('inventoryForm');
-        if (inventoryForm) {
-            inventoryForm.reset();
-        }
-    }
-
-    function openQuickAction() {                                          
-        const modal = document.getElementById('quickActionModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeQuickAction() {
-        const modal = document.getElementById('quickActionModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    // Save Functions (AJAX)
-    function saveUser() {
-        showLoading();
-        
-        setTimeout(() => {
-            closeUserModal();
-            loadUsers();
-            showToast('User added successfully!', 'success');
-            hideLoading();
-        }, 1500);
-    }
-
-    function saveProduct() {
-        showLoading();
-        
-        setTimeout(() => {
-            closeProductModal();
-            loadProducts();
-            showToast('Product added successfully!', 'success');
-            hideLoading();
-        }, 1500);
-    }
-
-    function saveInventoryAdjustment() {
-        showLoading();
-        
-        setTimeout(() => {
-            closeInventoryModal();
-            loadInventory();
-            showToast('Inventory adjustment saved!', 'success');
-            hideLoading();
-        }, 1500);
-    }
-
-    // Utility Functions
-    function showLoading() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'flex';
-        }
-    }
-
-    function hideLoading() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'none';
-        }
-    }
-
-    function showToast(message, type = 'info') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        
-        toast.textContent = message;
-        toast.className = 'toast';
-        
-        switch(type) {
-            case 'success':
-                toast.style.background = 'var(--success)';
-                break;
-            case 'error':
-                toast.style.background = 'var(--danger)';
-                break;
-            case 'warning':
-                toast.style.background = 'var(--warning)';
-                break;
-            default:
-                toast.style.background = 'var(--primary)';
-        }
-        
-        toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
-    function loadProductDropdown() {
-        const select = document.getElementById('inventoryProduct');
-        if (!select) return;
-        
-        select.innerHTML = '<option value="">Select Product</option>';
-        
-        const productCards = document.querySelectorAll('.product-card');
-        if (productCards.length > 0) {
-            productCards.forEach((card, index) => {
-                const title = card.querySelector('.product-title');
-                if (title) {
-                    const option = document.createElement('option');
-                    option.value = index + 1;
-                    option.textContent = title.textContent;
-                    select.appendChild(option);
-                }
-            });
-        } else {
-            const products = [
-                { id: 1, name: 'Laptop Pro' },
-                { id: 2, name: 'Wireless Mouse' },
-                { id: 3, name: 'T-Shirt' },
-                { id: 4, name: 'Coffee Maker' },
-                { id: 5, name: 'Organic Coffee' }
-            ];
-            
-            products.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.textContent = product.name;
-                select.appendChild(option);
-            });
-        }
-    }
-
-    function loadRecentAlerts() {
-        const alerts = [
-            { type: 'warning', message: 'T-Shirt stock is low (5 units)', time: '2 hours ago' },
-            { type: 'info', message: 'New user registration: Charlie Davis', time: '4 hours ago' },
-            { type: 'success', message: 'Daily sales target achieved!', time: '6 hours ago' }
-        ];
-        
-        const container = document.getElementById('recentAlerts');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        alerts.forEach(alert => {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert-item';
-            alertDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid var(--gray-light);">
-                    <i class="fas fa-${alert.type === 'warning' ? 'exclamation-triangle' : alert.type === 'info' ? 'info-circle' : 'check-circle'}" 
-                       style="color: ${alert.type === 'warning' ? 'var(--warning)' : alert.type === 'info' ? 'var(--primary)' : 'var(--success)'}"></i>
-                    <div>
-                        <p style="margin: 0; font-size: 14px;">${alert.message}</p>
-                        <small style="color: var(--gray);">${alert.time}</small>
-                    </div>
-                </div>
-            `;
-            container.appendChild(alertDiv);
-        });
-    }
-
-    function loadRecentActivity() {
-        const activities = [
-            { user: 'John Doe', action: 'added new product', time: '10:30 AM' },
-            { user: 'Jane Smith', action: 'updated inventory', time: '9:15 AM' },
-            { user: 'System', action: 'generated daily report', time: '8:00 AM' }
-        ];
-        
-        const container = document.getElementById('recentActivity');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        activities.forEach(activity => {
-            const activityDiv = document.createElement('div');
-            activityDiv.className = 'activity-item';
-            activityDiv.innerHTML = `
-                <div style="padding: 10px; border-bottom: 1px solid var(--gray-light);">
-                    <p style="margin: 0; font-size: 14px;">
-                        <strong>${activity.user}</strong> ${activity.action}
-                    </p>
-                    <small style="color: var(--gray);">${activity.time}</small>
-                </div>
-            `;
-            container.appendChild(activityDiv);
-        });
-    }
-
-    // Action Functions
-    function exportUsers() {
-        showLoading();
-        setTimeout(() => {
-            showToast('Users exported successfully!', 'success');
-            hideLoading();
-        }, 1000);
-    }
-
-    function bulkResetPassword() {
-        const selected = document.querySelectorAll('.user-checkbox:checked');
-        if (selected.length === 0) {
-            showToast('Please select users first', 'warning');
-            return;
-        }
-        
-        if (confirm(`Reset passwords for ${selected.length} selected users?`)) {
-            showLoading();
-            
-            setTimeout(() => {
-                showToast('Passwords reset emails sent!', 'success');
-                hideLoading();
-            }, 1500);
-        }
-    }
-
-    function bulkUpdateStock() {
-        showToast('Bulk stock update feature coming soon!', 'info');
-    }
-
-    function importProducts() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.csv';
-        input.onchange = function(e) {
-            showLoading();
-            setTimeout(() => {
-                showToast('Products imported successfully!', 'success');
-                loadProducts();
-                hideLoading();
-            }, 2000);
-        };
-        input.click();
-    }
-
-    function generateReport() {
-        showLoading();
-        setTimeout(() => {
-            showToast('Need to work On this Function still incomplete !!', 'success');
-            hideLoading();
-        }, 2000);
-    }
-
-    function backupDatabase() {
-        showLoading();
-        setTimeout(() => {
-            showToast('Database backup completed!', 'success');
-            hideLoading();
-        }, 1500);
-    }
-
-    function clearCache() {
-        showLoading();
-        setTimeout(() => {
-            showToast('Cache cleared successfully!', 'success');
-            hideLoading();
-        }, 1000);
-    }
-
-    function exportAllData() {
-        showLoading();
-        setTimeout(() => {
-            showToast('All data exported!', 'success');
-            hideLoading();
-        }, 2000);
-    }
-
-    // Theme Functions
-    function changeTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        document.querySelectorAll('.theme-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.theme === theme) {
-                btn.classList.add('active');
-            }
-        });
-        localStorage.setItem('retailx-theme', theme);
-    }
-
-    function loadSettings() {
-        const savedTheme = localStorage.getItem('retailx-theme') || 'default';
-        changeTheme(savedTheme);
-    }
-
-    // Quick Actions
-    function quickAddProduct() {
-        closeQuickAction();
-        openProductModal();
-    }
-
-    function quickAddUser() {
-        closeQuickAction();
-        openUserModal();
-    }
-
-    function quickStockCheck() {
-        closeQuickAction();
-        showLoading();
-        setTimeout(() => {
-            showToast('Need to work On this Function still incomplete !!');
-            hideLoading();
-        }, 1000);
-    }
-
-    function quickGenerateReport() {
-        closeQuickAction();
-        generateReport();
-    }
-
-    // Initialize Dashboard
-    function initDashboard() {
-        loadSettings();
-    }
-
-    // Global Search
-    function performGlobalSearch(term) {
-        showLoading();
-        
-        setTimeout(() => {
-            const results = {
-                users: 3,
-                products: 7,
-                reports: 2
-            };
-            
-            showToast(`Found ${results.users} users, ${results.products} products, ${results.reports} reports`, 'info');
-            hideLoading();
-        }, 500);
-    }
-
-    // Edit Functions
-    function editUser(id, type) {
-        showToast(`Edit user ${id} (${type}) - Feature coming soon!`, 'info');
-    }
-
-    function deleteUser(id, type) {
-        if (confirm('Are you sure you want to delete this user?')) {
-            showLoading();
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/delete-user/${type}/${id}/`;
-            
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            if (csrfToken) {
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrfmiddlewaretoken';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    function resetUserPassword(id, type) {
-        if (confirm('Reset password for this user? A temporary password will be generated.')) {
-            showLoading();
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/reset-password/${type}/${id}/`;
-            
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            if (csrfToken) {
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrfmiddlewaretoken';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    function editProduct(id) {
-        showToast(`Edit product ${id} - Feature coming soon!`, 'info');
-    }
-
-    function deleteProduct(id) {
-        if (confirm('Are you sure you want to delete this product?')) {
-            showLoading();
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/delete-product/${id}/`;
-            
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            if (csrfToken) {
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrfmiddlewaretoken';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    function viewProductDetails(id) {
-        showToast(`Viewing product ${id} details - Feature coming soon!`, 'info');
-    }
-
-    function adjustStock(id) {
-        openInventoryModal();
-        showToast(`Adjusting stock for product ${id}`, 'info');
-    }
-
-    function viewInventoryHistory(id) {
-        showToast(`Viewing inventory history for product ${id} - Feature coming soon!`, 'info');
-    }
-
-    function toggleAllUsers() {
-        const selectAll = document.getElementById('selectAllUsers');
-        if (!selectAll) return;
-        
-        const isChecked = selectAll.checked;
-        document.querySelectorAll('.user-checkbox').forEach(checkbox => {
-            checkbox.checked = isChecked;
-        });
-    }
-
-    function updateSalesChart() {
-        const period = document.getElementById('salesPeriod')?.value;
-        showLoading();
-        
-        setTimeout(() => {
-            initSalesChart();
-            hideLoading();
-        }, 500);
-    }
-
-    function updateAnalytics() {
-        const period = document.getElementById('reportPeriod')?.value;
-        showLoading();
-        
-        setTimeout(() => {
-            initAnalyticsChart();
-            initCategoryChart();
-            hideLoading();
-        }, 500);
-    }
-
-    function saveSettings() {
-        const settings = {
-            emailNotifications: document.getElementById('emailNotifications')?.checked || false,
-            lowStockAlerts: document.getElementById('lowStockAlerts')?.checked || false,
-            newUserAlerts: document.getElementById('newUserAlerts')?.checked || false
-        };
-        
-        localStorage.setItem('retailx-settings', JSON.stringify(settings));
-        showToast('Settings saved!', 'success');
-    }
-
-    </script>
-
-    <!-- SIMPLE CHATBOT SCRIPT -->
-    <script>
-    // SIMPLE CHATBOT - DIRECT HANDLERS
-    (function() {
-        console.log("🚀 Chatbot script loaded");
-        
-        // Get elements
-        const button = document.getElementById('chatbot-button');
-        const box = document.getElementById('chatbot-box');
-        
-        if (!button) {
-            console.error("❌ Chatbot button not found!");
-            return;
-        }
-        
-        console.log("✅ Chatbot button found:", button);
-        
-        // Remove any existing handlers and add new one
-        button.onclick = null;
-        
-        // Add click handler DIRECTLY
-        button.onclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            console.log("👆 Button clicked!");
-            
-            if (box) {
-                if (box.style.display === 'none' || box.style.display === '') {
-                    box.style.display = 'flex';
-                    document.getElementById('chatbot-input')?.focus();
-                    console.log("📤 Box opened");
-                } else {
-                    box.style.display = 'none';
-                    console.log("📥 Box closed");
-                }
-            }
-            return false;
-        };
-        
-        console.log("✅ Click handler attached");
-        
-        // Add welcome message
-        const messages = document.getElementById('chatbot-messages');
-        if (messages) {
-            messages.innerHTML = '<div class="chat-bot"><span style="background:white; color:#333; padding:10px 15px; border-radius:18px; display:inline-block; max-width:80%;">👋 Hello! How can I help you today?</span></div>';
-        }
-    })();
-
-    // Global send function
-    window.sendChatMessage = function() {
-        const input = document.getElementById('chatbot-input');
-        const messages = document.getElementById('chatbot-messages');
-        
-        if (!input || !messages) return;
-        
-        const message = input.value.trim();
-        if (message === '') return;
-        
-        // Add user message
-        messages.innerHTML += `<div class="chat-user" style="text-align:right; margin-bottom:10px;"><span style="background:#6C63FF; color:white; padding:10px 15px; border-radius:18px; display:inline-block; max-width:80%;">${escapeHtml(message)}</span></div>`;
-        input.value = '';
-        messages.scrollTop = messages.scrollHeight;
-        
-        // Show typing
-        const typingId = 'typing-' + Date.now();
-        messages.innerHTML += `<div class="chat-bot" id="${typingId}" style="margin-bottom:10px;"><span style="background:white; color:#333; padding:10px 15px; border-radius:18px; display:inline-block;">🤖 Typing...</span></div>`;
-        messages.scrollTop = messages.scrollHeight;
-        
-        // Send to server
-        fetch('/chatbot/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ message: message })
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById(typingId)?.remove();
-            messages.innerHTML += `<div class="chat-bot" style="margin-bottom:10px;"><span style="background:white; color:#333; padding:10px 15px; border-radius:18px; display:inline-block;">${escapeHtml(data.reply)}</span></div>`;
-            messages.scrollTop = messages.scrollHeight;
-        })
-        .catch(() => {
-            document.getElementById(typingId)?.remove();
-            messages.innerHTML += `<div class="chat-bot" style="margin-bottom:10px;"><span style="background:white; color:#333; padding:10px 15px; border-radius:18px; display:inline-block;">⚠️ Server error</span></div>`;
-            messages.scrollTop = messages.scrollHeight;
-        });
-    };
-
-    // Helper functions
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    // Add enter key support
-    document.addEventListener('DOMContentLoaded', function() {
-        const input = document.getElementById('chatbot-input');
-        if (input) {
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    window.sendChatMessage();
-                }
-            });
-        }
-    });
-    </script>
-
-    <!-- Your regular JS file -->
+    <!-- Link to external JS file -->
     <script src="{% static 'js/admin_home.js' %}"></script>
 </body>
 </html>

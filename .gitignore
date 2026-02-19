@@ -1,1 +1,4 @@
-Auth.txt
+# Environment variables
+.env
+*.env
+Auth.txt   # keep if you want
