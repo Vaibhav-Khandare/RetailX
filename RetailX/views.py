@@ -975,15 +975,46 @@ def cashier_home(request):
     cashier_username = request.session.get('cashier_username')
     try:
         cashier = Cashier.objects.get(username=cashier_username)
+        
+        # =========================================================
+        # FETCH REAL PRODUCTS FROM DJANGO DATABASE
+        # =========================================================
+        # We query the Product model for all available items
+        products_queryset = Product.objects.filter(is_available=True).values(
+            'id', 'name', 'sku', 'category', 'brand', 'price', 'in_stock'
+        )
+        
+        # Convert the queryset into a standard Python list of dictionaries
+        # Crucial: Convert Decimal prices to float so JSON can serialize them
+        products_list = []
+        for p in products_queryset:
+            products_list.append({
+                'id': p['id'],
+                'name': p['name'],
+                'sku': p['sku'],
+                'category': p['category'] or 'General',
+                'brand': p['brand'] or 'N/A',
+                'price': float(p['price']),       # Converted for JS
+                'in_stock': p['in_stock']         # Used for stock validation
+            })
+            
+        # Do NOT use json.dumps() here. Pass the raw Python list.
+        # The Django {{ products_data|json_script:"products-data" }} tag in HTML 
+        # handles the secure JSON stringification automatically.
+        # =========================================================
+
         context = {
             'cashier_name': cashier.fullname,
-            'cashier_username': cashier.username
+            'cashier_username': cashier.username,
+            'products_data': products_list  # Passing actual DB data
         }
     except Cashier.DoesNotExist:
         context = {
             'cashier_name': 'Cashier',
-            'cashier_username': 'Unknown'
+            'cashier_username': 'Unknown',
+            'products_data': []
         }
+        
     return render(request, 'cashier_home.html', context)
 
 # ====================================================================

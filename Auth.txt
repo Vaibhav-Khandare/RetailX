@@ -1,0 +1,8 @@
+name:admin
+pass:nothing@123
+
+Gmail:retailx.connect@gmail.com
+pwd:RetailX@123
+
+insta id:retailx.connect
+pwd:RetailX@123
