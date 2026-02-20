@@ -3,7 +3,7 @@ import json
 import random
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, date as date_type
 
 import pandas as pd
 import numpy as np
@@ -26,10 +26,11 @@ from productsDB.models import Product
 from .gemini_chat import ask_gemini
 
 # ------------------------------
-# Path to trained models folder
+# Path to trained models folders
 # ------------------------------
 BASE_DIR = settings.BASE_DIR
-MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models')
+MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models')                # For existing models (top/least products)
+FESTIVAL_MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models', 'festival')  # For new prediction models
 
 # ------------------------------
 # Festival list for dropdown
@@ -131,7 +132,7 @@ def get_festival_from_date(date_obj):
     return month_mapping.get(month)
 
 # ------------------------------
-# Helper: get festival sales predictions
+# Helper: get festival sales predictions (USES OLD MODEL FOLDER)
 # ------------------------------
 def get_festival_sales(festival_name):
     """
@@ -1085,6 +1086,9 @@ def manager_home(request):
         top_products_json = json.dumps(list(top_products)) if top_products else '[]'
         least_products_json = json.dumps(list(least_products)) if least_products else '[]'
         
+        # NEW: add today's date for default prediction date input
+        today_date = date_type.today().isoformat()
+        
         context = {
             'manager_name': manager.fullname,
             'manager_username': manager.username,
@@ -1095,10 +1099,12 @@ def manager_home(request):
             'festival_choices': FESTIVAL_CHOICES,
             'cashiers': json.dumps(cashiers_list),
             'total_cashiers': len(cashiers_list),
+            'today_date': today_date,  # NEW
         }
         # ============================================================
         
     except Manager.DoesNotExist:
+        today_date = date_type.today().isoformat()  # NEW
         context = {
             'manager_name': 'Manager',
             'manager_username': 'Unknown',
@@ -1109,6 +1115,7 @@ def manager_home(request):
             'festival_choices': FESTIVAL_CHOICES,
             'cashiers': '[]',
             'total_cashiers': 0,
+            'today_date': today_date,  # NEW
         }
     
     return render(request, 'manager_home.html', context)
@@ -1390,3 +1397,121 @@ def chatbot_api(request):
             return JsonResponse({"reply": "Server error. Please try again."}, status=500)
     
     return JsonResponse({"reply": "Only POST requests are allowed."}, status=405)
+
+
+# ================== NEW PREDICTION API ENDPOINTS (USES FESTIVAL_MODEL_FOLDER) =================
+
+@csrf_exempt
+def get_products_for_festival_api(request):
+    """Return list of products that have models for the given festival (from festival subfolder)."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    festival = request.GET.get('festival')
+    if not festival:
+        return JsonResponse({'error': 'Festival parameter required'}, status=400)
+    
+    festival_clean = festival.strip().lower().replace(' ', '_')
+    products = set()
+    
+    if not os.path.exists(FESTIVAL_MODEL_FOLDER):
+        return JsonResponse({'products': []})
+    
+    for fname in os.listdir(FESTIVAL_MODEL_FOLDER):
+        if not fname.endswith('.pkl'):
+            continue
+        if fname.lower().startswith(festival_clean):
+            # Extract product name from filename
+            prod = fname[len(festival_clean):].replace('.pkl', '').replace('_', ' ').strip()
+            if prod:
+                products.add(prod)
+    
+    return JsonResponse({'products': list(products)})
+
+
+@csrf_exempt
+def predict_sales_api(request):
+    """Predict sales for a given festival, product, and date (using festival subfolder)."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    festival = request.GET.get('festival')
+    product = request.GET.get('product')
+    date_str = request.GET.get('date')
+    
+    if not all([festival, product, date_str]):
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+    
+    try:
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        predicted_units = predict_single_product(festival, product, target_date)
+        
+        # Optionally fetch product price from database (if product exists)
+        price = 100  # default price; you may enhance by querying Product model
+        try:
+            product_obj = Product.objects.filter(name__icontains=product).first()
+            if product_obj:
+                price = float(product_obj.price)
+        except:
+            pass
+        
+        predicted_revenue = predicted_units * price
+        
+        return JsonResponse({
+            'festival': festival,
+            'product': product,
+            'date': date_str,
+            'predicted_units': round(predicted_units, 2),
+            'predicted_revenue': round(predicted_revenue, 2)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def predict_single_product(festival_name, product_name, target_date):
+    """
+    Predict sales for a specific product on a given date using its Prophet model
+    from the festival subfolder.
+    """
+    if not os.path.exists(FESTIVAL_MODEL_FOLDER):
+        raise FileNotFoundError("Festival model folder not found.")
+    
+    festival_clean = festival_name.strip().lower().replace(' ', '_')
+    product_clean = product_name.strip().replace(' ', '_')
+    
+    # Find matching model file
+    model_filename = None
+    for fname in os.listdir(FESTIVAL_MODEL_FOLDER):
+        if not fname.endswith('.pkl'):
+            continue
+        fname_lower = fname.lower()
+        # Check if filename starts with festival name and contains product name
+        if fname_lower.startswith(festival_clean) and product_clean.lower() in fname_lower:
+            model_filename = fname
+            break
+    
+    if not model_filename:
+        # Try alternative: just product name anywhere after festival prefix
+        for fname in os.listdir(FESTIVAL_MODEL_FOLDER):
+            if not fname.endswith('.pkl'):
+                continue
+            if fname.lower().startswith(festival_clean) and product_clean.lower().replace(' ', '_') in fname.lower():
+                model_filename = fname
+                break
+    
+    if not model_filename:
+        raise ValueError(f"No model found for {festival_name} - {product_name}")
+    
+    model_path = os.path.join(FESTIVAL_MODEL_FOLDER, model_filename)
+    try:
+        model = joblib.load(model_path)
+    except Exception as e:
+        raise RuntimeError(f"Error loading model: {e}")
+    
+    # Ensure target_date is a Timestamp
+    future = pd.DataFrame({'ds': [pd.Timestamp(target_date)]})
+    forecast = model.predict(future)
+    predicted_sales = forecast['yhat'].iloc[0]
+    if np.isnan(predicted_sales) or predicted_sales < 0:
+        predicted_sales = 0
+    return predicted_sales

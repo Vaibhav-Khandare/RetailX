@@ -109,6 +109,9 @@ urlpatterns = [
     
     path("chatbot/", views.chatbot_api, name="chatbot_api"),
 
+    path('api/products-for-festival/', views.get_products_for_festival_api),
+    path('api/predict/', views.predict_sales_api),
+
 ]
 
 

@@ -180,6 +180,29 @@
                     </div>
                 </div>
 
+                <!-- ================== NEW PREDICTION CONTROLS CARD ================= -->
+                <div class="prediction-controls-card">
+                    <h3><i class="fas fa-chart-line"></i> Sales Prediction</h3>
+                    <div class="prediction-controls">
+                        <select id="predictFestival" class="filter-select">
+                            <option value="">Select Festival</option>
+                            {% for festival in festival_choices %}
+                            <option value="{{ festival }}">{{ festival }}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="predictProduct" class="filter-select" disabled>
+                            <option value="">Select Product</option>
+                        </select>
+                        <input type="date" id="predictDate" class="form-control" value="{{ today_date }}">
+                        <button class="btn-primary" id="predictBtn"><i class="fas fa-magic"></i> Predict</button>
+                    </div>
+                    <div class="prediction-result" id="predictionResult" style="display: none;">
+                        <p>Predicted Units: <span id="predUnits">0</span></p>
+                        <p>Predicted Revenue: $<span id="predRevenue">0.00</span></p>
+                    </div>
+                </div>
+                <!-- ================== END NEW PREDICTION CARD ================= -->
+
                 <!-- CHARTS SECTION -->
                 <div class="charts-row">
                     <div class="chart-card">

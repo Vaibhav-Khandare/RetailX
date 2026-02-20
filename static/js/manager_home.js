@@ -1288,6 +1288,8 @@ RetailX.Dashboard = {
         this.loadMockData();
         this.startClock();
         this.initCharts();
+        this.initPrediction();  // NEW: initialize prediction module
+        console.log('📈 Prediction module initialized');
     },
 
     loadMockData: function() {
@@ -1326,7 +1328,7 @@ RetailX.Dashboard = {
         // Revenue Chart
         const ctx = document.getElementById('revenueChart')?.getContext('2d');
         if (ctx) {
-            new Chart(ctx, {
+            window.revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -1407,7 +1409,139 @@ RetailX.Dashboard = {
                 }
             });
         }
+    },
+
+    // ================== NEW PREDICTION MODULE =================
+    initPrediction: function() {
+        console.log('🔮 Initializing Prediction Module...');
+        const festivalSelect = $('#predictFestival');
+        const productSelect = $('#predictProduct');
+        const dateInput = $('#predictDate');
+        const predictBtn = $('#predictBtn');
+        const resultDiv = $('#predictionResult');
+
+        if (!festivalSelect.length) {
+            console.error('❌ Prediction elements not found in DOM!');
+            return;
+        }
+
+        // Load products when festival changes
+        festivalSelect.on('change', function() {
+            const festival = $(this).val();
+            console.log('Festival selected:', festival);
+            if (!festival) {
+                productSelect.prop('disabled', true).html('<option value="">Select Product</option>');
+                resultDiv.fadeOut();
+                return;
+            }
+            console.log('Fetching products for festival:', festival);
+            $.ajax({
+                url: '/api/products-for-festival/',
+                data: { festival: festival },
+                success: function(data) {
+                    console.log('Products response:', data);
+                    productSelect.prop('disabled', false).empty().append('<option value="">Select Product</option>');
+                    if (data.products && data.products.length > 0) {
+                        data.products.forEach(function(product) {
+                            productSelect.append(`<option value="${product}">${product}</option>`);
+                        });
+                    } else {
+                        productSelect.append('<option value="">No products found</option>').prop('disabled', true);
+                        RetailX.showToast('No models found for this festival', 'warning');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX error:', error);
+                    RetailX.showToast('Failed to load products', 'error');
+                }
+            });
+        });
+
+        // Predict button click
+        predictBtn.on('click', function() {
+            const festival = festivalSelect.val();
+            const product = productSelect.val();
+            const date = dateInput.val();
+            if (!festival || !product || !date) {
+                RetailX.showToast('Please select festival, product, and date', 'warning');
+                return;
+            }
+            console.log('Predicting:', {festival, product, date});
+            $(this).html('<i class="fas fa-spinner fa-spin"></i> Predicting...').prop('disabled', true);
+            $.ajax({
+                url: '/api/predict/',
+                data: { festival: festival, product: product, date: date },
+                success: function(data) {
+                    console.log('Prediction response:', data);
+                    if (data.error) {
+                        RetailX.showToast(data.error, 'error');
+                        return;
+                    }
+                    $('#predUnits').text(data.predicted_units);
+                    $('#predRevenue').text(data.predicted_revenue.toFixed(2));
+                    resultDiv.fadeIn();
+
+                    // Update charts with the predicted point
+                    RetailX.Dashboard.updateChartWithPrediction(data);
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Prediction failed';
+                    console.error('Prediction error:', errorMsg);
+                    RetailX.showToast(errorMsg, 'error');
+                },
+                complete: function() {
+                    predictBtn.html('<i class="fas fa-magic"></i> Predict').prop('disabled', false);
+                }
+            });
+        });
+    },
+
+    updateChartWithPrediction: function(prediction) {
+        console.log('Updating chart with prediction:', prediction);
+        if (window.revenueChart) {
+            const chart = window.revenueChart;
+            const newLabel = prediction.date; // e.g., "2026-02-20"
+            
+            // Check if label already exists, if not add it
+            if (!chart.data.labels.includes(newLabel)) {
+                chart.data.labels.push(newLabel);
+                // Add null to original dataset for the new label
+                chart.data.datasets[0].data.push(null);
+            }
+            
+            // Find or create a predictions dataset
+            let predDataset = chart.data.datasets.find(ds => ds.label === 'Predicted');
+            if (!predDataset) {
+                predDataset = {
+                    label: 'Predicted',
+                    data: [],
+                    borderColor: '#f97316',
+                    backgroundColor: '#f97316',
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    showLine: false,
+                    type: 'scatter' // treat as scatter points
+                };
+                // Initialize with nulls for all existing labels
+                for (let i = 0; i < chart.data.labels.length; i++) {
+                    predDataset.data.push(null);
+                }
+                chart.data.datasets.push(predDataset);
+            }
+            
+            // Ensure predDataset data length matches labels
+            while (predDataset.data.length < chart.data.labels.length) {
+                predDataset.data.push(null);
+            }
+            
+            // Set the predicted value at the index of the new label
+            const index = chart.data.labels.indexOf(newLabel);
+            predDataset.data[index] = prediction.predicted_revenue;
+            
+            chart.update();
+        }
     }
+    // ================== END NEW PREDICTION MODULE =================
 };
 
 // ============================================
