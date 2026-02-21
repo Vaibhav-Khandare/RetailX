@@ -1,6 +1,17 @@
-console.log("ADMIN JS LOADED");
+/**
+ * RetailX Advanced Admin Dashboard
+ * Version: 2.0
+ * Theme: Midnight Slate & Electric Cobalt
+ * 
+ * This file contains all JavaScript functionality for the admin dashboard
+ * including real-time clock, fullscreen toggle, user management, and analytics.
+ */
 
-// Global Variables
+console.log("✅ ADMIN JS LOADED - Version 2.0");
+
+/* =========================
+   GLOBAL VARIABLES
+========================= */
 let currentUser = 'admin@retailx.com';
 let salesChart, analyticsChart, categoryChart;
 let notificationCount = 3;
@@ -9,13 +20,25 @@ let notificationCount = 3;
 window.topSellingChart = null;
 window.leastSellingChart = null;
 
-// Initialize Dashboard
+// Fullscreen state
+let isFullscreen = false;
+
+/* =========================
+   DOCUMENT READY - INITIALIZATION
+========================= */
 document.addEventListener('DOMContentLoaded', function() {
-    // Set current date
+    console.log("📦 Initializing Admin Dashboard...");
+    
+    // Initialize date and time
     updateCurrentDate();
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000); // Update time every second
     
     // Initialize navigation
     initNavigation();
+    
+    // Initialize fullscreen functionality
+    initFullscreen();
     
     // Initialize dashboard
     initDashboard();
@@ -34,12 +57,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup search functionality
     setupSearch();
     
+    // Setup mobile menu toggle
+    setupMobileMenu();
+    
     // Check if we have festival data to display
     setTimeout(function() {
         const festivalEl = document.getElementById('detected-festival');
         const hasFestivalData = festivalEl && festivalEl.dataset.festival;
         if (hasFestivalData) {
-            console.log('Festival data detected on page load, initializing charts...');
+            console.log('🎉 Festival data detected on page load, initializing charts...');
             if (typeof initFestivalCharts === 'function') {
                 initFestivalCharts();
             }
@@ -65,15 +91,23 @@ document.addEventListener('DOMContentLoaded', function() {
             loadDashboardData();
         }
     }, 30000);
+    
+    console.log("✅ Admin Dashboard initialized successfully");
 });
 
-// Update Current Date
+/* =========================
+   DATE & TIME FUNCTIONS
+========================= */
+
+/**
+ * Updates the current date display in the topbar
+ */
 function updateCurrentDate() {
     const now = new Date();
     const options = { 
-        weekday: 'long', 
+        weekday: 'short', 
         year: 'numeric', 
-        month: 'long', 
+        month: 'short', 
         day: 'numeric' 
     };
     const dateElement = document.getElementById('currentDate');
@@ -82,10 +116,117 @@ function updateCurrentDate() {
     }
 }
 
-// Navigation
+/**
+ * Updates the current time display in the topbar (updates every second)
+ */
+function updateCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+    });
+    const timeElement = document.getElementById('currentTime');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
+/* =========================
+   FULLSCREEN FUNCTIONALITY
+========================= */
+
+/**
+ * Initializes fullscreen toggle functionality
+ */
+function initFullscreen() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+    
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    
+    // Listen for fullscreen change events
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+}
+
+/**
+ * Toggles fullscreen mode
+ */
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        }
+        isFullscreen = true;
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
+    }
+}
+
+/**
+ * Updates fullscreen icon based on current state
+ */
+function updateFullscreenIcon() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+    
+    const icon = fullscreenBtn.querySelector('i');
+    if (document.fullscreenElement) {
+        icon.className = 'fas fa-compress';
+        fullscreenBtn.setAttribute('title', 'Exit Fullscreen');
+    } else {
+        icon.className = 'fas fa-expand';
+        fullscreenBtn.setAttribute('title', 'Enter Fullscreen');
+    }
+}
+
+/* =========================
+   MOBILE MENU
+========================= */
+
+/**
+ * Sets up mobile menu toggle functionality
+ */
+function setupMobileMenu() {
+    const menuToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+        });
+    }
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+
+/**
+ * Initializes navigation between sections
+ */
 function initNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     const sections = document.querySelectorAll('.content-section');
+    const pageTitle = document.getElementById('pageTitle');
+    const breadcrumb = document.getElementById('breadcrumb');
     
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
@@ -105,6 +246,15 @@ function initNavigation() {
                 sectionElement.classList.add('active');
             }
             
+            // Update page title and breadcrumb
+            const sectionName = this.querySelector('span').textContent;
+            if (pageTitle) {
+                pageTitle.textContent = sectionName;
+            }
+            if (breadcrumb) {
+                breadcrumb.textContent = `Admin / ${sectionName}`;
+            }
+            
             // Load section-specific data
             loadSectionData(sectionId);
             
@@ -112,7 +262,7 @@ function initNavigation() {
             if (sectionId === 'analytics') {
                 setTimeout(function() {
                     if (typeof initFestivalCharts === 'function') {
-                        console.log('Analytics section activated, re-initializing charts...');
+                        console.log('📊 Analytics section activated, re-initializing charts...');
                         initFestivalCharts();
                     }
                 }, 300);
@@ -121,7 +271,10 @@ function initNavigation() {
     });
 }
 
-// Load Section Data
+/**
+ * Loads data for specific section
+ * @param {string} sectionId - ID of the section to load data for
+ */
 function loadSectionData(sectionId) {
     switch(sectionId) {
         case 'dashboard':
@@ -145,7 +298,13 @@ function loadSectionData(sectionId) {
     }
 }
 
-// Setup Form Handlers
+/* =========================
+   FORM HANDLERS
+========================= */
+
+/**
+ * Sets up form submission handlers
+ */
 function setupFormHandlers() {
     // User Form - No need to prevent default as we want form submission
     const userForm = document.getElementById('userForm');
@@ -182,7 +341,13 @@ function setupFormHandlers() {
     }
 }
 
-// Setup Search
+/* =========================
+   SEARCH FUNCTIONALITY
+========================= */
+
+/**
+ * Sets up global search functionality
+ */
 function setupSearch() {
     const globalSearch = document.getElementById('globalSearch');
     if (globalSearch) {
@@ -195,7 +360,13 @@ function setupSearch() {
     }
 }
 
-// AJAX Load Dashboard Data
+/* =========================
+   DASHBOARD DATA LOADING
+========================= */
+
+/**
+ * Loads dashboard data via AJAX simulation
+ */
 function loadDashboardData() {
     showLoading();
     
@@ -217,13 +388,22 @@ function loadDashboardData() {
     }, 1000);
 }
 
+/**
+ * Updates dashboard statistics
+ */
 function updateStats() {
     // Stats are already updated by Django context
     // Additional stats can be updated here if needed
     hideLoading();
 }
 
-// AJAX Load Users (for client-side filtering)
+/* =========================
+   USER MANAGEMENT
+========================= */
+
+/**
+ * Loads users for client-side filtering
+ */
 function loadUsers() {
     // Users are already loaded by Django
     // This function handles client-side filtering and search
@@ -234,6 +414,9 @@ function loadUsers() {
     }
 }
 
+/**
+ * Filters users based on selected criteria
+ */
 function filterUsers() {
     const filterEl = document.getElementById('userFilter');
     const filterValue = filterEl ? filterEl.value : 'all';
@@ -273,11 +456,20 @@ function filterUsers() {
     }
 }
 
+/**
+ * Searches users (wrapper for filterUsers)
+ */
 function searchUsers() {
     filterUsers();
 }
 
-// AJAX Load Products (for client-side filtering)
+/* =========================
+   PRODUCT MANAGEMENT
+========================= */
+
+/**
+ * Loads products for client-side filtering
+ */
 function loadProducts() {
     // Products are already loaded by Django
     // This function handles client-side filtering
@@ -289,6 +481,9 @@ function loadProducts() {
     }
 }
 
+/**
+ * Filters products based on selected criteria
+ */
 function filterProducts() {
     const catEl = document.getElementById('categoryFilter');
     const categoryValue = catEl ? catEl.value : 'all';
@@ -332,6 +527,9 @@ function filterProducts() {
     }
 }
 
+/**
+ * Updates category filter options based on available products
+ */
 function updateCategoryFilter() {
     const filter = document.getElementById('categoryFilter');
     if (!filter) return;
@@ -354,13 +552,25 @@ function updateCategoryFilter() {
     });
 }
 
-// AJAX Load Inventory
+/* =========================
+   INVENTORY MANAGEMENT
+========================= */
+
+/**
+ * Loads inventory data
+ */
 function loadInventory() {
     // Inventory data is already loaded by Django
     // Additional processing can be done here
 }
 
-// AJAX Load Analytics
+/* =========================
+   ANALYTICS
+========================= */
+
+/**
+ * Loads analytics data
+ */
 function loadAnalytics() {
     showLoading();
     
@@ -371,11 +581,15 @@ function loadAnalytics() {
     }, 1000);
 }
 
-// ============= IMPROVED FESTIVAL CHART FUNCTIONS =============
+/* =========================
+   FESTIVAL CHART FUNCTIONS
+========================= */
 
-// Initialize Festival Charts from Django template data
+/**
+ * Initializes festival charts from Django template data
+ */
 function initFestivalCharts() {
-    console.log('initFestivalCharts called');
+    console.log('📊 initFestivalCharts called');
     
     // Check if we have festival data
     const topProductsElement = document.getElementById('top-products-data');
@@ -383,12 +597,12 @@ function initFestivalCharts() {
     const festivalNameElement = document.getElementById('detected-festival');
     
     if (!topProductsElement || !leastProductsElement) {
-        console.log('Data elements not found');
+        console.log('❌ Data elements not found');
         return;
     }
     
-    console.log('Top products raw data:', topProductsElement.dataset.products);
-    console.log('Least products raw data:', leastProductsElement.dataset.products);
+    console.log('📦 Top products raw data:', topProductsElement.dataset.products);
+    console.log('📦 Least products raw data:', leastProductsElement.dataset.products);
     
     // Parse the data from data attributes
     try {
@@ -403,9 +617,9 @@ function initFestivalCharts() {
                 // Handle escaped quotes
                 const cleanedData = rawData.replace(/&quot;/g, '"');
                 topProducts = JSON.parse(cleanedData);
-                console.log('Parsed top products:', topProducts);
+                console.log('✅ Parsed top products:', topProducts);
             } catch (e) {
-                console.error('Failed to parse top products JSON:', e);
+                console.error('❌ Failed to parse top products JSON:', e);
                 console.log('Raw data:', topProductsElement.dataset.products);
             }
         }
@@ -416,9 +630,9 @@ function initFestivalCharts() {
                 const rawData = leastProductsElement.dataset.products;
                 const cleanedData = rawData.replace(/&quot;/g, '"');
                 leastProducts = JSON.parse(cleanedData);
-                console.log('Parsed least products:', leastProducts);
+                console.log('✅ Parsed least products:', leastProducts);
             } catch (e) {
-                console.error('Failed to parse least products JSON:', e);
+                console.error('❌ Failed to parse least products JSON:', e);
             }
         }
         
@@ -428,20 +642,20 @@ function initFestivalCharts() {
         
         const festivalName = festivalNameElement ? festivalNameElement.dataset.festival : 'Festival';
         
-        console.log('Final top products:', topProducts);
-        console.log('Final least products:', leastProducts);
+        console.log('📊 Final top products:', topProducts);
+        console.log('📊 Final least products:', leastProducts);
         
         if (topProducts.length > 0 || leastProducts.length > 0) {
             createFestivalCharts(topProducts, leastProducts, festivalName);
         } else {
-            console.log('No product data found for charts');
+            console.log('⚠️ No product data found for charts');
             // Clear canvases and show empty state
             ['topSellingChart', 'leastSellingChart'].forEach(canvasId => {
                 const canvas = document.getElementById(canvasId);
                 if (canvas) {
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.font = '14px Poppins, sans-serif';
+                    ctx.font = '14px Inter, sans-serif';
                     ctx.fillStyle = '#999';
                     ctx.textAlign = 'center';
                     ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
@@ -449,13 +663,18 @@ function initFestivalCharts() {
             });
         }
     } catch (e) {
-        console.error('Error in initFestivalCharts:', e);
+        console.error('❌ Error in initFestivalCharts:', e);
     }
 }
 
-// Create separate horizontal bar charts for top and least products
+/**
+ * Creates festival charts for top and least selling products
+ * @param {Array} topProducts - Top selling products data
+ * @param {Array} leastProducts - Least selling products data
+ * @param {string} festivalName - Name of the festival
+ */
 function createFestivalCharts(topProducts, leastProducts, festivalName) {
-    console.log('Creating charts with:', { topProducts, leastProducts });
+    console.log('📈 Creating charts with:', { topProducts, leastProducts });
     
     // Format data properly
     const formattedTop = Array.isArray(topProducts) ? topProducts.map(item => ({
@@ -468,8 +687,8 @@ function createFestivalCharts(topProducts, leastProducts, festivalName) {
         units: parseFloat(item.predicted_sales) || 0
     })) : [];
     
-    console.log('Formatted top:', formattedTop);
-    console.log('Formatted least:', formattedLeast);
+    console.log('📊 Formatted top:', formattedTop);
+    console.log('📊 Formatted least:', formattedLeast);
     
     // Create top selling chart
     if (formattedTop.length > 0) {
@@ -480,13 +699,13 @@ function createFestivalCharts(topProducts, leastProducts, festivalName) {
             'Top Selling Products'
         );
     } else {
-        console.log('No top products to display');
+        console.log('⚠️ No top products to display');
         // Clear canvas if no data
         const canvas = document.getElementById('topSellingChart');
         if (canvas) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '14px Poppins, sans-serif';
+            ctx.font = '14px Inter, sans-serif';
             ctx.fillStyle = '#999';
             ctx.textAlign = 'center';
             ctx.fillText('No top products data', canvas.width/2, canvas.height/2);
@@ -502,13 +721,13 @@ function createFestivalCharts(topProducts, leastProducts, festivalName) {
             'Least Selling Products'
         );
     } else {
-        console.log('No least products to display');
+        console.log('⚠️ No least products to display');
         // Clear canvas if no data
         const canvas = document.getElementById('leastSellingChart');
         if (canvas) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '14px Poppins, sans-serif';
+            ctx.font = '14px Inter, sans-serif';
             ctx.fillStyle = '#999';
             ctx.textAlign = 'center';
             ctx.fillText('No least products data', canvas.width/2, canvas.height/2);
@@ -516,13 +735,19 @@ function createFestivalCharts(topProducts, leastProducts, festivalName) {
     }
 }
 
-// Create a horizontal bar chart - IMPROVED VERSION
+/**
+ * Creates a horizontal bar chart
+ * @param {string} canvasId - ID of the canvas element
+ * @param {Array} data - Chart data
+ * @param {string} color - Base color for the chart
+ * @param {string} label - Chart label
+ */
 function createHorizontalBarChart(canvasId, data, color, label) {
-    console.log(`Creating ${canvasId} with data:`, data);
+    console.log(`📊 Creating ${canvasId} with data:`, data);
     
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        console.log(`Canvas ${canvasId} not found`);
+        console.log(`❌ Canvas ${canvasId} not found`);
         return;
     }
     
@@ -537,9 +762,9 @@ function createHorizontalBarChart(canvasId, data, color, label) {
     
     // Make sure we have valid data
     if (!data || data.length === 0) {
-        console.log(`No data for ${canvasId}, showing empty message`);
+        console.log(`⚠️ No data for ${canvasId}, showing empty message`);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '14px Poppins, sans-serif';
+        ctx.font = '14px Inter, sans-serif';
         ctx.fillStyle = '#999';
         ctx.textAlign = 'center';
         ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
@@ -563,8 +788,8 @@ function createHorizontalBarChart(canvasId, data, color, label) {
         return Math.max(0, val); // No negative values
     });
     
-    console.log('Chart labels:', labels);
-    console.log('Chart values:', values);
+    console.log('📈 Chart labels:', labels);
+    console.log('📈 Chart values:', values);
     
     // Create gradient colors based on value
     const backgroundColors = values.map((value, index) => {
@@ -631,7 +856,7 @@ function createHorizontalBarChart(canvasId, data, color, label) {
                         color: '#666',
                         font: {
                             size: 11,
-                            family: 'Poppins, sans-serif'
+                            family: 'Inter, sans-serif'
                         }
                     },
                     ticks: {
@@ -640,7 +865,7 @@ function createHorizontalBarChart(canvasId, data, color, label) {
                         },
                         font: {
                             size: 10,
-                            family: 'Poppins, sans-serif'
+                            family: 'Inter, sans-serif'
                         }
                     }
                 },
@@ -651,7 +876,7 @@ function createHorizontalBarChart(canvasId, data, color, label) {
                     ticks: {
                         font: {
                             size: 11,
-                            family: 'Poppins, sans-serif'
+                            family: 'Inter, sans-serif'
                         },
                         maxRotation: 0,
                         autoSkip: true,
@@ -669,10 +894,14 @@ function createHorizontalBarChart(canvasId, data, color, label) {
         window.leastSellingChart = newChart;
     }
     
-    console.log(`Chart ${canvasId} created successfully with ${sortedData.length} items`);
+    console.log(`✅ Chart ${canvasId} created successfully with ${sortedData.length} items`);
 }
 
-// Helper function to convert hex to rgb
+/**
+ * Helper function to convert hex color to RGB
+ * @param {string} hex - Hex color code
+ * @returns {string} RGB color string
+ */
 function hexToRgb(hex) {
     // Remove # if present
     hex = hex.replace('#', '');
@@ -685,67 +914,13 @@ function hexToRgb(hex) {
     return `${r}, ${g}, ${b}`;
 }
 
-// ============= END OF FESTIVAL CHART FUNCTIONS =============
+/* =========================
+   CHART INITIALIZATION
+========================= */
 
-// Load prediction data
-function loadPredictionData() {
-    const predictions = {
-        nextWeek: 3250,
-        nextMonth: 14500,
-        trend: 'up',
-        confidence: 85
-    };
-    
-    const container = document.getElementById('predictionData');
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div style="text-align: center;">
-            <h3 style="color: var(--primary); margin-bottom: 10px;">Next Week: $${predictions.nextWeek.toLocaleString()}</h3>
-            <p style="color: var(--gray); margin-bottom: 5px;">Monthly Forecast: $${predictions.nextMonth.toLocaleString()}</p>
-            <p style="color: ${predictions.trend === 'up' ? 'var(--success)' : 'var(--danger)'}; margin-bottom: 5px;">
-                <i class="fas fa-arrow-${predictions.trend === 'up' ? 'up' : 'down'}"></i>
-                Trend: ${predictions.trend === 'up' ? 'Upward' : 'Downward'}
-            </p>
-            <p style="color: var(--gray);">Confidence: ${predictions.confidence}%</p>
-        </div>
-    `;
-}
-
-function loadReportsTable() {
-    const reports = [
-        { date: '2024-01-15', product: 'Laptop Pro', units: 12, revenue: 15599.88, margin: '35%', trend: 'up' },
-        { date: '2024-01-15', product: 'Wireless Mouse', units: 45, revenue: 1349.55, margin: '45%', trend: 'up' },
-        { date: '2024-01-14', product: 'Coffee Maker', units: 8, revenue: 719.92, margin: '30%', trend: 'stable' },
-        { date: '2024-01-14', product: 'Organic Coffee', units: 25, revenue: 324.75, margin: '40%', trend: 'up' },
-        { date: '2024-01-13', product: 'T-Shirt', units: 15, revenue: 299.85, margin: '50%', trend: 'down' }
-    ];
-    
-    const tbody = document.getElementById('reportsTableBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    reports.forEach(report => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${report.date}</td>
-            <td>${report.product}</td>
-            <td>${report.units}</td>
-            <td>$${report.revenue.toFixed(2)}</td>
-            <td>${report.margin}</td>
-            <td>
-                <span style="color: ${report.trend === 'up' ? 'var(--success)' : report.trend === 'down' ? 'var(--danger)' : 'var(--warning)'};">
-                    <i class="fas fa-arrow-${report.trend === 'up' ? 'up' : report.trend === 'down' ? 'down' : 'right'}"></i>
-                    ${report.trend}
-                </span>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Chart Initialization
+/**
+ * Initializes the main sales chart
+ */
 function initSalesChart() {
     const ctx = document.getElementById('salesChart');
     if (!ctx) return;
@@ -761,8 +936,8 @@ function initSalesChart() {
         datasets: [{
             label: 'Sales ($)',
             data: [1200, 1900, 3000, 5000, 2845, 3200, 1800],
-            borderColor: '#6C63FF',
-            backgroundColor: 'rgba(108, 99, 255, 0.1)',
+            borderColor: '#4361ee',
+            backgroundColor: 'rgba(67, 97, 238, 0.1)',
             borderWidth: 2,
             fill: true,
             tension: 0.4
@@ -797,6 +972,9 @@ function initSalesChart() {
     });
 }
 
+/**
+ * Initializes analytics chart
+ */
 function initAnalyticsChart() {
     const ctx = document.getElementById('analyticsChart');
     if (!ctx) return;
@@ -812,15 +990,15 @@ function initAnalyticsChart() {
         datasets: [{
             label: 'Revenue',
             data: [12000, 19000, 15000, 25000, 22000, 30000],
-            borderColor: '#6C63FF',
-            backgroundColor: 'rgba(108, 99, 255, 0.1)',
+            borderColor: '#4361ee',
+            backgroundColor: 'rgba(67, 97, 238, 0.1)',
             borderWidth: 2,
             fill: true
         }, {
             label: 'Profit',
             data: [4000, 7000, 5000, 9000, 8000, 12000],
-            borderColor: '#4CAF50',
-            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
             borderWidth: 2,
             fill: true
         }]
@@ -854,6 +1032,9 @@ function initAnalyticsChart() {
     });
 }
 
+/**
+ * Initializes category chart
+ */
 function initCategoryChart() {
     const ctx = document.getElementById('categoryChart');
     if (!ctx) return;
@@ -869,11 +1050,11 @@ function initCategoryChart() {
         datasets: [{
             data: [40, 20, 15, 15, 10],
             backgroundColor: [
-                '#6C63FF',
-                '#FF6B6B',
-                '#4CAF50',
-                '#FF9800',
-                '#9C27B0'
+                '#4361ee',
+                '#ef4444',
+                '#10b981',
+                '#f59e0b',
+                '#8b5cf6'
             ]
         }]
     };
@@ -893,7 +1074,13 @@ function initCategoryChart() {
     });
 }
 
-// Notification Functions
+/* =========================
+   NOTIFICATION FUNCTIONS
+========================= */
+
+/**
+ * Toggles notification panel visibility
+ */
 function toggleNotifications() {
     const notificationPanel = document.getElementById('notificationPanel');
     if (notificationPanel) {
@@ -901,6 +1088,9 @@ function toggleNotifications() {
     }
 }
 
+/**
+ * Loads notifications from server
+ */
 function loadNotifications() {
     const notifications = [
         {
@@ -953,6 +1143,10 @@ function loadNotifications() {
     renderNotifications(notifications);
 }
 
+/**
+ * Renders notifications in the panel
+ * @param {Array} notifications - Array of notification objects
+ */
 function renderNotifications(notifications) {
     const notificationList = document.getElementById('notificationList');
     if (!notificationList) return;
@@ -995,6 +1189,10 @@ function renderNotifications(notifications) {
     }
 }
 
+/**
+ * Marks a single notification as read
+ * @param {number} id - Notification ID
+ */
 function markNotificationAsRead(id) {
     showLoading();
     
@@ -1015,6 +1213,9 @@ function markNotificationAsRead(id) {
     }, 500);
 }
 
+/**
+ * Marks all notifications as read
+ */
 function markAllAsRead() {
     showLoading();
     
@@ -1037,6 +1238,9 @@ function markAllAsRead() {
     }, 500);
 }
 
+/**
+ * Views all notifications
+ */
 function viewAllNotifications() {
     showToast('Viewing all notifications - Feature coming soon!', 'info');
     const notificationPanel = document.getElementById('notificationPanel');
@@ -1045,7 +1249,13 @@ function viewAllNotifications() {
     }
 }
 
-// Modal Functions
+/* =========================
+   MODAL FUNCTIONS
+========================= */
+
+/**
+ * Opens user modal
+ */
 function openUserModal() {
     const modal = document.getElementById('userModal');
     if (modal) {
@@ -1053,6 +1263,9 @@ function openUserModal() {
     }
 }
 
+/**
+ * Closes user modal
+ */
 function closeUserModal() {
     const modal = document.getElementById('userModal');
     if (modal) {
@@ -1064,6 +1277,9 @@ function closeUserModal() {
     }
 }
 
+/**
+ * Opens product modal
+ */
 function openProductModal() {
     const modal = document.getElementById('productModal');
     if (modal) {
@@ -1071,6 +1287,9 @@ function openProductModal() {
     }
 }
 
+/**
+ * Closes product modal
+ */
 function closeProductModal() {
     const modal = document.getElementById('productModal');
     if (modal) {
@@ -1082,6 +1301,9 @@ function closeProductModal() {
     }
 }
 
+/**
+ * Opens inventory modal
+ */
 function openInventoryModal() {
     // Load products for dropdown
     loadProductDropdown();
@@ -1091,6 +1313,9 @@ function openInventoryModal() {
     }
 }
 
+/**
+ * Closes inventory modal
+ */
 function closeInventoryModal() {
     const modal = document.getElementById('inventoryModal');
     if (modal) {
@@ -1102,6 +1327,9 @@ function closeInventoryModal() {
     }
 }
 
+/**
+ * Opens quick action modal
+ */
 function openQuickAction() {                                          
     const modal = document.getElementById('quickActionModal');
     if (modal) {
@@ -1109,6 +1337,9 @@ function openQuickAction() {
     }
 }
 
+/**
+ * Closes quick action modal
+ */
 function closeQuickAction() {
     const modal = document.getElementById('quickActionModal');
     if (modal) {
@@ -1116,7 +1347,13 @@ function closeQuickAction() {
     }
 }
 
-// Save Functions (AJAX)
+/* =========================
+   SAVE FUNCTIONS
+========================= */
+
+/**
+ * Saves user data (simulated)
+ */
 function saveUser() {
     showLoading();
     
@@ -1137,6 +1374,9 @@ function saveUser() {
     }, 1500);
 }
 
+/**
+ * Saves product data (simulated)
+ */
 function saveProduct() {
     showLoading();
     
@@ -1159,6 +1399,9 @@ function saveProduct() {
     }, 1500);
 }
 
+/**
+ * Saves inventory adjustment (simulated)
+ */
 function saveInventoryAdjustment() {
     showLoading();
     
@@ -1179,7 +1422,13 @@ function saveInventoryAdjustment() {
     }, 1500);
 }
 
-// Utility Functions
+/* =========================
+   UTILITY FUNCTIONS
+========================= */
+
+/**
+ * Shows loading overlay
+ */
 function showLoading() {
     const loadingOverlay = document.getElementById('loadingOverlay');
     if (loadingOverlay) {
@@ -1187,6 +1436,9 @@ function showLoading() {
     }
 }
 
+/**
+ * Hides loading overlay
+ */
 function hideLoading() {
     const loadingOverlay = document.getElementById('loadingOverlay');
     if (loadingOverlay) {
@@ -1194,6 +1446,11 @@ function hideLoading() {
     }
 }
 
+/**
+ * Shows toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification (success, error, warning, info)
+ */
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -1222,6 +1479,9 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+/**
+ * Loads products into dropdown
+ */
 function loadProductDropdown() {
     const select = document.getElementById('inventoryProduct');
     if (!select) return;
@@ -1259,6 +1519,9 @@ function loadProductDropdown() {
     }
 }
 
+/**
+ * Loads recent alerts
+ */
 function loadRecentAlerts() {
     const alerts = [
         { type: 'warning', message: 'T-Shirt stock is low (5 units)', time: '2 hours ago' },
@@ -1288,6 +1551,9 @@ function loadRecentAlerts() {
     });
 }
 
+/**
+ * Loads recent activity
+ */
 function loadRecentActivity() {
     const activities = [
         { user: 'John Doe', action: 'added new product', time: '10:30 AM' },
@@ -1315,7 +1581,13 @@ function loadRecentActivity() {
     });
 }
 
-// Action Functions
+/* =========================
+   ACTION FUNCTIONS
+========================= */
+
+/**
+ * Exports users data
+ */
 function exportUsers() {
     showLoading();
     setTimeout(() => {
@@ -1324,6 +1596,9 @@ function exportUsers() {
     }, 1000);
 }
 
+/**
+ * Bulk reset passwords for selected users
+ */
 function bulkResetPassword() {
     const selected = document.querySelectorAll('.user-checkbox:checked');
     if (selected.length === 0) {
@@ -1353,10 +1628,16 @@ function bulkResetPassword() {
     }
 }
 
+/**
+ * Bulk update stock (placeholder)
+ */
 function bulkUpdateStock() {
     showToast('Bulk stock update feature coming soon!', 'info');
 }
 
+/**
+ * Import products from CSV
+ */
 function importProducts() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -1372,6 +1653,9 @@ function importProducts() {
     input.click();
 }
 
+/**
+ * Generate report (placeholder)
+ */
 function generateReport() {
     showLoading();
     setTimeout(() => {
@@ -1380,6 +1664,9 @@ function generateReport() {
     }, 2000);
 }
 
+/**
+ * Backup database
+ */
 function backupDatabase() {
     showLoading();
     setTimeout(() => {
@@ -1388,6 +1675,9 @@ function backupDatabase() {
     }, 1500);
 }
 
+/**
+ * Clear cache
+ */
 function clearCache() {
     showLoading();
     setTimeout(() => {
@@ -1396,6 +1686,9 @@ function clearCache() {
     }, 1000);
 }
 
+/**
+ * Export all data
+ */
 function exportAllData() {
     showLoading();
     setTimeout(() => {
@@ -1404,7 +1697,14 @@ function exportAllData() {
     }, 2000);
 }
 
-// Theme Functions
+/* =========================
+   THEME FUNCTIONS
+========================= */
+
+/**
+ * Changes the theme
+ * @param {string} theme - Theme name (default, dark, light)
+ */
 function changeTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -1414,24 +1714,53 @@ function changeTheme(theme) {
         }
     });
     localStorage.setItem('retailx-theme', theme);
+    showToast(`Theme changed to ${theme}`, 'success');
 }
 
+/**
+ * Loads saved theme settings
+ */
 function loadSettings() {
     const savedTheme = localStorage.getItem('retailx-theme') || 'default';
     changeTheme(savedTheme);
+    
+    // Load other settings
+    const savedSettings = localStorage.getItem('retailx-settings');
+    if (savedSettings) {
+        try {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
+            document.getElementById('lowStockAlerts').checked = settings.lowStockAlerts || false;
+            document.getElementById('newUserAlerts').checked = settings.newUserAlerts || false;
+        } catch (e) {
+            console.error('Error loading settings:', e);
+        }
+    }
 }
 
-// Quick Actions
+/* =========================
+   QUICK ACTIONS
+========================= */
+
+/**
+ * Quick action to add product
+ */
 function quickAddProduct() {
     closeQuickAction();
     openProductModal();
 }
 
+/**
+ * Quick action to add user
+ */
 function quickAddUser() {
     closeQuickAction();
     openUserModal();
 }
 
+/**
+ * Quick action to check stock
+ */
 function quickStockCheck() {
     closeQuickAction();
     showLoading();
@@ -1441,17 +1770,33 @@ function quickStockCheck() {
     }, 1000);
 }
 
+/**
+ * Quick action to generate report
+ */
 function quickGenerateReport() {
     closeQuickAction();
     generateReport();
 }
 
-// Initialize Dashboard
+/* =========================
+   DASHBOARD INITIALIZATION
+========================= */
+
+/**
+ * Initializes dashboard
+ */
 function initDashboard() {
     loadSettings();
 }
 
-// Global Search
+/* =========================
+   GLOBAL SEARCH
+========================= */
+
+/**
+ * Performs global search
+ * @param {string} term - Search term
+ */
 function performGlobalSearch(term) {
     showLoading();
     
@@ -1468,11 +1813,24 @@ function performGlobalSearch(term) {
     }, 500);
 }
 
-// Edit Functions (stubs for demo)
+/* =========================
+   EDIT FUNCTIONS (Stubs)
+========================= */
+
+/**
+ * Edits a user
+ * @param {string} id - User ID
+ * @param {string} type - User type
+ */
 function editUser(id, type) {
     showToast(`Edit user ${id} (${type}) - Feature coming soon!`, 'info');
 }
 
+/**
+ * Deletes a user
+ * @param {string} id - User ID
+ * @param {string} type - User type
+ */
 function deleteUser(id, type) {
     if (confirm('Are you sure you want to delete this user?')) {
         showLoading();
@@ -1496,6 +1854,11 @@ function deleteUser(id, type) {
     }
 }
 
+/**
+ * Resets user password
+ * @param {string} id - User ID
+ * @param {string} type - User type
+ */
 function resetUserPassword(id, type) {
     if (confirm('Reset password for this user? A temporary password will be generated.')) {
         showLoading();
@@ -1519,10 +1882,18 @@ function resetUserPassword(id, type) {
     }
 }
 
+/**
+ * Edits a product
+ * @param {string} id - Product ID
+ */
 function editProduct(id) {
     showToast(`Edit product ${id} - Feature coming soon!`, 'info');
 }
 
+/**
+ * Deletes a product
+ * @param {string} id - Product ID
+ */
 function deleteProduct(id) {
     if (confirm('Are you sure you want to delete this product?')) {
         showLoading();
@@ -1546,19 +1917,34 @@ function deleteProduct(id) {
     }
 }
 
+/**
+ * Views product details
+ * @param {string} id - Product ID
+ */
 function viewProductDetails(id) {
     showToast(`Viewing product ${id} details - Feature coming soon!`, 'info');
 }
 
+/**
+ * Adjusts stock for a product
+ * @param {string} id - Product ID
+ */
 function adjustStock(id) {
     openInventoryModal();
     showToast(`Adjusting stock for product ${id}`, 'info');
 }
 
+/**
+ * Views inventory history for a product
+ * @param {string} id - Product ID
+ */
 function viewInventoryHistory(id) {
     showToast(`Viewing inventory history for product ${id} - Feature coming soon!`, 'info');
 }
 
+/**
+ * Toggles all user checkboxes
+ */
 function toggleAllUsers() {
     const selectAll = document.getElementById('selectAllUsers');
     if (!selectAll) return;
@@ -1569,6 +1955,9 @@ function toggleAllUsers() {
     });
 }
 
+/**
+ * Updates sales chart based on selected period
+ */
 function updateSalesChart() {
     const periodEl = document.getElementById('salesPeriod');
     const period = periodEl ? periodEl.value : null;
@@ -1580,6 +1969,9 @@ function updateSalesChart() {
     }, 500);
 }
 
+/**
+ * Updates analytics based on selected period
+ */
 function updateAnalytics() {
     const periodEl = document.getElementById('reportPeriod');
     const period = periodEl ? periodEl.value : null;
@@ -1592,6 +1984,9 @@ function updateAnalytics() {
     }, 500);
 }
 
+/**
+ * Saves settings to localStorage
+ */
 function saveSettings() {
     const emailCheck = document.getElementById('emailNotifications');
     const lowStockCheck = document.getElementById('lowStockAlerts');
@@ -1607,8 +2002,13 @@ function saveSettings() {
 }
 
 /* =========================
-   GET CSRF TOKEN FUNCTION
+   CSRF TOKEN HELPER
 ========================= */
+
+/**
+ * Gets CSRF token from cookies
+ * @returns {string} CSRF token
+ */
 function getCSRFToken() {
     let cookieValue = null;
     const name = "csrftoken";
@@ -1627,8 +2027,12 @@ function getCSRFToken() {
 }
 
 /* =========================
-   SEND MESSAGE FUNCTION
+   CHATBOT FUNCTIONS
 ========================= */
+
+/**
+ * Sends message to chatbot
+ */
 function sendMessage() {
     const input = document.getElementById("chatbot-input");
     const messages = document.getElementById("chatbot-messages");
@@ -1702,18 +2106,20 @@ function sendMessage() {
     });
 }
 
-/* =========================
-   HELPER: Escape HTML
-========================= */
+/**
+ * Escapes HTML special characters
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
 }
 
-/* =========================
-   CHATBOT TOGGLE (FIXED)
-========================= */
+/**
+ * Toggles chatbot visibility
+ */
 function toggleChatbot() {
     const box = document.getElementById("chatbot-box");
 

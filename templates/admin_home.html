@@ -5,119 +5,182 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
     <title>RetailX - Advanced Admin Dashboard</title>
+    
+    <!-- CSS Files -->
     <link rel="stylesheet" href="{% static 'css/admin_home.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body>
+<body data-admin="{{ uname }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
+    <!-- ========== SIDEBAR (Matching Cashier Theme with User Info) ========== -->
+    <aside class="sidebar">
+        <!-- Logo Section -->
         <div class="logo">
             <div class="logo-circle">
                 <div class="logo-image">
                     <img src="{% static 'images/RetailX logo with fruits and bar design.png' %}" alt="RetailX Logo">
                 </div>
             </div>
-            <h2>RetailX</h2>
+            <h2>Retail<span style="color: var(--accent);">X</span></h2>
             <p class="admin-role">Admin Dashboard</p>
         </div>
 
+        <!-- User Info Section - Enhanced to match cashier style -->
         <div class="user-info">
-            <div class="avatar">A</div>
+            <div class="avatar">
+                <img src="https://ui-avatars.com/api/?name={{ uname|default:'Admin' }}&background=4361ee&color=fff&size=56" alt="Admin">
+                <span class="status-indicator online"></span>
+            </div>
             <div class="user-details">
-                <h4>{{ uname }}</h4>
-                <p>{{ email }}</p>
+                <h4 id="adminName">{{ uname|default:'Admin User' }}</h4>
+                <p id="adminEmail">{{ email|default:'admin@retailx.com' }}</p>
+                <span class="role-badge">Administrator</span>
             </div>
         </div>
 
+        <!-- Navigation Menu -->
         <nav class="nav-menu">
-            <a href="#" class="nav-item {% if not detected_festival %}active{% endif %}" data-section="dashboard">
-                <i class="fas fa-home"></i> Dashboard
-            </a>
-            <a href="#" class="nav-item" data-section="users">
-                <i class="fas fa-users"></i> User Management
-            </a>
-            <a href="#" class="nav-item" data-section="products">
-                <i class="fas fa-box"></i> Product Management
-            </a>
-            <a href="#" class="nav-item" data-section="inventory">
-                <i class="fas fa-warehouse"></i> Inventory
-            </a>
-            <a href="#" class="nav-item {% if detected_festival %}active{% endif %}" data-section="analytics">
-                <i class="fas fa-chart-line"></i> Analysis
-            </a>
-            <a href="#" class="nav-item" data-section="settings">
-                <i class="fas fa-cog"></i> Settings
-            </a>
+            <!-- Main Section -->
+            <div class="nav-section">
+                <p class="nav-caption">MAIN</p>
+                <a href="#" class="nav-item {% if not detected_festival %}active{% endif %}" data-section="dashboard">
+                    <i class="fas fa-home"></i> <span>Dashboard</span>
+                </a>
+            </div>
+
+            <!-- Management Section -->
+            <div class="nav-section">
+                <p class="nav-caption">MANAGEMENT</p>
+                <a href="#" class="nav-item" data-section="users">
+                    <i class="fas fa-users"></i> <span>User Management</span>
+                </a>
+                <a href="#" class="nav-item" data-section="products">
+                    <i class="fas fa-box"></i> <span>Product Management</span>
+                </a>
+                <a href="#" class="nav-item" data-section="inventory">
+                    <i class="fas fa-warehouse"></i> <span>Inventory</span>
+                </a>
+            </div>
+
+            <!-- Analytics Section -->
+            <div class="nav-section">
+                <p class="nav-caption">ANALYTICS</p>
+                <a href="#" class="nav-item {% if detected_festival %}active{% endif %}" data-section="analytics">
+                    <i class="fas fa-chart-line"></i> <span>Analysis</span>
+                </a>
+            </div>
+
+            <!-- System Section -->
+            <div class="nav-section">
+                <p class="nav-caption">SYSTEM</p>
+                <a href="#" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i> <span>Settings</span>
+                </a>
+            </div>
         </nav>
 
+        <!-- Logout Section -->
         <div class="logout-section">
             <a href="/admin_login" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i> Logout
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </a>
             <div class="system-status">
                 <span class="status-indicator active"></span>
                 <span>System Online</span>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- ========== MAIN CONTENT ========== -->
     <div class="main">
-        <!-- TOP BAR -->
-        <div class="topbar">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
+        <!-- ========== TOPBAR (Matching Cashier Theme with Fullscreen & Clock) ========== -->
+        <header class="topbar">
+            <!-- Page Title Area -->
+            <div class="page-title-area">
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="breadcrumb" id="breadcrumb">Admin / Dashboard</div>
+                </div>
             </div>
 
+            <!-- Topbar Right Section -->
             <div class="topbar-right">
-                <!-- Notification Panel -->
-                <div class="notification-container">
-                    <button class="notification-btn" onclick="toggleNotifications()">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-count">3</span>
-                    </button>
-                    <div class="notification-panel" id="notificationPanel">
-                        <div class="notification-header">
-                            <h4>Notifications</h4>
-                            <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
-                        </div>
-                        <div class="notification-list" id="notificationList">
-                            <!-- Notifications loaded via AJAX -->
-                        </div>
-                        <div class="notification-footer">
-                            <a href="#" onclick="viewAllNotifications()">View all notifications</a>
-                        </div>
+                <!-- Search Box -->
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
+                </div>
+
+                <!-- KPI Pills (Optional) -->
+                <div class="kpi-pills">
+                    <div class="pill">
+                        <span>Total Users</span>
+                        <strong id="topbarUsers">{{ totaluser }}</strong>
+                    </div>
+                    <div class="pill">
+                        <span>Products</span>
+                        <strong id="topbarProducts">{{ totalpro }}</strong>
                     </div>
                 </div>
 
-                <div class="date-display">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span id="currentDate"></span>
-                </div>
-                <button class="quick-action-btn" onclick="openQuickAction()">
-                    <i class="fas fa-plus"></i> Quick Action
-                </button>
-            </div>
-        </div>
+                <!-- Action Icons -->
+                <div class="action-icons">
+                    <!-- Fullscreen Button -->
+                    <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
 
-        <!-- DASHBOARD CONTENT -->
+                    <!-- Notification Button -->
+                    <div class="notification-container">
+                        <button class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-count">3</span>
+                        </button>
+                        <div class="notification-panel" id="notificationPanel">
+                            <div class="notification-header">
+                                <h4><i class="fas fa-bell" style="color: var(--primary); margin-right: 8px;"></i>Notifications</h4>
+                                <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <!-- Notifications loaded via AJAX -->
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#" onclick="viewAllNotifications()">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date-Time Display (Matching Cashier) -->
+                    <div class="date-time-display">
+                        <span id="currentDate"></span>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== CONTENT WRAPPER ========== -->
         <div class="content-wrapper">
-            <!-- DASHBOARD SECTION -->
+            <!-- ========== DASHBOARD SECTION ========== -->
             <section id="dashboard" class="content-section {% if not detected_festival %}active{% endif %}">
                 <div class="section-header">
                     <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
                 </div>
 
-                <!-- Horizontal Stats Cards -->
+                <!-- Horizontal Stats Cards (KPI Style) -->
                 <div class="horizontal-stats">
+                    <!-- Total Users Card -->
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
@@ -131,6 +194,7 @@
                         </div>
                     </div>
 
+                    <!-- Total Products Card -->
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-box"></i>
@@ -144,6 +208,7 @@
                         </div>
                     </div>
 
+                    <!-- Today's Revenue Card -->
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-chart-line"></i>
@@ -152,11 +217,12 @@
                             <h3>Today's Revenue</h3>
                             <p class="stat-value" id="todayRevenue">$2,845</p>
                             <span class="stat-change positive">
-                                <i class="fas fa-exclamation-circle"></i> Attention Required
+                                <i class="fas fa-arrow-up"></i> +12.5%
                             </span>
                         </div>
                     </div>
 
+                    <!-- Low Stock Items Card -->
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -171,7 +237,9 @@
                     </div>
                 </div>
 
+                <!-- Dashboard Grid -->
                 <div class="dashboard-grid">
+                    <!-- Sales Overview Card -->
                     <div class="dashboard-card wide">
                         <div class="card-header">
                             <h3><i class="fas fa-chart-bar"></i> Sales Overview</h3>
@@ -186,27 +254,45 @@
                         </div>
                     </div>
 
+                    <!-- Recent Alerts Card -->
                     <div class="dashboard-card">
                         <div class="card-header">
                             <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
                         </div>
                         <div class="card-body" id="recentAlerts">
                             <!-- Alerts loaded via AJAX -->
+                            <div class="alert-item" style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+                                <p style="font-weight: 600;">Low Stock Alert</p>
+                                <small style="color: var(--text-muted);">5 items are below minimum stock level</small>
+                            </div>
+                            <div class="alert-item" style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+                                <p style="font-weight: 600;">New User Registered</p>
+                                <small style="color: var(--text-muted);">John Doe joined as Cashier</small>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Recent Activity Card -->
                     <div class="dashboard-card">
                         <div class="card-header">
                             <h3><i class="fas fa-clock"></i> Recent Activity</h3>
                         </div>
                         <div class="card-body" id="recentActivity">
                             <!-- Activity loaded via AJAX -->
+                            <div class="activity-item" style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+                                <p><i class="fas fa-circle" style="color: var(--success); font-size: 8px;"></i> User login: Admin</p>
+                                <small style="color: var(--text-muted);">2 minutes ago</small>
+                            </div>
+                            <div class="activity-item" style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+                                <p><i class="fas fa-circle" style="color: var(--success); font-size: 8px;"></i> Product added: iPhone 15</p>
+                                <small style="color: var(--text-muted);">15 minutes ago</small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- USER MANAGEMENT SECTION -->
+            <!-- ========== USER MANAGEMENT SECTION ========== -->
             <section id="users" class="content-section">
                 <div class="section-header">
                     <h1><i class="fas fa-users"></i> User Management</h1>
@@ -215,6 +301,7 @@
                     </button>
                 </div>
 
+                <!-- Action Bar -->
                 <div class="action-bar">
                     <div class="filter-options">
                         <select id="userFilter" class="filter-select" onchange="filterUsers()">
@@ -223,8 +310,7 @@
                             <option value="manager">Managers</option>
                             <option value="cashier">Cashiers</option>
                         </select>
-                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input"
-                            onkeyup="searchUsers()">
+                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input" onkeyup="searchUsers()">
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn" onclick="exportUsers()">
@@ -236,6 +322,7 @@
                     </div>
                 </div>
 
+                <!-- Users Table -->
                 <div class="table-container">
                     <table id="usersTable">
                         <thead>
@@ -277,7 +364,7 @@
                             {% else %}
                                 <tr>
                                     <td colspan="8" style="text-align: center; padding: 40px;">
-                                        <i class="fas fa-users-slash" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                        <i class="fas fa-users-slash" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
                                         <p>No users found. Add your first user using the "Add New User" button above.</p>
                                     </td>
                                 </tr>
@@ -286,13 +373,13 @@
                     </table>
                 </div>
                 
-                <!-- User count display -->
-                <div style="margin-top: 20px; text-align: right; color: var(--gray); font-size: 14px;">
+                <!-- User Count Display -->
+                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
                     Showing {{ users|length }} user(s) in total
                 </div>
             </section>
 
-            <!-- PRODUCT MANAGEMENT SECTION -->
+            <!-- ========== PRODUCT MANAGEMENT SECTION ========== -->
             <section id="products" class="content-section">
                 <div class="section-header">
                     <h1><i class="fas fa-box"></i> Product Management</h1>
@@ -301,8 +388,9 @@
                     </button>
                 </div>
 
-                <div class="product-filters">
-                    <div class="filter-group">
+                <!-- Product Filters -->
+                <div class="action-bar">
+                    <div class="filter-options">
                         <select id="categoryFilter" class="filter-select" onchange="filterProducts()">
                             <option value="all">All Categories</option>
                         </select>
@@ -312,7 +400,7 @@
                             <option value="out">Out of Stock</option>
                         </select>
                     </div>
-                    <div class="quick-actions">
+                    <div class="action-buttons">
                         <button class="action-btn" onclick="bulkUpdateStock()">
                             <i class="fas fa-arrow-up"></i> Bulk Stock Update
                         </button>
@@ -322,6 +410,7 @@
                     </div>
                 </div>
 
+                <!-- Products Grid -->
                 <div class="products-grid" id="productsGrid">
                     {% if products %}
                         {% for product in products %}
@@ -355,19 +444,19 @@
                         {% endfor %}
                     {% else %}
                         <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                            <i class="fas fa-box-open" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <i class="fas fa-box-open" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
                             <p>No products found. Add your first product using the "Add Product" button above.</p>
                         </div>
                     {% endif %}
                 </div>
                 
-                <!-- Product count display -->
-                <div style="margin-top: 20px; text-align: right; color: var(--gray); font-size: 14px;">
+                <!-- Product Count Display -->
+                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
                     Showing {{ products|length }} product(s) in total
                 </div>
             </section>
 
-            <!-- INVENTORY SECTION -->
+            <!-- ========== INVENTORY SECTION ========== -->
             <section id="inventory" class="content-section">
                 <div class="section-header">
                     <h1><i class="fas fa-warehouse"></i> Inventory Management</h1>
@@ -376,6 +465,7 @@
                     </button>
                 </div>
 
+                <!-- Inventory Stats -->
                 <div class="inventory-stats">
                     <div class="inventory-card">
                         <h4>Total Stock Value</h4>
@@ -391,79 +481,71 @@
                     </div>
                 </div>
 
-                <div class="inventory-content">
-                    <div class="inventory-table-container">
-                        <table id="inventoryTable">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Current Stock</th>
-                                    <th>Min. Stock</th>
-                                    <th>Status</th>
-                                    <th>Category</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventoryTableBody">
-                                {% for product in products %}
-                                <tr>
-                                    <td>{{ product.name }}</td>
-                                    <td>{{ product.sku }}</td>
-                                    <td>{{ product.in_stock }}</td>
-                                    <td>{{ product.min_stock_level }}</td>
-                                    <td>
-                                        <span class="status-badge {% if product.in_stock <= product.min_stock_level %}status-pending{% else %}status-active{% endif %}">
-                                            {% if product.in_stock <= product.min_stock_level %}Low Stock{% else %}In Stock{% endif %}
-                                        </span>
-                                    </td>
-                                    <td>{{ product.category|capfirst }}</td>
-                                    <td>
-                                        <button class="action-btn small" onclick="adjustStock('{{ product.id }}')">
-                                            <i class="fas fa-edit"></i> Adjust
-                                        </button>
-                                        <button class="action-btn small" onclick="viewInventoryHistory('{{ product.id }}')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- Inventory Table -->
+                <div class="table-container">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Current Stock</th>
+                                <th>Min. Stock</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.sku }}</td>
+                                <td>{{ product.in_stock }}</td>
+                                <td>{{ product.min_stock_level }}</td>
+                                <td>
+                                    <span class="status-badge {% if product.in_stock <= product.min_stock_level %}status-pending{% else %}status-active{% endif %}">
+                                        {% if product.in_stock <= product.min_stock_level %}Low Stock{% else %}In Stock{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ product.category|capfirst }}</td>
+                                <td>
+                                    <button class="action-btn small" onclick="adjustStock('{{ product.id }}')">
+                                        <i class="fas fa-edit"></i> Adjust
+                                    </button>
+                                    <button class="action-btn small" onclick="viewInventoryHistory('{{ product.id }}')">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
-            <!-- Analysis table -->
+            <!-- ========== ANALYTICS SECTION ========== -->
             <section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
-
                 <!-- Hidden data elements for JavaScript -->
                 <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
                 <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
                 <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
 
-                <div class="analytics-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px; align-items: stretch;">
-
-                    <!-- ================= SEARCH CARD ================= -->
-                    <div class="analytics-card" style="width: 100%; min-width: 1200px; height:500px;">
-                        <div class="card-header" style="padding: 18px 25px;">
-                            <h3 style="margin: 0; font-size: 20px;"><i class="fas fa-search"></i> Festival Sales Prediction</h3>
-                            <p style="font-size:14px; color:var(--gray); margin: 8px 0 0 0;">
+                <div class="analytics-grid">
+                    <!-- ========== FESTIVAL SEARCH CARD ========== -->
+                    <div class="analytics-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-search"></i> Festival Sales Prediction</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
                                 Choose a festival OR enter a date to predict demand
                             </p>
-                        </div>
 
-                        <div class="card-body" style="padding: 20px 25px 25px 25px;">
-
-                            <form method="get" action="" id="festivalSearchForm" style="display: flex; flex-direction: column; gap: 20px;">
-
-                                <!-- DROPDOWN -->
-                                <div style="width: 100%;">
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
-                                        <i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--primary);"></i> Select Festival
-                                    </label>
-                                    <select name="festival" id="festival_select" 
-                                            style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
+                            <form method="get" action="" id="festivalSearchForm">
+                                <!-- Festival Dropdown -->
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar-alt" style="color: var(--primary); margin-right: 8px;"></i> Select Festival</label>
+                                    <select name="festival" id="festival_select" class="filter-select">
                                         <option value="">-- Choose a festival --</option>
                                         {% for festival in festival_choices %}
                                             <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
@@ -473,60 +555,39 @@
                                     </select>
                                 </div>
 
-                                <!-- OR DIVIDER -->
-                                <div style="text-align: center; margin: 5px 0; position: relative;">
-                                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--gray-light);"></div>
-                                    <span style="background: var(--white); padding: 0 20px; position: relative; color: var(--gray); font-size: 15px; font-weight: 500;">OR</span>
+                                <!-- OR Divider -->
+                                <div style="text-align: center; margin: 20px 0; position: relative;">
+                                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--text-light);"></div>
+                                    <span style="background: white; padding: 0 20px; position: relative; color: var(--text-muted); font-weight: 600;">OR</span>
                                 </div>
 
-                                <!-- DATE INPUT -->
-                                <div style="width: 100%;">
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: var(--dark);">
-                                        <i class="fas fa-calendar" style="margin-right: 8px; color: var(--primary);"></i> Enter Date
-                                    </label>
+                                <!-- Date Input -->
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar" style="color: var(--primary); margin-right: 8px;"></i> Enter Date</label>
                                     <input type="text" name="festival_date" id="festival_date"
                                            placeholder="DD-MM-YYYY (example: 25-12-2025)"
-                                           style="width: 100%; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 12px; background: var(--white); font-size: 15px; font-family: 'Poppins', sans-serif; transition: all 0.3s;">
-                                    <small style="display: block; margin-top: 8px; color: var(--gray); font-size: 13px; padding-left: 5px;">
+                                           class="filter-select">
+                                    <small style="display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px;">
                                         Leave blank if using dropdown above
                                     </small>
                                 </div>
 
                                 <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
 
-                                <button type="submit" 
-                                        style="width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);">
-                                    <i class="fas fa-search" style="font-size: 18px;"></i> Predict Sales
+                                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 16px;">
+                                    <i class="fas fa-search"></i> Predict Sales
                                 </button>
                             </form>
-
-                            <script>
-                                document.getElementById('festivalSearchForm').addEventListener('submit', function(e) {
-                                    const selectValue = document.getElementById('festival_select').value;
-                                    const dateValue = document.getElementById('festival_date').value;
-                                    const hiddenInput = document.getElementById('festival_hidden');
-
-                                    if (dateValue) {
-                                        hiddenInput.value = dateValue;
-                                    } else if (selectValue) {
-                                        hiddenInput.value = selectValue;
-                                    } else {
-                                        e.preventDefault();
-                                        alert('Please select a festival or enter a date');
-                                    }
-                                });
-                            </script>
-
                         </div>
-                    </div> 
-                    <!-- ================= RESULT CARD ================= -->
+                    </div>
+
+                    <!-- ========== FESTIVAL SALES FORECAST CARD ========== -->
                     <div class="analytics-card full">
                         <div class="card-header">
                             <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
                         </div>
 
                         <div class="card-body">
-
                             {% if festival_error %}
                                 <div class="ux-error">
                                     <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
@@ -534,69 +595,65 @@
                             {% endif %}
 
                             {% if detected_festival %}
-
-                                <!-- FESTIVAL BADGE -->
+                                <!-- Festival Banner -->
                                 <div class="ux-festival-banner">
                                     <i class="fas fa-glass-cheers"></i>
                                     <span>{{ detected_festival }}</span>
                                     <small>Expected Sales Analysis</small>
                                 </div>
 
-                                <!-- ================= CHARTS ONLY (No Product Lists) ================= -->
-                                <div class="ux-chart-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10;">
-
+                                <!-- Charts Grid -->
+                                <div class="ux-chart-grid">
+                                    <!-- Top Selling Products Chart -->
                                     <div class="ux-chart-card">
                                         <h4 class="ux-chart-title fire">
                                             <i class="fas fa-fire"></i> Top Selling Products
                                         </h4>
-                                        <div class="ux-chart-box" style="height: 350px;">
+                                        <div class="ux-chart-box">
                                             <canvas id="topSellingChart"></canvas>
                                         </div>
                                     </div>
 
+                                    <!-- Least Selling Products Chart -->
                                     <div class="ux-chart-card">
                                         <h4 class="ux-chart-title cool">
                                             <i class="fas fa-snowflake"></i> Least Selling Products
                                         </h4>
-                                        <div class="ux-chart-box" style="height: 350px;">
+                                        <div class="ux-chart-box">
                                             <canvas id="leastSellingChart"></canvas>
                                         </div>
                                     </div>
-
                                 </div>
 
-                                <!-- Optional: Add a simple summary if needed -->
+                                <!-- Summary (if needed) -->
                                 {% if top_products %}
-                                <div class="ux-summary" style="margin-top: 20px; padding: 12px; text-align: center; background: #f5f5f5; border-radius: 6px;">
-                                    <i class="fas fa-chart-line"></i>
+                                <div class="ux-summary">
+                                    <i class="fas fa-chart-line"></i> Forecast generated for {{ detected_festival }}
                                 </div>
                                 {% endif %}
 
                             {% else %}
-
-                                <!-- EMPTY STATE -->
+                                <!-- Empty State -->
                                 <div class="ux-empty-state">
                                     <i class="fas fa-chart-pie"></i>
                                     <h4>No Prediction Yet</h4>
                                     <p>Select a festival or enter a date to view forecast</p>
                                     <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
                                 </div>
-
                             {% endif %}
-
                         </div>
                     </div>
-
                 </div>
             </section>
 
-            <!-- SETTINGS SECTION -->
+            <!-- ========== SETTINGS SECTION ========== -->
             <section id="settings" class="content-section">
                 <div class="section-header">
                     <h1><i class="fas fa-cog"></i> System Settings</h1>
                 </div>
 
                 <div class="settings-grid">
+                    <!-- Notification Settings -->
                     <div class="settings-card">
                         <h3><i class="fas fa-bell"></i> Notification Settings</h3>
                         <div class="settings-options">
@@ -618,6 +675,7 @@
                         </div>
                     </div>
 
+                    <!-- Theme Settings -->
                     <div class="settings-card">
                         <h3><i class="fas fa-paint-brush"></i> Theme Settings</h3>
                         <div class="theme-options">
@@ -636,6 +694,7 @@
                         </div>
                     </div>
 
+                    <!-- Data Management -->
                     <div class="settings-card">
                         <h3><i class="fas fa-database"></i> Data Management</h3>
                         <div class="data-actions">
@@ -655,7 +714,7 @@
         </div>
     </div>
 
-    <!-- USER MODAL -->
+    <!-- ========== USER MODAL ========== -->
     <div id="userModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -704,7 +763,7 @@
         </div>
     </div>
 
-    <!-- PRODUCT MODAL -->
+    <!-- ========== PRODUCT MODAL ========== -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -762,7 +821,7 @@
         </div>
     </div>
 
-    <!-- INVENTORY MODAL -->
+    <!-- ========== INVENTORY MODAL ========== -->
     <div id="inventoryModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -808,7 +867,7 @@
         </div>
     </div>
 
-    <!-- QUICK ACTION MODAL -->
+    <!-- ========== QUICK ACTION MODAL ========== -->
     <div id="quickActionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -838,39 +897,33 @@
         </div>
     </div>
 
-    <!-- LOADING OVERLAY -->
+    <!-- ========== LOADING OVERLAY ========== -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
         <p>Loading...</p>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
+    <!-- ========== TOAST NOTIFICATION ========== -->
     <div id="toast" class="toast"></div>
 
-    <!-- 🤖 CHATBOT - FIXED -->
-    <div id="chatbot-button" onclick="toggleChatbot()"
-        style="position:fixed; bottom:25px; right:25px; width:60px; height:60px;
-        background:#6C63FF; color:white; border-radius:50%; display:flex;
-        align-items:center; justify-content:center; cursor:pointer; font-size:24px;">
-        🤖
-    </div>
+    <!-- ========== CHATBOT ========== -->
+    <div id="chatbot-button" onclick="toggleChatbot()">🤖</div>
 
-    <div id="chatbot-box"
-        style="position:fixed; bottom:100px; right:25px; width:340px; height:460px;
-        background:white; border-radius:12px; display:none; flex-direction:column;
-        z-index:999999;">
-        <div style="background:#6C63FF; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+    <div id="chatbot-box">
+        <div id="chatbot-header">
             <span>🤖 RetailX Assistant</span>
-            <span style="cursor:pointer; font-size:20px;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
+            <span style="cursor: pointer;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
         </div>
-        <div id="chatbot-messages" style="flex:1; padding:15px; overflow-y:auto; background:#f5f7fb;"></div>
-        <div style="display:flex; padding:10px; background:white; border-top:1px solid #e0e0e0;">
-            <input type="text" id="chatbot-input" placeholder="Type message..." style="flex:1; padding:10px; border:1px solid #e0e0e0; border-radius:20px; margin-right:10px;" autocomplete="off">
-            <button onclick="sendMessage()" style="background:#6C63FF; color:white; border:none; padding:0 20px; border-radius:20px; cursor:pointer;">Send</button>
+        <div id="chatbot-messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div id="chatbot-input-area">
+            <input type="text" id="chatbot-input" placeholder="Type message..." autocomplete="off">
+            <button onclick="sendMessage()">Send</button>
         </div>
     </div>
 
-    <!-- Link to external JS file -->
+    <!-- ========== SCRIPTS ========== -->
     <script src="{% static 'js/admin_home.js' %}"></script>
 </body>
 </html>
