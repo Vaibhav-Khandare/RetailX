@@ -14,14 +14,18 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsQR Library for QR decoding -->
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body data-cashier="{{ cashier_name }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 
+    <!-- Preloader -->
     <div id="global-loader" class="loader-wrapper">
         <div class="loader"></div>
         <div class="loader-text">Initializing POS System...</div>
     </div>
 
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="brand">
@@ -80,7 +84,9 @@
         </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="main-content">
+        <!-- Top Navigation -->
         <header class="top-nav">
             <div class="page-title-area">
                 <button class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -121,8 +127,10 @@
             </div>
         </header>
 
+        <!-- Page Content -->
         <div class="page-container">
             
+            <!-- Dashboard Page -->
             <div class="page active" id="dashboard-page">
                 <div class="kpi-container">
                     <div class="kpi-card">
@@ -203,6 +211,7 @@
                 </div>
             </div>
 
+            <!-- POS Page -->
             <div class="page" id="pos-page">
                 <div class="pos-layout">
                     <div class="pos-left-panel">
@@ -211,6 +220,10 @@
                                 <i class="fas fa-barcode"></i>
                                 <input type="text" id="posBarcodeScanner" placeholder="Scan barcode or enter product code (Press Enter)" autocomplete="off" autofocus>
                                 <button class="btn-primary" id="posManualSearchBtn"><i class="fas fa-search"></i></button>
+                                <!-- Camera/QR Scan Button -->
+                                <button class="btn-primary" id="cameraScanBtn" style="margin-left: 8px; background: linear-gradient(135deg, #4cc9f0, #4361ee);" title="Scan QR Code with Camera">
+                                    <i class="fas fa-camera"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -225,7 +238,7 @@
                             <div class="cart-items" id="cartItemsContainer">
                                 <div class="cart-empty-state">
                                     <i class="fas fa-shopping-cart"></i>
-                                    <p>Scan an item to begin transaction</p>
+                                    <p>Scan a barcode or QR code to begin transaction</p>
                                 </div>
                             </div>
                         </div>
@@ -310,6 +323,7 @@
                 </div>
             </div>
 
+            <!-- Inventory Page -->
             <div class="page" id="inventory-page">
                 <div class="card advanced-card full-height">
                     <div class="card-header flex-between">
@@ -332,12 +346,13 @@
                                 </tr>
                             </thead>
                             <tbody id="inventoryTableBody">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- Transactions Page -->
             <div class="page" id="transactions-page">
                 <div class="card advanced-card full-height">
                     <div class="card-header flex-between">
@@ -365,12 +380,13 @@
                                 </tr>
                             </thead>
                             <tbody id="txTableBody">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- Summary Page -->
             <div class="page" id="summary-page">
                 <div class="summary-grid">
                     <div class="card advanced-card grid-span-2">
@@ -428,10 +444,10 @@
                     <button class="btn-danger large" id="printZReportBtn"><i class="fas fa-flag-checkered"></i> Close Register & Print Z-Report</button>
                 </div>
             </div>
-
         </div>
     </main>
 
+    <!-- Product Search Modal -->
     <div class="modal" id="posSearchModal">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -445,12 +461,73 @@
                         <input type="text" id="posModalSearchInput" placeholder="Type product name or category..." autofocus>
                     </div>
                     <div class="grid-products" id="posModalResults">
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- QR Scanner Modal with Enhanced Camera Options -->
+    <div class="modal" id="qrScannerModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-qrcode"></i> Scan QR Code</h3>
+                    <button class="modal-close" id="qrScannerClose"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="qr-scanner-container">
+                        <!-- Camera Selection Dropdown -->
+                        <div class="camera-selector">
+                            <select id="cameraSelect" class="modern-select">
+                                <option value="default">Default Camera</option>
+                                <option value="environment">Back Camera</option>
+                                <option value="user">Front Camera</option>
+                                <option value="droidcam">DroidCam (Mobile Camera)</option>
+                            </select>
+                            <button id="applyCameraBtn" class="btn-primary btn-sm">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                        </div>
+                        
+                        <!-- Camera feed container -->
+                        <div class="camera-container">
+                            <video id="qr-video" playsinline autoplay></video>
+                            <canvas id="qr-canvas" style="display: none;"></canvas>
+                        </div>
+                        
+                        <!-- Camera controls -->
+                        <div class="camera-controls">
+                            <button id="switchCameraBtn" class="btn-outline">
+                                <i class="fas fa-sync-alt"></i> Quick Switch
+                            </button>
+                            <button id="detectCamerasBtn" class="btn-outline">
+                                <i class="fas fa-search"></i> Detect Cameras
+                            </button>
+                            <button id="captureQRBtn" class="btn-primary">
+                                <i class="fas fa-camera"></i> Capture QR
+                            </button>
+                        </div>
+                        
+                        <!-- Status display -->
+                        <div id="qr-status" class="qr-status">
+                            <i class="fas fa-info-circle"></i> Select camera and click "Capture QR"
+                        </div>
+                        
+                        <!-- Result display -->
+                        <div id="qr-result" class="qr-result" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="scanner-instructions">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>For DroidCam:</strong> Make sure DroidCam is running on your phone and connected via WiFi/USB. Select "DroidCam" from the dropdown and click Apply.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Modal -->
     <div class="modal" id="discountModal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -470,6 +547,7 @@
         </div>
     </div>
 
+    <!-- Receipt Modal -->
     <div class="modal" id="receiptModal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content receipt-bg">
@@ -479,7 +557,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="receipt-paper" id="receiptPrintArea">
-                        </div>
+                    </div>
                     <div class="receipt-actions hide-print mt-20">
                         <button class="btn-outline w-100 mb-10" id="emailReceiptBtn"><i class="fas fa-envelope"></i> Email Receipt</button>
                         <button class="btn-primary w-100" id="printActualReceiptBtn"><i class="fas fa-print"></i> Print Receipt</button>
@@ -489,10 +567,13 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Beep Sound -->
     <audio id="beepSound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..." preload="auto"></audio>
 
+    <!-- JavaScript -->
     <script src="/static/js/cashier_home.js"></script>
 </body>
 </html>

@@ -35,8 +35,12 @@ RetailX.State = {
         digitalTendered: 0
     },
     transactions: [], // Session history
-    // NEW: Hold bills storage
-    heldBills: []
+    heldBills: [], // Hold bills storage
+    // Camera state
+    cameraStream: null,
+    currentCamera: 'environment', // 'environment' for back camera, 'user' for front, or deviceId for specific camera
+    isCameraActive: false,
+    availableCameras: [] // List of available cameras
 };
 
 // ============================================
@@ -49,9 +53,18 @@ RetailX.Database = {
         { sku: '20001', barcode: '012345678903', name: 'Wireless Mouse', category: 'Electronics', price: 29.99, stock: 15 },
         { sku: '20002', barcode: '012345678904', name: 'USB-C Fast Charger', category: 'Electronics', price: 19.99, stock: 50 },
         { sku: '30001', barcode: '012345678905', name: 'Cotton T-Shirt (M)', category: 'Apparel', price: 15.00, stock: 200 },
-        { sku: '40001', barcode: '012345678906', name: 'Water Bottle 1L', category: 'Accessories', price: 9.99, stock: 85 }
+        { sku: '40001', barcode: '012345678906', name: 'Water Bottle 1L', category: 'Accessories', price: 9.99, stock: 85 },
+        // Products with QR codes (can be scanned)
+        { sku: '50001', barcode: 'QR-COFFEE-001', name: 'Special Edition Coffee', category: 'Grocery', price: 34.99, stock: 20 },
+        { sku: '50002', barcode: 'QR-PHONE-001', name: 'Smartphone Case', category: 'Electronics', price: 19.99, stock: 45 },
+        { sku: '50003', barcode: 'QR-TSHIRT-001', name: 'Limited Edition T-Shirt', category: 'Apparel', price: 29.99, stock: 15 }
     ],
 
+    /**
+     * Search products by query
+     * @param {string} query - Search term
+     * @returns {Array} Filtered products
+     */
     searchProducts: function(query) {
         query = query.toLowerCase().trim();
         if (!query) return this.products;
@@ -63,8 +76,36 @@ RetailX.Database = {
         );
     },
 
+    /**
+     * Get product by barcode or SKU
+     * @param {string} code - Barcode or SKU
+     * @returns {Object|undefined} Product object
+     */
     getProductByCode: function(code) {
         return this.products.find(p => p.barcode === code || p.sku === code);
+    },
+
+    /**
+     * Get product by QR code
+     * @param {string} qrCode - QR code value
+     * @returns {Object|undefined} Product object
+     */
+    getProductByQR: function(qrCode) {
+        const cleanCode = qrCode.trim();
+        
+        // Check if it's a product URL (simulate)
+        if (cleanCode.includes('product/')) {
+            const sku = cleanCode.split('/').pop();
+            return this.products.find(p => p.sku === sku);
+        }
+        
+        // Check if it's a barcode format
+        if (cleanCode.startsWith('QR-')) {
+            return this.products.find(p => p.barcode === cleanCode);
+        }
+        
+        // Default: treat as SKU/barcode
+        return this.getProductByCode(cleanCode);
     }
 };
 
@@ -72,12 +113,29 @@ RetailX.Database = {
 // UTILITY & HELPER FUNCTIONS
 // ============================================
 RetailX.Utils = {
+    /**
+     * Format money amount
+     * @param {number} amount - Amount to format
+     * @returns {string} Formatted money string
+     */
     formatMoney: (amount) => `${RetailX.Config.currencySymbol}${parseFloat(amount).toFixed(2)}`,
+    
+    /**
+     * Generate unique bill number
+     * @returns {string} Bill number
+     */
     generateBillNo: () => {
         const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
         const random = Math.floor(1000 + Math.random() * 9000);
         return `INV-${dateStr}-${random}`;
     },
+    
+    /**
+     * Debounce function for performance
+     * @param {Function} func - Function to debounce
+     * @param {number} wait - Wait time in ms
+     * @returns {Function} Debounced function
+     */
     debounce: (func, wait) => {
         let timeout;
         return function executedFunction(...args) {
@@ -86,13 +144,32 @@ RetailX.Utils = {
             timeout = setTimeout(later, wait);
         };
     },
+    
+    /**
+     * Play beep sound
+     */
     playBeep: () => {
         const beep = document.getElementById('beepSound');
-        if(beep) { beep.currentTime = 0; beep.play().catch(e=>console.log("Audio play prevented")); }
+        if(beep) { 
+            beep.currentTime = 0; 
+            beep.play().catch(e => console.log("Audio play prevented")); 
+        }
     },
+    
+    /**
+     * Show toast notification
+     * @param {string} title - Toast title
+     * @param {string} message - Toast message
+     * @param {string} type - Toast type (success, error, warning, info)
+     */
     showToast: (title, message, type = 'info') => {
         const container = document.getElementById('toastContainer');
-        const iconMap = { 'success': 'fa-check-circle', 'error': 'fa-exclamation-circle', 'warning': 'fa-exclamation-triangle', 'info': 'fa-info-circle' };
+        const iconMap = { 
+            'success': 'fa-check-circle', 
+            'error': 'fa-exclamation-circle', 
+            'warning': 'fa-exclamation-triangle', 
+            'info': 'fa-info-circle' 
+        };
         
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
@@ -114,10 +191,11 @@ RetailX.Utils = {
             setTimeout(() => toast.remove(), 400);
         }, 3000);
     },
-    // NEW: Simple notification popup
+    
+    /**
+     * Show notification popup
+     */
     showNotificationPopup: function() {
-        // Use SweetAlert2 for a simple popup
-        const unreadCount = 2; // hardcoded for demo
         Swal.fire({
             title: 'Notifications',
             html: `
@@ -134,9 +212,574 @@ RetailX.Utils = {
 };
 
 // ============================================
+// ENHANCED CAMERA QR SCANNER MODULE WITH FIXED DROIDCAM SUPPORT
+// ============================================
+RetailX.CameraScanner = {
+    /**
+     * Initialize camera scanner
+     */
+    init: function() {
+        this.bindEvents();
+        this.checkLibrary();
+        // Try to enumerate cameras on init
+        setTimeout(() => {
+            this.enumerateCameras();
+        }, 1000);
+    },
+
+    /**
+     * Check if jsQR library is loaded
+     */
+    checkLibrary: function() {
+        if (typeof jsQR === 'undefined') {
+            console.error('❌ jsQR library not loaded');
+            RetailX.Utils.showToast('Library Error', 'QR decoder not loaded. Please refresh.', 'error');
+        } else {
+            console.log('✅ jsQR library loaded successfully');
+        }
+    },
+
+    /**
+     * Enumerate available cameras with improved detection
+     */
+    enumerateCameras: function() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.log('Camera enumeration not supported');
+            RetailX.Utils.showToast('Camera Detection', 'Your browser does not support camera enumeration', 'warning');
+            return;
+        }
+
+        // First, request camera permission to get labels
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                // Stop the stream immediately after getting permission
+                stream.getTracks().forEach(track => track.stop());
+                
+                // Now enumerate devices with labels
+                return navigator.mediaDevices.enumerateDevices();
+            })
+            .then(devices => {
+                RetailX.State.availableCameras = devices.filter(device => device.kind === 'videoinput');
+                console.log(`📷 Found ${RetailX.State.availableCameras.length} cameras:`, RetailX.State.availableCameras);
+                
+                // Log camera details for debugging
+                RetailX.State.availableCameras.forEach((camera, index) => {
+                    console.log(`Camera ${index + 1}:`, {
+                        label: camera.label || 'Unnamed',
+                        deviceId: camera.deviceId,
+                        groupId: camera.groupId
+                    });
+                });
+                
+                // Update camera dropdown with detected cameras
+                this.updateCameraDropdown();
+                
+                // Show success message
+                if (RetailX.State.availableCameras.length > 0) {
+                    RetailX.Utils.showToast('Cameras Detected', `Found ${RetailX.State.availableCameras.length} camera(s)`, 'success');
+                } else {
+                    RetailX.Utils.showToast('No Cameras', 'No cameras detected on this device', 'warning');
+                }
+            })
+            .catch(err => {
+                console.error('Error enumerating cameras:', err);
+                RetailX.Utils.showToast('Camera Error', 'Could not access camera information', 'error');
+            });
+    },
+
+    /**
+     * Update camera dropdown with detected cameras - FIXED VERSION
+     */
+    updateCameraDropdown: function() {
+        const select = $('#cameraSelect');
+        if (!select.length) return;
+
+        // Save current selection
+        const currentValue = select.val();
+        
+        // Clear and rebuild
+        select.empty();
+        
+        // Add standard options
+        select.append('<option value="default">📷 Default Camera</option>');
+        select.append('<option value="environment">📱 Back Camera (Environment)</option>');
+        select.append('<option value="user">🤳 Front Camera (User)</option>');
+        
+        // Add separator if there are detected cameras
+        if (RetailX.State.availableCameras.length > 0) {
+            select.append('<option disabled>──────────</option>');
+            select.append('<option value="droidcam-auto">📱 Auto-Detect DroidCam</option>');
+            
+            // Add all detected cameras with their labels
+            RetailX.State.availableCameras.forEach((camera, index) => {
+                let label = camera.label || `Camera ${index + 1}`;
+                
+                // Clean up the label
+                label = label.replace(' (046d:0825)', '').trim();
+                
+                // Check if it might be DroidCam
+                const isDroidCam = label.toLowerCase().includes('droidcam') || 
+                                   label.toLowerCase().includes('droid') ||
+                                   label.toLowerCase().includes('mobile') ||
+                                   label.toLowerCase().includes('phone') ||
+                                   label.toLowerCase().includes('android') ||
+                                   label.toLowerCase().includes('iphone') ||
+                                   label.toLowerCase().includes('ipad');
+                
+                // Truncate very long labels
+                if (label.length > 40) {
+                    label = label.substring(0, 40) + '...';
+                }
+                
+                const optionValue = camera.deviceId;
+                const optionLabel = isDroidCam ? `📱 DroidCam: ${label}` : `📷 ${label}`;
+                
+                select.append(`<option value="${optionValue}">${optionLabel}</option>`);
+            });
+        }
+
+        // Try to restore previous selection
+        if (currentValue) {
+            if (select.find(`option[value="${currentValue}"]`).length) {
+                select.val(currentValue);
+            }
+        }
+        
+        // Add change event to update selection
+        select.off('change').on('change', function() {
+            const selected = $(this).val();
+            console.log('Camera selected:', selected);
+        });
+    },
+
+    /**
+     * Bind camera-related events
+     */
+    bindEvents: function() {
+        const self = this;
+
+        // Camera Scan Button
+        $('#cameraScanBtn').off('click').on('click', function() {
+            self.openScanner();
+        });
+
+        // Close scanner modal
+        $('#qrScannerClose').off('click').on('click', function() {
+            self.closeScanner();
+        });
+
+        // Apply selected camera - FIXED VERSION
+        $('#applyCameraBtn').off('click').on('click', function() {
+            const selected = $('#cameraSelect').val();
+            console.log('Applying camera selection:', selected);
+            self.applyCameraSelection(selected);
+        });
+
+        // Quick switch camera button
+        $('#switchCameraBtn').off('click').on('click', function() {
+            self.quickSwitchCamera();
+        });
+
+        // Detect cameras button
+        $('#detectCamerasBtn').off('click').on('click', function() {
+            RetailX.Utils.showToast('Detecting Cameras', 'Searching for available cameras...', 'info');
+            self.enumerateCameras();
+        });
+
+        // Capture QR button
+        $('#captureQRBtn').off('click').on('click', function() {
+            self.captureQR();
+        });
+
+        // Close on click outside
+        $(window).off('click').on('click', function(e) {
+            if ($(e.target).hasClass('modal')) {
+                self.closeScanner();
+            }
+        });
+
+        // ESC key to close
+        $(document).off('keydown').on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#qrScannerModal').hasClass('show')) {
+                self.closeScanner();
+            }
+        });
+    },
+
+    /**
+     * Apply selected camera - FIXED VERSION with better DroidCam support
+     * @param {string} selection - Camera selection value
+     */
+    applyCameraSelection: function(selection) {
+        console.log('Applying camera:', selection);
+        
+        if (selection === 'droidcam-auto') {
+            // Auto-detect DroidCam
+            const droidCam = this.findDroidCam();
+            
+            if (droidCam) {
+                RetailX.State.currentCamera = droidCam.deviceId;
+                RetailX.Utils.showToast('✅ DroidCam Found', 'Using mobile camera via DroidCam', 'success');
+                console.log('DroidCam device:', droidCam);
+            } else {
+                // Try to use any available camera
+                if (RetailX.State.availableCameras.length > 0) {
+                    // Use the first available camera
+                    RetailX.State.currentCamera = RetailX.State.availableCameras[0].deviceId;
+                    RetailX.Utils.showToast('DroidCam Not Found', 'Using first available camera instead', 'warning');
+                } else {
+                    RetailX.State.currentCamera = 'environment';
+                    RetailX.Utils.showToast('No Cameras Found', 'Using default back camera', 'warning');
+                }
+            }
+        } else if (selection === 'default') {
+            // Use default camera (no specific constraints)
+            RetailX.State.currentCamera = '';
+        } else if (selection === 'environment' || selection === 'user') {
+            RetailX.State.currentCamera = selection;
+        } else {
+            // Assume it's a deviceId
+            RetailX.State.currentCamera = selection;
+        }
+        
+        console.log('Camera set to:', RetailX.State.currentCamera);
+        
+        // Restart camera with new selection
+        this.startCamera();
+    },
+
+    /**
+     * Find DroidCam in available cameras - NEW HELPER FUNCTION
+     * @returns {Object|null} DroidCam device or null
+     */
+    findDroidCam: function() {
+        if (RetailX.State.availableCameras.length === 0) {
+            return null;
+        }
+        
+        // First, look for cameras with DroidCam in the label
+        const droidCam = RetailX.State.availableCameras.find(cam => 
+            cam.label && (
+                cam.label.toLowerCase().includes('droidcam') || 
+                cam.label.toLowerCase().includes('droid') ||
+                cam.label.toLowerCase().includes('mobile') ||
+                cam.label.toLowerCase().includes('phone') ||
+                cam.label.toLowerCase().includes('android') ||
+                cam.label.toLowerCase().includes('iphone') ||
+                cam.label.toLowerCase().includes('ipad') ||
+                cam.label.toLowerCase().includes('wireless') ||
+                cam.label.toLowerCase().includes('wifi')
+            )
+        );
+        
+        if (droidCam) {
+            console.log('Found DroidCam by label:', droidCam.label);
+            return droidCam;
+        }
+        
+        // If no DroidCam found, return the last camera (often DroidCam appears last)
+        if (RetailX.State.availableCameras.length > 0) {
+            console.log('No DroidCam label found, using last camera:', RetailX.State.availableCameras[RetailX.State.availableCameras.length - 1].label);
+            return RetailX.State.availableCameras[RetailX.State.availableCameras.length - 1];
+        }
+        
+        return null;
+    },
+
+    /**
+     * Quick switch between front/back cameras
+     */
+    quickSwitchCamera: function() {
+        if (RetailX.State.currentCamera === 'environment') {
+            RetailX.State.currentCamera = 'user';
+        } else if (RetailX.State.currentCamera === 'user') {
+            RetailX.State.currentCamera = 'environment';
+        } else {
+            // If it's a deviceId, switch to environment
+            RetailX.State.currentCamera = 'environment';
+        }
+        
+        // Update dropdown
+        if (RetailX.State.currentCamera === 'environment') {
+            $('#cameraSelect').val('environment');
+        } else if (RetailX.State.currentCamera === 'user') {
+            $('#cameraSelect').val('user');
+        }
+        
+        this.startCamera();
+        RetailX.Utils.showToast('Camera Switched', `Switched to ${RetailX.State.currentCamera === 'environment' ? 'back' : 'front'} camera`, 'info');
+    },
+
+    /**
+     * Open camera scanner modal
+     */
+    openScanner: function() {
+        const self = this;
+        
+        // Show modal
+        $('#qrScannerModal').addClass('show');
+        
+        // Clear previous results
+        $('#qr-result').removeClass('show').empty();
+        $('#qr-status').removeClass('success error warning').html('<i class="fas fa-info-circle"></i> Select camera and click "Apply"');
+        
+        // Enumerate cameras
+        this.enumerateCameras();
+        
+        // Initialize camera with a slight delay
+        setTimeout(() => {
+            self.startCamera();
+        }, 500);
+    },
+
+    /**
+     * Close camera scanner modal
+     */
+    closeScanner: function() {
+        this.stopCamera();
+        $('#qrScannerModal').removeClass('show');
+        $('#qr-result').removeClass('show').empty();
+        $('#qr-status').removeClass('success error warning').html('<i class="fas fa-info-circle"></i> Camera closed');
+        
+        // Focus back on barcode scanner
+        setTimeout(() => {
+            $('#posBarcodeScanner').focus();
+        }, 300);
+    },
+
+    /**
+     * Start camera stream - FIXED VERSION with better error handling
+     */
+    startCamera: function() {
+        const self = this;
+        const video = document.getElementById('qr-video');
+        
+        if (!video) {
+            console.error('Video element not found');
+            return;
+        }
+
+        // Stop any existing stream
+        this.stopCamera();
+
+        // Set mirror class based on camera
+        const container = document.querySelector('.camera-container');
+        if (container) {
+            if (RetailX.State.currentCamera === 'user') {
+                container.classList.remove('camera-back');
+            } else {
+                container.classList.add('camera-back');
+            }
+        }
+
+        // Build constraints based on selection
+        let constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+
+        // Handle different camera selections
+        if (RetailX.State.currentCamera && RetailX.State.currentCamera !== '') {
+            if (RetailX.State.currentCamera === 'environment' || RetailX.State.currentCamera === 'user') {
+                constraints.video.facingMode = RetailX.State.currentCamera;
+            } else {
+                // It's a deviceId - use exact constraint for reliability
+                constraints.video.deviceId = { exact: RetailX.State.currentCamera };
+            }
+        }
+
+        console.log('Camera constraints:', JSON.stringify(constraints, null, 2));
+
+        // Request camera access
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(stream) {
+                // Store stream for later cleanup
+                RetailX.State.cameraStream = stream;
+                RetailX.State.isCameraActive = true;
+                
+                // Set video source
+                video.srcObject = stream;
+                
+                // Play video
+                return video.play();
+            })
+            .then(() => {
+                console.log('✅ Camera started successfully');
+                
+                // Get camera info
+                const track = RetailX.State.cameraStream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                console.log('Camera settings:', settings);
+                
+                $('#qr-status').removeClass('error warning').addClass('success').html('<i class="fas fa-check-circle"></i> Camera ready - Point at QR code and click "Capture QR"');
+            })
+            .catch(function(err) {
+                console.error('❌ Camera error:', err);
+                RetailX.State.isCameraActive = false;
+                
+                let errorMessage = 'Could not access camera';
+                let errorDetail = '';
+                
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = 'Camera permission denied';
+                    errorDetail = 'Please allow camera access in your browser settings.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage = 'No camera found';
+                    errorDetail = 'Make sure DroidCam is running and connected.';
+                } else if (err.name === 'NotReadableError') {
+                    errorMessage = 'Camera is busy';
+                    errorDetail = 'Camera is already in use by another application.';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage = 'Camera not available';
+                    errorDetail = 'The selected camera cannot be used. Try another camera.';
+                } else if (err.name === 'AbortError') {
+                    errorMessage = 'Camera access aborted';
+                    errorDetail = 'The camera request was aborted.';
+                } else {
+                    errorDetail = err.message || 'Unknown error';
+                }
+                
+                RetailX.Utils.showToast('Camera Error', errorMessage, 'error');
+                $('#qr-status').removeClass('success').addClass('error').html(`
+                    <i class="fas fa-exclamation-triangle"></i> ${errorMessage}<br>
+                    <small>${errorDetail}</small>
+                `);
+                
+                // If deviceId failed, try falling back to environment
+                if (RetailX.State.currentCamera && RetailX.State.currentCamera !== 'environment' && RetailX.State.currentCamera !== 'user') {
+                    console.log('Falling back to environment camera');
+                    RetailX.State.currentCamera = 'environment';
+                    $('#cameraSelect').val('environment');
+                    
+                    // Show retry button
+                    $('#qr-status').append('<br><button class="btn-primary btn-sm mt-2" onclick="RetailX.CameraScanner.startCamera()">Retry with Back Camera</button>');
+                }
+            });
+    },
+
+    /**
+     * Stop camera stream
+     */
+    stopCamera: function() {
+        if (RetailX.State.cameraStream && RetailX.State.isCameraActive) {
+            RetailX.State.cameraStream.getTracks().forEach(track => {
+                track.stop();
+            });
+            RetailX.State.cameraStream = null;
+            RetailX.State.isCameraActive = false;
+            console.log('✅ Camera stopped');
+        }
+        
+        const video = document.getElementById('qr-video');
+        if (video) {
+            video.srcObject = null;
+        }
+    },
+
+    /**
+     * Capture and decode QR code from video frame
+     */
+    captureQR: function() {
+        const self = this;
+        const video = document.getElementById('qr-video');
+        const canvas = document.getElementById('qr-canvas');
+        
+        if (!video || !canvas) {
+            RetailX.Utils.showToast('Error', 'Camera not ready', 'error');
+            return;
+        }
+
+        // Check if video is playing
+        if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+            RetailX.Utils.showToast('Error', 'Camera not initialized', 'error');
+            return;
+        }
+
+        // Check if jsQR is loaded
+        if (typeof jsQR === 'undefined') {
+            RetailX.Utils.showToast('Error', 'QR decoder not loaded', 'error');
+            return;
+        }
+
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        if (canvas.width === 0 || canvas.height === 0) {
+            RetailX.Utils.showToast('Error', 'No video feed', 'error');
+            return;
+        }
+        
+        // Draw video frame to canvas
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Get image data
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Decode QR code
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert"
+        });
+
+        if (code) {
+            // QR code found
+            const qrData = code.data;
+            console.log('✅ QR Code detected:', qrData);
+            
+            // Play success sound
+            RetailX.Utils.playBeep();
+            
+            // Show result
+            $('#qr-result').html(`
+                <div class="success">
+                    <i class="fas fa-check-circle"></i> QR Code: ${qrData}
+                </div>
+            `).addClass('show');
+            
+            $('#qr-status').removeClass('error warning').addClass('success').html('<i class="fas fa-info-circle"></i> Processing QR code...');
+            
+            // Process the QR code
+            this.processQRData(qrData);
+            
+            // Close scanner after short delay
+            setTimeout(() => {
+                self.closeScanner();
+            }, 1500);
+            
+        } else {
+            // No QR code found
+            RetailX.Utils.showToast('No QR Code', 'No QR code detected in the frame', 'warning');
+            $('#qr-status').removeClass('success').addClass('warning').html('<i class="fas fa-exclamation-triangle"></i> No QR code detected - Try again');
+        }
+    },
+
+    /**
+     * Process decoded QR data
+     * @param {string} qrData - Decoded QR data
+     */
+    processQRData: function(qrData) {
+        // Find product by QR code
+        const product = RetailX.Database.getProductByQR(qrData);
+        
+        if (product) {
+            RetailX.POS.addToCart(product);
+            RetailX.Utils.showToast('Product Found', `${product.name} added to cart`, 'success');
+        } else {
+            RetailX.Utils.showToast('Product Not Found', `No product matches QR: ${qrData.substring(0, 20)}`, 'error');
+        }
+    }
+};
+
+// ============================================
 // UI & NAVIGATION MODULE
 // ============================================
 RetailX.Navigation = {
+    /**
+     * Initialize navigation
+     */
     init: function() {
         // Handle Sidebar Routing
         $('.menu-item[data-page]').on('click', function(e) {
@@ -153,8 +796,13 @@ RetailX.Navigation = {
 
         // Fullscreen
         $('#fullscreenBtn').on('click', () => {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else if (document.exitFullscreen) document.exitFullscreen();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
         });
 
         // Initialize Clocks
@@ -162,6 +810,10 @@ RetailX.Navigation = {
         setInterval(() => this.updateClocks(), 1000);
     },
 
+    /**
+     * Switch to a specific page
+     * @param {string} pageId - Page identifier
+     */
     switchPage: function(pageId) {
         $('.page').removeClass('active');
         $(`#${pageId}-page`).addClass('active');
@@ -169,7 +821,14 @@ RetailX.Navigation = {
         $('.menu-item').removeClass('active highlight');
         $(`.menu-item[data-page="${pageId}"]`).addClass(pageId === 'pos' ? 'highlight' : 'active');
 
-        const titles = { 'dashboard': 'Terminal Dashboard', 'pos': 'Point of Sale', 'inventory': 'Product Lookup', 'transactions': 'Shift Transactions', 'summary': 'End of Shift Summary' };
+        const titles = { 
+            'dashboard': 'Terminal Dashboard', 
+            'pos': 'Point of Sale', 
+            'inventory': 'Product Lookup', 
+            'transactions': 'Shift Transactions', 
+            'summary': 'End of Shift Summary' 
+        };
+        
         $('#pageTitle').text(titles[pageId]);
         $('#breadcrumb').text(`Terminal / ${titles[pageId]}`);
 
@@ -180,6 +839,9 @@ RetailX.Navigation = {
         if(pageId === 'summary') RetailX.Summary.render();
     },
 
+    /**
+     * Update clocks and timer
+     */
     updateClocks: function() {
         const now = new Date();
         $('#currentDate').text(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
@@ -198,11 +860,17 @@ RetailX.Navigation = {
 // POINT OF SALE (POS) MODULE
 // ============================================
 RetailX.POS = {
+    /**
+     * Initialize POS module
+     */
     init: function() {
         this.resetTransaction();
         this.bindEvents();
     },
 
+    /**
+     * Bind POS events
+     */
     bindEvents: function() {
         const self = this;
 
@@ -245,7 +913,7 @@ RetailX.POS = {
             });
         });
 
-        // NEW: Hold Bill button functionality
+        // Hold Bill button functionality
         $('#suspendTransactionBtn').on('click', () => {
             if (RetailX.State.cart.length === 0) {
                 RetailX.Utils.showToast('Empty Cart', 'Add items before holding.', 'error');
@@ -278,7 +946,7 @@ RetailX.POS = {
             });
         });
 
-        // NEW: Add Customer button functionality
+        // Add Customer button functionality
         $('#addCustomerBtn').on('click', () => {
             Swal.fire({
                 title: 'Attach Customer',
@@ -355,10 +1023,11 @@ RetailX.POS = {
 
         // Cash Tender Logic
         $('#tenderAmount').on('input', () => this.validateCheckout());
+        
         $('.quick-cash-btn').on('click', function() {
             const val = $(this).data('val');
             let amt = 0;
-            if(val === 'exact') amt = RetailX.State.billTotals.grandTotal;
+            if(val === 'exact') amt = RetailX.State.billTotals ? RetailX.State.billTotals.grandTotal : 0;
             else amt = parseFloat(val);
             
             $('#tenderAmount').val(amt.toFixed(2));
@@ -369,6 +1038,10 @@ RetailX.POS = {
         $('#completeCheckoutBtn').on('click', () => this.completeTransaction());
     },
 
+    /**
+     * Process barcode scan
+     * @param {string} code - Scanned barcode
+     */
     processScan: function(code) {
         if(!code.trim()) return;
         const product = RetailX.Database.getProductByCode(code.trim());
@@ -381,6 +1054,10 @@ RetailX.POS = {
         }
     },
 
+    /**
+     * Render search modal with products
+     * @param {Array} products - Products to display
+     */
     renderSearchModal: function(products) {
         const container = $('#posModalResults');
         container.empty();
@@ -411,6 +1088,10 @@ RetailX.POS = {
         });
     },
 
+    /**
+     * Add product to cart
+     * @param {Object} product - Product to add
+     */
     addToCart: function(product) {
         const existing = RetailX.State.cart.find(i => i.sku === product.sku);
         if(existing) {
@@ -421,6 +1102,11 @@ RetailX.POS = {
         this.renderCart();
     },
 
+    /**
+     * Update item quantity
+     * @param {string} sku - Product SKU
+     * @param {number} delta - Quantity change
+     */
     updateItemQty: function(sku, delta) {
         const item = RetailX.State.cart.find(i => i.sku === sku);
         if(item) {
@@ -432,6 +1118,9 @@ RetailX.POS = {
         }
     },
 
+    /**
+     * Render cart items
+     */
     renderCart: function() {
         const container = $('#cartItemsContainer');
         container.empty();
@@ -439,8 +1128,8 @@ RetailX.POS = {
         if(RetailX.State.cart.length === 0) {
             container.html(`
                 <div class="cart-empty-state">
-                    <i class="fas fa-barcode"></i>
-                    <p>Scan an item to begin transaction</p>
+                    <i class="fas fa-qrcode"></i>
+                    <p>Scan a barcode or QR code to begin transaction</p>
                 </div>
             `);
         } else {
@@ -475,6 +1164,9 @@ RetailX.POS = {
         this.updateTotals();
     },
 
+    /**
+     * Update cart totals
+     */
     updateTotals: function() {
         let subtotal = 0;
         let itemCount = 0;
@@ -514,6 +1206,9 @@ RetailX.POS = {
         this.validateCheckout();
     },
 
+    /**
+     * Validate checkout button state
+     */
     validateCheckout: function() {
         const btn = $('#completeCheckoutBtn');
         const totals = RetailX.State.billTotals;
@@ -544,6 +1239,9 @@ RetailX.POS = {
         }
     },
 
+    /**
+     * Reset current transaction
+     */
     resetTransaction: function() {
         RetailX.State.cart = [];
         RetailX.State.discountValue = 0;
@@ -557,6 +1255,9 @@ RetailX.POS = {
         $('#posBarcodeScanner').focus();
     },
 
+    /**
+     * Complete current transaction
+     */
     completeTransaction: function() {
         const totals = RetailX.State.billTotals;
         
@@ -601,15 +1302,20 @@ RetailX.POS = {
         }, 800);
     },
 
+    /**
+     * Generate receipt HTML
+     * @param {Object} tx - Transaction object
+     */
     generateReceiptHTML: function(tx) {
         let itemsHtml = '';
         tx.items.forEach(i => {
             itemsHtml += `
-                <div class="rcpt-line">
-                    <span style="flex:2">${i.name.substring(0, 15)}</span>
-                    <span style="flex:1" class="qty">${i.qty} x ${i.price}</span>
-                    <span style="flex:1" class="amt">${(i.qty * i.price).toFixed(2)}</span>
-                </div>
+                <tr>
+                    <td>${i.name.substring(0, 20)}</td>
+                    <td class="qty">${i.qty}</td>
+                    <td class="amt">$${i.price.toFixed(2)}</td>
+                    <td class="amt">$${(i.qty * i.price).toFixed(2)}</td>
+                </tr>
             `;
         });
 
@@ -627,18 +1333,28 @@ RetailX.POS = {
                 <span>Reg: ${RetailX.Config.registerId}</span>
                 <span>Bill: ${tx.id}</span>
             </div>
+            <table class="rcpt-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
             <div class="rcpt-totals">
-                ${itemsHtml}
-            </div>
-            <div class="rcpt-totals" style="margin-top: 10px;">
-                <div class="rcpt-line"><span>Subtotal:</span><span>${tx.totals.subtotal.toFixed(2)}</span></div>
-                ${tx.totals.discountAmt > 0 ? `<div class="rcpt-line"><span>Discount:</span><span>-${tx.totals.discountAmt.toFixed(2)}</span></div>` : ''}
-                <div class="rcpt-line"><span>Tax (8.5%):</span><span>${tx.totals.tax.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Subtotal:</span><span>$${tx.totals.subtotal.toFixed(2)}</span></div>
+                ${tx.totals.discountAmt > 0 ? `<div class="rcpt-line"><span>Discount:</span><span>-$${tx.totals.discountAmt.toFixed(2)}</span></div>` : ''}
+                <div class="rcpt-line"><span>Tax (8.5%):</span><span>$${tx.totals.tax.toFixed(2)}</span></div>
                 <div class="rcpt-line bold"><span>TOTAL:</span><span>$${tx.totals.grandTotal.toFixed(2)}</span></div>
             </div>
-            <div class="rcpt-totals" style="margin-top: 10px;">
-                <div class="rcpt-line"><span>Paid by ${tx.method.toUpperCase()}:</span><span>${tx.tendered.toFixed(2)}</span></div>
-                <div class="rcpt-line"><span>Change:</span><span>${tx.change.toFixed(2)}</span></div>
+            <div class="rcpt-totals">
+                <div class="rcpt-line"><span>Paid by ${tx.method.toUpperCase()}:</span><span>$${tx.tendered.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Change:</span><span>$${tx.change.toFixed(2)}</span></div>
             </div>
             <div class="rcpt-barcode">
                 *${tx.id}*
@@ -651,6 +1367,9 @@ RetailX.POS = {
         $('#receiptPrintArea').html(html);
     },
 
+    /**
+     * Update dashboard KPIs
+     */
     updateDashboardKPIs: function() {
         const s = RetailX.State.shift;
         $('#dashTotalSales').text(RetailX.Utils.formatMoney(s.totalSales));
@@ -685,6 +1404,10 @@ RetailX.POS = {
 // INVENTORY MODULE
 // ============================================
 RetailX.Inventory = {
+    /**
+     * Render inventory table
+     * @param {string} query - Search query
+     */
     renderTable: function(query = '') {
         const tbody = $('#inventoryTableBody');
         tbody.empty();
@@ -724,6 +1447,9 @@ $('#inventorySearch').on('input', RetailX.Utils.debounce(function() {
 // TRANSACTIONS (HISTORY) MODULE
 // ============================================
 RetailX.Transactions = {
+    /**
+     * Render transactions table
+     */
     renderTable: function() {
         const tbody = $('#txTableBody');
         tbody.empty();
@@ -782,13 +1508,15 @@ $('#exportTxBtn').on('click', () => {
     RetailX.Utils.showToast('Export Complete', 'Excel file downloaded', 'success');
 });
 
-
 // ============================================
 // SUMMARY MODULE (Chart & Reports)
 // ============================================
 RetailX.Summary = {
     chartInstance: null,
     
+    /**
+     * Render summary page
+     */
     render: function() {
         const s = RetailX.State.shift;
         
@@ -805,6 +1533,9 @@ RetailX.Summary = {
         this.renderChart();
     },
 
+    /**
+     * Render hourly sales chart
+     */
     renderChart: function() {
         const ctx = document.getElementById('hourlySalesChart');
         if(!ctx) return;
@@ -877,6 +1608,7 @@ $(document).ready(function() {
     // Init Modules
     RetailX.Navigation.init();
     RetailX.POS.init();
+    RetailX.CameraScanner.init();
 
     // Global Modal Closers
     $('.modal-close').on('click', function() {
@@ -894,7 +1626,7 @@ $(document).ready(function() {
         RetailX.Utils.showToast('Drawer Opened', 'Cash drawer kicked open.', 'warning');
     });
 
-    // NEW: Notifications button handler
+    // Notifications button handler
     $('#notificationsBtn').on('click', () => {
         RetailX.Utils.showNotificationPopup();
     });
