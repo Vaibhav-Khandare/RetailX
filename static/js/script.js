@@ -44,12 +44,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(toggleSwitch) toggleSwitch.addEventListener('change', switchTheme, false);
 
+    // ===== FLOATING TROLLEY – PURELY DOWNWARD, ALWAYS VISIBLE =====
+    const floatingTrolley = document.querySelector('.floating-trolley-scroll');
+    const heroTrolley = document.querySelector('.scene-container');
+    const heroSection = document.querySelector('.hero');
+    const stepsSection = document.querySelector('.steps-section');
+    const stickyWrapper = document.querySelector('.sticky-wrapper');
 
-    // 3. HORIZONTAL SCROLL TRIGGER (Sticky Timeline)
+    if (floatingTrolley && heroTrolley && heroSection && stepsSection) {
+        floatingTrolley.classList.remove('visible');
+
+        function updateFloatingTrolley() {
+            const scrollY = window.scrollY;
+            const heroTop = heroSection.offsetTop;
+            const heroHeight = heroSection.offsetHeight;
+            const stepsTop = stepsSection.offsetTop;
+            const stepsHeight = stepsSection.offsetHeight;
+            const viewportHeight = window.innerHeight;
+
+            // Start when 30% of hero is scrolled past
+            const startScroll = heroTop + heroHeight * 0.3;
+            // End when bottom of steps section reaches top of viewport
+            const endScroll = stepsTop + stepsHeight - viewportHeight;
+
+            if (scrollY >= startScroll && scrollY <= endScroll) {
+                floatingTrolley.classList.add('visible');
+
+                // Progress from 0 to 1
+                const progress = (scrollY - startScroll) / (endScroll - startScroll);
+
+                // Get starting position (center of hero trolley)
+                const heroRect = heroTrolley.getBoundingClientRect();
+                const startX = heroRect.left + heroRect.width / 2;
+                const startY = heroRect.top + heroRect.height / 2;
+
+                // Get target area (near the middle of sticky wrapper)
+                const stickyRect = stickyWrapper.getBoundingClientRect();
+                const targetX = stickyRect.left + stickyRect.width / 2;
+                const targetY = stickyRect.top + stickyRect.height * 0.6;
+
+                // Horizontal sweep limits (keep inside viewport)
+                const leftBound = 50;
+                const rightBound = window.innerWidth - 100;
+
+                // Calculate Y – always increasing from startY to targetY, but clamp to stay inside viewport
+                let desiredY = startY + (targetY - startY) * progress;
+                // Clamp Y so trolley never goes above top or below bottom of viewport
+                const minY = 40; // half height
+                const maxY = window.innerHeight - 40;
+                const currentY = Math.min(maxY, Math.max(minY, desiredY));
+
+                // Calculate X with sweeping motion
+                let currentX;
+                if (progress < 0.25) {
+                    // Phase 1: stay at startX
+                    currentX = startX;
+                } else if (progress < 0.5) {
+                    // Phase 2: sweep to left bound
+                    const p = (progress - 0.25) / 0.25;
+                    currentX = startX + (leftBound - startX) * p;
+                } else if (progress < 0.75) {
+                    // Phase 3: sweep to right bound
+                    const p = (progress - 0.5) / 0.25;
+                    currentX = leftBound + (rightBound - leftBound) * p;
+                } else {
+                    // Phase 4: settle to targetX with diminishing oscillation
+                    const p = (progress - 0.75) / 0.25;
+                    const swing = Math.sin(p * Math.PI * 8) * 40 * (1 - p);
+                    currentX = rightBound + (targetX - rightBound) * p + swing;
+                }
+
+                // Clamp X to keep trolley inside viewport
+                const clampedX = Math.min(rightBound, Math.max(leftBound, currentX));
+
+                // Apply position
+                floatingTrolley.style.transform = `translate(${clampedX - 40}px, ${currentY - 40}px) rotate(${Math.sin(progress * 15) * 8}deg)`;
+                
+                // Dynamic glow
+                const glowIntensity = 0.6 + Math.sin(progress * 20) * 0.3;
+                floatingTrolley.style.filter = `drop-shadow(0 0 ${20 + glowIntensity * 15}px rgba(79, 70, 229, ${glowIntensity}))`;
+            } else {
+                floatingTrolley.classList.remove('visible');
+            }
+        }
+
+        window.addEventListener('scroll', updateFloatingTrolley);
+        window.addEventListener('resize', updateFloatingTrolley);
+        updateFloatingTrolley();
+    }
+
+    // 3. HORIZONTAL SCROLL TRIGGER + CURVED LINE
     const stickySection = document.querySelector('.steps-section');
     const track = document.querySelector('.timeline-track');
+    const svgPath = document.querySelector('.scroll-line path');
 
-    if (stickySection && track) {
+    if (stickySection && track && svgPath) {
+        const pathLength = svgPath.getTotalLength();
+        svgPath.style.strokeDasharray = pathLength;
+        svgPath.style.strokeDashoffset = pathLength;
+
         window.addEventListener('scroll', () => {
             const sectionTop = stickySection.offsetTop;
             const sectionHeight = stickySection.offsetHeight;
@@ -66,15 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const trackWidth = track.scrollWidth;
                 const windowWidth = window.innerWidth;
-                
-                // We move by the exact difference to ensure the last card hits center
                 const moveAmount = (trackWidth - windowWidth) * percentage;
-
                 track.style.transform = `translateX(-${moveAmount}px)`;
+
+                svgPath.style.strokeDashoffset = pathLength * (1 - percentage);
             }
         });
     }
-
 
     // 4. 3D TILT EFFECT
     const trolleyObject = document.querySelector('.tilt-object');
@@ -88,18 +179,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cards = document.querySelectorAll('.tilt-card');
     cards.forEach(card => {
+        let isHovering = false;
+        
+        card.addEventListener('mouseenter', () => {
+            isHovering = true;
+        });
+        
         card.addEventListener('mousemove', (e) => {
+            if (!isHovering) return;
+            
             const rect = card.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            const xRotation = -1 * ((y - rect.height / 2) / 20);
-            const yRotation = (x - rect.width / 2) / 20;
+            const xRotation = -1 * ((y - rect.height / 2) / 25);
+            const yRotation = (x - rect.width / 2) / 25;
             
             card.style.transform = `perspective(1000px) rotateX(${xRotation}deg) rotateY(${yRotation}deg) scale(1.02)`;
         });
 
         card.addEventListener('mouseleave', () => {
+            isHovering = false;
             card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
         });
     });

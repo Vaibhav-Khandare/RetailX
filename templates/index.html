@@ -64,6 +64,13 @@
         </div>
     </nav>
 
+    <!-- Floating trolley (no canvas) -->
+    <div class="floating-trolley-scroll">
+        <i class="fas fa-shopping-cart"></i>
+        <div class="trolley-glow"></div>
+        <div class="trolley-trail"></div>
+    </div>
+
     <section class="hero">
         <div class="container hero-container">
             <div class="hero-text">
@@ -206,6 +213,10 @@
 
     <section id="how-it-works" class="steps-section">
         <div class="sticky-wrapper">
+            <svg class="scroll-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M -5,70 C 50,50 25,2 20,50 S 115,20 80,20 S 95,35 100,40" stroke="var(--primary)" stroke-width="2" fill="none" />
+            </svg>
+
             <div class="container">
                 <div class="section-header">
                     <h2>How it Works</h2>
@@ -266,7 +277,6 @@
             </div>
         </div>
     </section>
-
 
     <footer>
         <div class="container footer-container">
