@@ -1,4 +1,3 @@
-
 // =====================================================================
 // RETAILX ADVANCED POS - CASHIER TERMINAL LOGIC
 // =====================================================================
@@ -35,7 +34,9 @@ RetailX.State = {
         cardTendered: 0,
         digitalTendered: 0
     },
-    transactions: [] // Session history
+    transactions: [], // Session history
+    // NEW: Hold bills storage
+    heldBills: []
 };
 
 // ============================================
@@ -112,6 +113,23 @@ RetailX.Utils = {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 400);
         }, 3000);
+    },
+    // NEW: Simple notification popup
+    showNotificationPopup: function() {
+        // Use SweetAlert2 for a simple popup
+        const unreadCount = 2; // hardcoded for demo
+        Swal.fire({
+            title: 'Notifications',
+            html: `
+                <div style="text-align:left;">
+                    <p><i class="fas fa-info-circle" style="color:#3b82f6;"></i> Welcome to POS terminal</p>
+                    <p><i class="fas fa-check-circle" style="color:#10b981;"></i> Shift started at 08:00 AM</p>
+                    <p><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Low stock on Wireless Mouse</p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: 'Dismiss'
+        });
     }
 };
 
@@ -225,6 +243,73 @@ RetailX.POS = {
                     RetailX.Utils.showToast('Transaction Voided', 'Cart has been cleared.', 'warning');
                 }
             });
+        });
+
+        // NEW: Hold Bill button functionality
+        $('#suspendTransactionBtn').on('click', () => {
+            if (RetailX.State.cart.length === 0) {
+                RetailX.Utils.showToast('Empty Cart', 'Add items before holding.', 'error');
+                return;
+            }
+            // Ask for a hold name
+            Swal.fire({
+                title: 'Hold Bill',
+                input: 'text',
+                inputLabel: 'Enter a reference (e.g., customer name)',
+                inputPlaceholder: 'Optional',
+                showCancelButton: true,
+                confirmButtonText: 'Hold Bill',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const holdName = result.value || `Bill ${RetailX.State.currentBillNo}`;
+                    const heldBill = {
+                        id: RetailX.State.currentBillNo,
+                        name: holdName,
+                        cart: [...RetailX.State.cart],
+                        discountType: RetailX.State.discountType,
+                        discountValue: RetailX.State.discountValue,
+                        timestamp: new Date()
+                    };
+                    RetailX.State.heldBills.push(heldBill);
+                    RetailX.Utils.showToast('Bill Held', `Bill #${heldBill.id} saved.`, 'success');
+                    this.resetTransaction();
+                }
+            });
+        });
+
+        // NEW: Add Customer button functionality
+        $('#addCustomerBtn').on('click', () => {
+            Swal.fire({
+                title: 'Attach Customer',
+                html: `
+                    <input id="swal-input1" class="swal2-input" placeholder="Customer Name">
+                    <input id="swal-input2" class="swal2-input" placeholder="Phone (optional)">
+                `,
+                focusConfirm: false,
+                preConfirm: () => {
+                    const name = document.getElementById('swal-input1').value;
+                    if (!name) {
+                        Swal.showValidationMessage('Name is required');
+                        return false;
+                    }
+                    return { name: name, phone: document.getElementById('swal-input2').value };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    RetailX.State.currentCustomer = result.value;
+                    $('#activeCustomerName').text(result.value.name);
+                    $('#activeCustomerDisplay').slideDown();
+                    RetailX.Utils.showToast('Customer Added', result.value.name + ' attached.', 'success');
+                }
+            });
+        });
+
+        // Remove Customer button
+        $('#removeCustomerBtn').on('click', () => {
+            RetailX.State.currentCustomer = null;
+            $('#activeCustomerDisplay').slideUp();
+            RetailX.Utils.showToast('Customer Removed', 'Customer detached from bill.', 'info');
         });
 
         // Discount Modal
@@ -463,8 +548,10 @@ RetailX.POS = {
         RetailX.State.cart = [];
         RetailX.State.discountValue = 0;
         RetailX.State.currentBillNo = RetailX.Utils.generateBillNo();
+        RetailX.State.currentCustomer = null;
         $('#currentBillNo').text(`Order: ${RetailX.State.currentBillNo}`);
         $('#tenderAmount').val('');
+        $('#activeCustomerDisplay').slideUp();
         
         this.renderCart();
         $('#posBarcodeScanner').focus();
@@ -478,7 +565,7 @@ RetailX.POS = {
             id: RetailX.State.currentBillNo,
             date: new Date(),
             method: RetailX.State.paymentMethod,
-            customer: 'Walk-in Customer',
+            customer: RetailX.State.currentCustomer ? RetailX.State.currentCustomer.name : 'Walk-in Customer',
             items: [...RetailX.State.cart],
             totals: {...totals},
             tendered: parseFloat($('#tenderAmount').val()) || totals.grandTotal,
@@ -801,10 +888,15 @@ $(document).ready(function() {
         window.print();
     });
 
-    // Drawer Simulation
+    // Drawer Simulation (already working)
     $('#openDrawerBtn').on('click', () => {
         RetailX.Utils.playBeep();
         RetailX.Utils.showToast('Drawer Opened', 'Cash drawer kicked open.', 'warning');
+    });
+
+    // NEW: Notifications button handler
+    $('#notificationsBtn').on('click', () => {
+        RetailX.Utils.showNotificationPopup();
     });
 
     // Logout
@@ -813,4 +905,3 @@ $(document).ready(function() {
         $('#printZReportBtn').click(); // Reuse Z-report logic
     });
 });
-
