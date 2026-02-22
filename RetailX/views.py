@@ -2,6 +2,7 @@ import os
 import json
 import random
 import smtplib
+import csv
 from email.mime.text import MIMEText
 from datetime import datetime, date as date_type
 
@@ -1515,3 +1516,45 @@ def predict_single_product(festival_name, product_name, target_date):
     if np.isnan(predicted_sales) or predicted_sales < 0:
         predicted_sales = 0
     return predicted_sales
+
+
+# ================== INVENTORY CSV ENDPOINT (NEW) =================
+
+INVENTORY_CSV_PATH = r"C:\Users\Om\OneDrive\Desktop\CPP_Project\RetailX\static\Dataset_CSV\updated_product_dataset.csv"
+
+@csrf_exempt
+@never_cache
+def get_random_inventory(request):
+    """
+    Read the CSV, pick 50 random products, and return as JSON.
+    """
+    if not os.path.exists(INVENTORY_CSV_PATH):
+        return JsonResponse({'error': 'CSV file not found'}, status=404)
+
+    products = []
+    try:
+        with open(INVENTORY_CSV_PATH, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # Ensure numeric fields are converted
+                product = {
+                    'serial_no': row.get('serial_no', ''),
+                    'product_name': row.get('product_name', ''),
+                    'category': row.get('category', ''),
+                    'price': float(row.get('price', 0)),
+                    'quantity': int(row.get('quantity', 0)),
+                    'subcategory': row.get('subcategory', ''),
+                }
+                products.append(product)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+    # Select 50 random products (or fewer if CSV has less)
+    random.shuffle(products)
+    selected = products[:50]
+
+    # Add a unique ID for each row (needed for actions)
+    for idx, p in enumerate(selected):
+        p['id'] = idx + 1
+
+    return JsonResponse({'products': selected})

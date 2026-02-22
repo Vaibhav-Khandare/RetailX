@@ -14,9 +14,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- GSAP for smooth cursor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+
+    <!-- ===== CUSTOM CURSOR (from about page) ===== -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
 
     <div class="loader-wrapper">
         <div class="loader-content">
@@ -310,6 +316,9 @@
             <p>&copy; 2026 RetailX Systems. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Particle canvas (still present, but cursor is above) -->
+    <canvas id="trolley-particle-canvas"></canvas>
 
     <script src="/static/js/script.js"></script>
 </body>

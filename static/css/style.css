@@ -562,3 +562,39 @@ footer #f_logo{color: white;}
     80% { opacity: 0.8; transform: rotate(-10deg) translateX(50px); }
     100% { opacity: 0; transform: rotate(0deg) translateX(100px); }
 }
+
+/* --- all your existing CSS stays exactly the same – only add these cursor rules at the very end --- */
+
+/* ===== CUSTOM CURSOR (from about page) ===== */
+.cursor {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+}
+
+.cursor-follower {
+    width: 40px;
+    height: 40px;
+    background: rgba(99, 102, 241, 0.2);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.15s;
+    transform: translate(-50%, -50%);
+    backdrop-filter: blur(2px);
+}
+
+/* Hide cursor on mobile */
+@media (max-width: 768px) {
+    .cursor, .cursor-follower {
+        display: none;
+    }
+}

@@ -1,5 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
     
+    // ===== CUSTOM CURSOR (from about page) =====
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('cursorFollower');
+
+    if (cursor && follower) {
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { duration: 0.1, x: e.clientX, y: e.clientY });
+            gsap.to(follower, { duration: 0.3, x: e.clientX, y: e.clientY });
+        });
+
+        // Elements that trigger hover effect on cursor
+        const hoverElements = document.querySelectorAll(
+            'a, button, .btn, .login-card, .feature-card-advanced, .timeline-card, .nav-links a, .logo, .theme-switch, .btn-fill, .btn-outline, .learn-more'
+        );
+        
+        hoverElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                gsap.to(cursor, { duration: 0.2, scale: 1.5, backgroundColor: 'rgba(99,102,241,0.2)' });
+                gsap.to(follower, { duration: 0.2, scale: 1.2, backgroundColor: 'rgba(99,102,241,0.1)' });
+            });
+            el.addEventListener('mouseleave', () => {
+                gsap.to(cursor, { duration: 0.2, scale: 1, backgroundColor: 'transparent' });
+                gsap.to(follower, { duration: 0.2, scale: 1, backgroundColor: 'rgba(99,102,241,0.2)' });
+            });
+        });
+    }
+
     // 1. SEQUENCE MANAGER
     const loaderWrapper = document.querySelector('.loader-wrapper');
     const movingLogo = document.getElementById('moving-logo');

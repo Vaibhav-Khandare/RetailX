@@ -70,7 +70,7 @@ RetailX.formatDate = function(date) {
 };
 
 // ============================================
-// SIDEBAR MANAGER - FIXED, NO CONTENT SHIFT
+// SIDEBAR MANAGER
 // ============================================
 RetailX.SidebarManager = {
     init: function() {
@@ -78,40 +78,34 @@ RetailX.SidebarManager = {
         this.bindEvents();
         this.checkScreenSize();
         
-        // Listen for window resize
         $(window).on('resize', () => {
             this.checkScreenSize();
         });
     },
     
     bindEvents: function() {
-        // Mobile menu toggle
         $('#mobileMenuToggle').on('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.toggleSidebar();
         });
         
-        // Sidebar close button
         $('#sidebarClose').on('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.hideSidebar();
         });
         
-        // Overlay click
         $('#sidebarOverlay').on('click', () => {
             this.hideSidebar();
         });
         
-        // Close sidebar when clicking a menu item on mobile
         $('.menu-item').on('click', () => {
             if ($(window).width() <= 768) {
                 this.hideSidebar();
             }
         });
         
-        // ESC key to close sidebar on mobile
         $(document).on('keydown', (e) => {
             if (e.key === 'Escape' && $(window).width() <= 768) {
                 this.hideSidebar();
@@ -121,12 +115,10 @@ RetailX.SidebarManager = {
     
     checkScreenSize: function() {
         if ($(window).width() > 768) {
-            // Desktop: always show sidebar
             $('#sidebar').removeClass('hidden');
             $('#sidebarOverlay').removeClass('active');
             $('#mainContent').removeClass('full-width');
         } else {
-            // Mobile: hide sidebar by default
             $('#sidebar').addClass('hidden');
             $('#sidebarOverlay').removeClass('active');
             $('#mainContent').addClass('full-width');
@@ -375,7 +367,6 @@ RetailX.Chatbot = {
             return;
         }
 
-        // Add user message
         messages.append(`
             <div class="chat-user">
                 <span>${this.escapeHtml(message)}</span>
@@ -385,7 +376,6 @@ RetailX.Chatbot = {
         input.val('');
         messages.scrollTop(messages[0].scrollHeight);
 
-        // Add typing indicator
         const typingId = 'typing-' + Date.now();
         messages.append(`
             <div class="chat-bot" id="${typingId}">
@@ -394,7 +384,6 @@ RetailX.Chatbot = {
         `);
         messages.scrollTop(messages[0].scrollHeight);
 
-        // Send to backend
         $.ajax({
             url: '/chatbot/',
             method: 'POST',
@@ -441,7 +430,6 @@ RetailX.Chatbot = {
     }
 };
 
-// Global functions for HTML onclick
 window.toggleChatbot = function() {
     RetailX.Chatbot.toggleChatbot();
 };
@@ -473,13 +461,11 @@ RetailX.CashierManager = {
     },
 
     bindEvents: function() {
-        // Add Cashier Button
         $('#addStaffBtn').on('click', (e) => {
             e.preventDefault();
             this.openAddCashierModal();
         });
 
-        // Search with debounce
         $('#staffSearch').on('input', () => {
             const searchTerm = $('#staffSearch').val();
             $('#clearSearch').toggle(searchTerm.length > 0);
@@ -491,12 +477,10 @@ RetailX.CashierManager = {
             }, 300);
         });
 
-        // Clear search
         $('#clearSearch').on('click', () => {
             $('#staffSearch').val('').trigger('input');
         });
 
-        // Refresh button
         $('#refreshStaffBtn').on('click', (e) => {
             e.preventDefault();
             $(e.currentTarget).find('i').addClass('fa-spin');
@@ -507,27 +491,23 @@ RetailX.CashierManager = {
             }, 800);
         });
 
-        // Retry button
         $('#retryLoadBtn').on('click', (e) => {
             e.preventDefault();
             this.loadCashierData();
         });
 
-        // Sort by dropdown
         $('#sortBy').on('change', () => {
             this.sortBy = $('#sortBy').val();
             this.currentPage = 1;
             this.filterAndSort();
         });
 
-        // Items per page
         $('#itemsPerPage').on('change', () => {
             this.itemsPerPage = parseInt($('#itemsPerPage').val());
             this.currentPage = 1;
             this.filterAndSort();
         });
 
-        // Column sorting
         $('#sort-id, #sort-name, #sort-username, #sort-email').on('click', (e) => {
             e.preventDefault();
             const column = e.currentTarget.id.replace('sort-', '');
@@ -542,7 +522,6 @@ RetailX.CashierManager = {
                 .addClass(this.sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
         });
 
-        // Pagination
         $('#prevPage').on('click', (e) => {
             e.preventDefault();
             if (this.currentPage > 1) {
@@ -560,26 +539,22 @@ RetailX.CashierManager = {
             }
         });
 
-        // Form submit
         $('#staffForm').on('submit', (e) => {
             e.preventDefault();
             this.handleFormSubmit();
         });
 
-        // Modal close buttons
         $('.modal-close, .cancel-btn').on('click', (e) => {
             e.preventDefault();
             $('.modal').fadeOut(300);
             this.resetForm();
         });
 
-        // Close success modal
         $('#closeSuccessModal').on('click', (e) => {
             e.preventDefault();
             $('#successModal').fadeOut(300);
         });
 
-        // Click outside modal to close
         $(window).on('click', (e) => {
             if ($(e.target).hasClass('modal')) {
                 $('.modal').fadeOut(300);
@@ -587,7 +562,6 @@ RetailX.CashierManager = {
             }
         });
 
-        // Delete confirmation
         $('#confirmDeleteBtn').on('click', (e) => {
             e.preventDefault();
             this.deleteCashier();
@@ -599,7 +573,6 @@ RetailX.CashierManager = {
             this.deleteCashierId = null;
         });
 
-        // View modal edit button
         $('#editFromViewBtn').on('click', (e) => {
             e.preventDefault();
             const cashierId = $('#viewStaffModal').data('cashierId');
@@ -609,7 +582,6 @@ RetailX.CashierManager = {
             }, 300);
         });
 
-        // View modal actions
         $('#messageStaff').on('click', (e) => {
             e.preventDefault();
             const email = $('#viewStaffEmail').text();
@@ -627,19 +599,16 @@ RetailX.CashierManager = {
             $('#viewStaffModal').fadeOut(300);
         });
 
-        // Summary card clicks
         $('#totalCashiersCard, #activeCashiersCard, #emailCard, #usernameCard').on('click', (e) => {
             e.preventDefault();
             RetailX.showToast(`Filtering feature coming soon`, 'info');
         });
 
-        // Export button
         $('#exportStaffBtn').on('click', (e) => {
             e.preventDefault();
             this.exportToCSV();
         });
 
-        // Apply date range
         $('#applyDateRange').on('click', (e) => {
             e.preventDefault();
             const start = $('#startDate').val();
@@ -647,7 +616,6 @@ RetailX.CashierManager = {
             RetailX.showToast(`Date range applied: ${start} to ${end}`, 'success');
         });
 
-        // Chart period change
         $('#revenuePeriod, #categoryPeriod').on('change', (e) => {
             e.preventDefault();
             RetailX.showToast('Chart period updated', 'info');
@@ -777,7 +745,6 @@ RetailX.CashierManager = {
         $('#staffTableBody').empty();
         $('#staffTableError').hide();
 
-        // Try from hidden data
         const dataEl = document.getElementById('staff-data');
         if (dataEl && dataEl.dataset.cashiers) {
             try {
@@ -797,7 +764,6 @@ RetailX.CashierManager = {
             }
         }
 
-        // Fallback to AJAX
         $.ajax({
             url: '/api/cashiers/',
             method: 'GET',
@@ -938,7 +904,6 @@ RetailX.CashierManager = {
         $('#withEmail').text(withEmail);
         $('#uniqueUsernames').text(unique);
 
-        // Animate numbers
         $('.summary-value').each(function() {
             const $this = $(this);
             const final = parseInt($this.text());
@@ -1206,7 +1171,6 @@ RetailX.CashierManager = {
     }
 };
 
-// Expose global methods
 window.viewCashier = (id) => RetailX.CashierManager.viewCashier(id);
 window.editCashier = (id) => RetailX.CashierManager.openEditCashierModal(id);
 window.deleteCashier = (id, name) => RetailX.CashierManager.openDeleteModal(id, name);
@@ -1251,16 +1215,19 @@ RetailX.Navigation = {
             inventory: 'Inventory Management',
             staff: 'Cashier Management',
             analysis: 'Analysis',
-            transactions: 'Transactions',
             reports: 'Reports',
             settings: 'Settings'
         };
 
         $('#pageTitle').text(titles[page] || 'Dashboard');
         $('#breadcrumb').text(`Home / ${titles[page] || 'Dashboard'}`);
-        
+
+        // Load data when page becomes active
         if (page === 'staff') {
             RetailX.CashierManager.loadCashierData();
+        }
+        if (page === 'inventory') {
+            RetailX.Inventory.loadInventory();
         }
     }
 };
@@ -1480,24 +1447,430 @@ RetailX.Dashboard = {
 };
 
 // ============================================
+// INVENTORY MANAGEMENT MODULE
+// ============================================
+RetailX.Inventory = {
+    allProducts: [],
+    filteredProducts: [],
+    currentPage: 1,
+    itemsPerPage: 20,
+    sortBy: 'name-asc',
+    categoryFilter: 'all',
+    searchTerm: '',
+    debounceTimer: null,
+
+    init: function() {
+        console.log('📦 Initializing Inventory Management...');
+        this.bindEvents();
+    },
+
+    bindEvents: function() {
+        $('#randomizeInventoryBtn').on('click', (e) => {
+            e.preventDefault();
+            this.loadInventory(true);
+        });
+
+        $('#refreshInventoryBtn').on('click', (e) => {
+            e.preventDefault();
+            this.loadInventory(true);
+        });
+
+        $('#inventorySearch').on('input', () => {
+            const term = $('#inventorySearch').val();
+            $('#clearInventorySearch').toggle(term.length > 0);
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => {
+                this.searchTerm = term.toLowerCase();
+                this.currentPage = 1;
+                this.applyFilters();
+            }, 300);
+        });
+
+        $('#clearInventorySearch').on('click', () => {
+            $('#inventorySearch').val('').trigger('input');
+        });
+
+        $('#inventoryCategoryFilter').on('change', (e) => {
+            this.categoryFilter = e.target.value;
+            this.currentPage = 1;
+            this.applyFilters();
+        });
+
+        $('#inventorySortFilter').on('change', (e) => {
+            this.sortBy = e.target.value;
+            this.currentPage = 1;
+            this.applyFilters();
+        });
+
+        $('#inventoryItemsPerPage').on('change', (e) => {
+            this.itemsPerPage = parseInt(e.target.value);
+            this.currentPage = 1;
+            this.renderCurrentPage();
+        });
+
+        $('#resetInventoryFilters').on('click', (e) => {
+            e.preventDefault();
+            this.resetFilters();
+        });
+
+        $('#resetFiltersEmptyBtn').on('click', (e) => {
+            e.preventDefault();
+            this.resetFilters();
+        });
+
+        $('#retryInventoryLoadBtn').on('click', (e) => {
+            e.preventDefault();
+            this.loadInventory(true);
+        });
+
+        $('#prevInventoryPage').on('click', (e) => {
+            e.preventDefault();
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.renderCurrentPage();
+            }
+        });
+
+        $('#nextInventoryPage').on('click', (e) => {
+            e.preventDefault();
+            const totalPages = Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.renderCurrentPage();
+            }
+        });
+
+        $('#exportAllInventoryBtn').on('click', (e) => {
+            e.preventDefault();
+            this.exportToCSV(this.filteredProducts, 'all_products');
+        });
+
+        $('#exportLowStockBtn').on('click', (e) => {
+            e.preventDefault();
+            const lowStock = this.filteredProducts.filter(p => p.quantity < 20);
+            this.exportToCSV(lowStock, 'low_stock_products');
+            RetailX.showToast(`Exported ${lowStock.length} low stock items`, 'success');
+        });
+
+        $('.quick-action-card').on('click', function() {
+            const action = $(this).find('span').text();
+            RetailX.showToast(`${action} feature coming soon!`, 'info');
+        });
+    },
+
+    loadInventory: function(showLoader = true) {
+        if (showLoader) {
+            $('#inventoryTableBody').html(`
+                <tr>
+                    <td colspan="8" class="loading-cell">
+                        <div class="loading-spinner"></div>
+                        <span>Loading inventory data...</span>
+                    </td>
+                </tr>
+            `);
+        }
+
+        $('#inventoryEmptyState').hide();
+        $('#inventoryErrorState').hide();
+
+        $.ajax({
+            url: '/api/inventory/random/',
+            method: 'GET',
+            success: (response) => {
+                if (response.products && response.products.length > 0) {
+                    this.allProducts = response.products;
+                    this.filteredProducts = [...this.allProducts];
+                    this.updateCategoryDropdown();
+                    this.applyFilters();
+                } else {
+                    this.showEmptyState();
+                }
+            },
+            error: (xhr, status, error) => {
+                console.error('Error loading inventory:', error);
+                $('#inventoryErrorState').fadeIn(200);
+                $('#inventoryTableBody').empty();
+                RetailX.showToast('Failed to load inventory', 'error');
+            }
+        });
+    },
+
+    updateCategoryDropdown: function() {
+        const categories = [...new Set(this.allProducts.map(p => p.category))];
+        const $select = $('#inventoryCategoryFilter');
+        $select.find('option:not(:first)').remove();
+        categories.sort().forEach(cat => {
+            $select.append(`<option value="${cat}">${cat}</option>`);
+        });
+    },
+
+    applyFilters: function() {
+        let filtered = [...this.allProducts];
+
+        if (this.categoryFilter !== 'all') {
+            filtered = filtered.filter(p => p.category === this.categoryFilter);
+        }
+
+        if (this.searchTerm) {
+            filtered = filtered.filter(p => 
+                (p.product_name && p.product_name.toLowerCase().includes(this.searchTerm)) ||
+                (p.category && p.category.toLowerCase().includes(this.searchTerm))
+            );
+        }
+
+        filtered = this.sortProducts(filtered, this.sortBy);
+
+        this.filteredProducts = filtered;
+        this.currentPage = 1;
+        this.renderCurrentPage();
+        this.updateStats();
+        this.updateActiveFiltersDisplay();
+    },
+
+    sortProducts: function(products, sortKey) {
+        const [field, order] = sortKey.split('-');
+        return products.sort((a, b) => {
+            let valA, valB;
+            if (field === 'name') {
+                valA = a.product_name.toLowerCase();
+                valB = b.product_name.toLowerCase();
+            } else if (field === 'price') {
+                valA = a.price;
+                valB = b.price;
+            } else if (field === 'quantity') {
+                valA = a.quantity;
+                valB = b.quantity;
+            } else {
+                return 0;
+            }
+            if (order === 'asc') {
+                return valA > valB ? 1 : -1;
+            } else {
+                return valA < valB ? 1 : -1;
+            }
+        });
+    },
+
+    renderCurrentPage: function() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = Math.min(start + this.itemsPerPage, this.filteredProducts.length);
+        const pageData = this.filteredProducts.slice(start, end);
+
+        this.renderTable(pageData);
+        this.updatePagination();
+    },
+
+    renderTable: function(data) {
+        const tbody = $('#inventoryTableBody');
+        tbody.empty();
+
+        if (data.length === 0) {
+            $('#inventoryEmptyState').fadeIn(200);
+            return;
+        }
+
+        $('#inventoryEmptyState').hide();
+
+        data.forEach((p, index) => {
+            const lowStock = p.quantity < 20;
+            const statusClass = lowStock ? 'status-badge low-stock' : 'status-badge in-stock';
+            const statusText = lowStock ? 'Low Stock' : 'In Stock';
+            const quantityClass = lowStock ? 'low-stock' : '';
+
+            tbody.append(`
+                <tr data-id="${p.id}">
+                    <td>${p.serial_no || '-'}</td>
+                    <td><strong>${p.product_name}</strong></td>
+                    <td>${p.category}</td>
+                    <td>₹${p.price.toFixed(2)}</td>
+                    <td class="${quantityClass}">${p.quantity}</td>
+                    <td>${p.subcategory || '-'}</td>
+                    <td><span class="${statusClass}"><i class="fas ${lowStock ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${statusText}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn view" onclick="RetailX.Inventory.viewProduct(${p.id})" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn edit" onclick="RetailX.Inventory.editProduct(${p.id})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete" onclick="RetailX.Inventory.deleteProduct(${p.id})" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+    },
+
+    viewProduct: function(id) {
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            RetailX.showToast(`Viewing ${product.product_name}`, 'info');
+        }
+    },
+
+    editProduct: function(id) {
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            RetailX.showToast(`Edit feature coming for ${product.product_name}`, 'info');
+        }
+    },
+
+    deleteProduct: function(id) {
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            RetailX.showToast(`Delete feature coming for ${product.product_name}`, 'info');
+        }
+    },
+
+    updatePagination: function() {
+        const total = this.filteredProducts.length;
+        const pages = Math.ceil(total / this.itemsPerPage);
+        const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+        const end = Math.min(start + this.itemsPerPage - 1, total);
+
+        $('#inventoryStartCount').text(total > 0 ? start : 0);
+        $('#inventoryEndCount').text(end);
+        $('#inventoryTotalCount').text(total);
+
+        let pageNumbers = '';
+        for (let i = 1; i <= pages; i++) {
+            if (i === 1 || i === pages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+                pageNumbers += `<span class="page-number ${i === this.currentPage ? 'active' : ''}" data-page="${i}">${i}</span>`;
+            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
+                pageNumbers += '<span class="page-number">...</span>';
+            }
+        }
+        $('#inventoryPagination').html(pageNumbers);
+
+        $('.page-number[data-page]').off('click').on('click', (e) => {
+            e.preventDefault();
+            const page = parseInt($(e.currentTarget).data('page'));
+            this.currentPage = page;
+            this.renderCurrentPage();
+        });
+
+        $('#prevInventoryPage').prop('disabled', this.currentPage === 1);
+        $('#nextInventoryPage').prop('disabled', this.currentPage === pages || total === 0);
+    },
+
+    updateStats: function() {
+        const totalItems = this.allProducts.length;
+        const totalValue = this.allProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+        const uniqueCategories = new Set(this.allProducts.map(p => p.category)).size;
+        const lowStockCount = this.allProducts.filter(p => p.quantity < 20).length;
+
+        $('#totalInventoryItems').text(totalItems);
+        $('#totalInventoryValue').text('₹' + totalValue.toFixed(2));
+        $('#uniqueCategories').text(uniqueCategories);
+        $('#lowStockCountInventory').text(lowStockCount);
+    },
+
+    updateActiveFiltersDisplay: function() {
+        const filters = [];
+        if (this.categoryFilter !== 'all') {
+            filters.push(`Category: ${this.categoryFilter}`);
+        }
+        if (this.searchTerm) {
+            filters.push(`Search: "${this.searchTerm}"`);
+        }
+        if (filters.length > 0) {
+            const tags = filters.map(f => `<span class="filter-tag">${f} <i class="fas fa-times" onclick="RetailX.Inventory.removeFilter('${f}')"></i></span>`).join('');
+            $('#filterTags').html(tags);
+            $('#activeFilters').show();
+        } else {
+            $('#activeFilters').hide();
+        }
+    },
+
+    removeFilter: function(filter) {
+        if (filter.startsWith('Category:')) {
+            this.categoryFilter = 'all';
+            $('#inventoryCategoryFilter').val('all');
+        } else if (filter.startsWith('Search:')) {
+            this.searchTerm = '';
+            $('#inventorySearch').val('').trigger('input');
+        }
+        this.applyFilters();
+    },
+
+    resetFilters: function() {
+        this.searchTerm = '';
+        this.categoryFilter = 'all';
+        this.sortBy = 'name-asc';
+        $('#inventorySearch').val('');
+        $('#inventoryCategoryFilter').val('all');
+        $('#inventorySortFilter').val('name-asc');
+        $('#clearInventorySearch').hide();
+        this.applyFilters();
+    },
+
+    exportToCSV: function(products, filename) {
+        if (!products || products.length === 0) {
+            RetailX.showToast('No data to export', 'warning');
+            return;
+        }
+
+        const headers = ['Serial No', 'Product Name', 'Category', 'Price', 'Quantity', 'Subcategory'];
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+
+        products.forEach(p => {
+            const row = [
+                p.serial_no || '',
+                `"${p.product_name.replace(/"/g, '""')}"`,
+                `"${p.category.replace(/"/g, '""')}"`,
+                p.price,
+                p.quantity,
+                `"${(p.subcategory || '').replace(/"/g, '""')}"`
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    },
+
+    printLabels: function() {
+        RetailX.showToast('Print labels feature coming soon!', 'info');
+    },
+    showBulkEdit: function() {
+        RetailX.showToast('Bulk edit feature coming soon!', 'info');
+    },
+    generateReport: function() {
+        RetailX.showToast('Stock report feature coming soon!', 'info');
+    },
+    scanBarcode: function() {
+        RetailX.showToast('Barcode scanning feature coming soon!', 'info');
+    }
+};
+
+// ============================================
 // INITIALIZATION
 // ============================================
 $(document).ready(function() {
     console.log('✅ Initializing RetailX Dashboard...');
 
-    // Hide preloader
     setTimeout(() => {
         $('#global-loader').addClass('fade-out');
         setTimeout(() => $('#global-loader').hide(), 400);
     }, 600);
 
-    // Initialize all modules
     RetailX.SidebarManager.init();
     RetailX.Navigation.init();
     RetailX.Dashboard.init();
     RetailX.CashierManager.init();
     RetailX.NotificationManager.init();
     RetailX.Chatbot.init();
+    RetailX.Inventory.init();
 
     console.log('✅ All modules initialized successfully');
 });
