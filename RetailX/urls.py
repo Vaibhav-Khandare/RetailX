@@ -111,6 +111,7 @@ urlpatterns = [
 
     path('api/products-for-festival/', views.get_products_for_festival_api),
     path('api/predict/', views.predict_sales_api),
+    path('api/inventory/random/', views.get_random_inventory, name='random_inventory'),
 
 ]
 
