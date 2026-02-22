@@ -14,187 +14,312 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-       * {
-    margin: 0; 
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-body {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #e8f4ff 0%, #e8f4ff 45%, #ffffff 45%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #e8f4ff 0%, #e8f4ff 45%, #ffffff 45%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
 
-/* LOGIN CARD */
-.login-card {
-    width: 380px;
-    background: #fff;
-    padding: 40px 35px;
-    border-radius: 18px;
-    box-shadow: 0 15px 35px rgba(76, 111, 255, 0.12);
-    text-align: center;
-    animation: fadeSlideIn 0.6s ease-out;
-}
+        /* Dark theme */
+        body.dark-theme {
+            background: linear-gradient(to bottom, #1a1f2e 0%, #1a1f2e 45%, #0f1219 45%);
+        }
 
-/* LOGO */
-.logo {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    margin-bottom: 20px;
-    box-shadow: 0 6px 15px rgba(76, 111, 255, 0.15);
-    border: 3px solid white;
-    transition: transform 0.3s ease;
-}
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            width: 48px;
+            height: 48px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #4C6FFF;
+            transition: all 0.3s ease;
+        }
 
-.logo:hover {
-    transform: scale(1.03);
-}
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(76, 111, 255, 0.3);
+        }
 
-.title {
-    font-size: 26px;
-    font-weight: 600;
-    color: #1F2937;
-    margin-bottom: 8px;
-}
+        body.dark-theme .theme-toggle {
+            background: #2d3748;
+            color: #fbbf24;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
 
-.subtitle {
-    color: #6B7280;
-    font-size: 14px;
-    margin-bottom: 30px;
-    font-weight: 400;
-}
+        /* LOGIN CARD */
+        .login-card {
+            width: 380px;
+            background: #fff;
+            padding: 40px 35px;
+            border-radius: 18px;
+            box-shadow: 0 15px 35px rgba(76, 111, 255, 0.12);
+            text-align: center;
+            animation: fadeSlideIn 0.6s ease-out;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
 
-/* INPUT FIELDS */
-.input-field {
-    position: relative;
-    margin-bottom: 20px;
-}
+        body.dark-theme .login-card {
+            background: #1f2937;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
 
-.input-field input {
-    width: 100%;
-    padding: 14px 50px 14px 18px;
-    font-size: 15px;
-    border-radius: 10px;
-    border: 1.5px solid #E5E7EB;
-    outline: none;
-    background: #F9FAFB;
-    transition: all 0.3s ease;
-}
+        /* LOGO */
+        .logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 15px rgba(76, 111, 255, 0.15);
+            border: 3px solid white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-.input-field input:focus {
-    border-color: #4C6FFF;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1);
-}
+        .logo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(76, 111, 255, 0.3);
+        }
 
-.input-field i {
-    position: absolute;
-    top: 50%;
-    right: 18px;
-    transform: translateY(-50%);
-    color: #9CA3AF;
-    cursor: pointer;
-    transition: color 0.3s;
-}
+        body.dark-theme .logo {
+            border-color: #2d3748;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
 
-.input-field input:focus + i {
-    color: #4C6FFF;
-}
+        .title {
+            font-size: 26px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
 
-/* LOGIN BUTTON */
-.login-btn {
-    width: 100%;
-    padding: 14px;
-    background: #4C6FFF;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 10px;
-}
+        body.dark-theme .title {
+            color: #f3f4f6;
+        }
 
-.login-btn:hover {
-    background: #3548e8;
-    transform: translateY(-2px);
-    box-shadow: 0 7px 14px rgba(76, 111, 255, 0.2);
-}
+        .subtitle {
+            color: #6B7280;
+            font-size: 14px;
+            margin-bottom: 30px;
+            font-weight: 400;
+            transition: color 0.3s ease;
+        }
 
-.login-btn:active {
-    transform: translateY(0);
-}
+        body.dark-theme .subtitle {
+            color: #9ca3af;
+        }
 
-/* FOOTER TEXT */
-.footer {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #6B7280;
-}
+        /* INPUT FIELDS */
+        .input-field {
+            position: relative;
+            margin-bottom: 20px;
+        }
 
-.footer a {
-    color: #4C6FFF;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s;
-}
+        .input-field input {
+            width: 100%;
+            padding: 14px 50px 14px 18px;
+            font-size: 15px;
+            border-radius: 10px;
+            border: 1.5px solid #E5E7EB;
+            outline: none;
+            background: #F9FAFB;
+            transition: all 0.3s ease;
+            color: #1F2937;
+        }
 
-.footer a:hover {
-    color: #3548e8;
-    text-decoration: underline;
-}
+        .input-field input:focus {
+            border-color: #4C6FFF;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(76, 111, 255, 0.15);
+        }
 
-/* ANIMATION - Simple and clean */
-@keyframes fadeSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-/* ERROR MESSAGE STYLING */
-.alert {
-    padding: 12px 15px;
-    border-radius: 10px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: shake 0.5s ease;
-}
+        body.dark-theme .input-field input {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
 
-.alert-error {
-    background-color: #FEF2F2;
-    border: 1px solid #FECACA;
-    color: #DC2626;
-}
+        body.dark-theme .input-field input:focus {
+            background: #1f2937;
+            border-color: #4C6FFF;
+            box-shadow: 0 0 0 4px rgba(76, 111, 255, 0.25);
+        }
 
-.alert i {
-    font-size: 16px;
-}
+        .input-field i {
+            position: absolute;
+            top: 50%;
+            right: 18px;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
 
-/* Shake animation for error */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
+        .input-field input:focus + i {
+            color: #4C6FFF;
+        }
 
+        body.dark-theme .input-field i {
+            color: #9ca3af;
+        }
 
+        body.dark-theme .input-field input:focus + i {
+            color: #fbbf24;
+        }
+
+        /* LOGIN BUTTON */
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #4C6FFF;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: #3548e8;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(76, 111, 255, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        body.dark-theme .login-btn {
+            background: #2563eb;
+        }
+
+        body.dark-theme .login-btn:hover {
+            background: #1d4ed8;
+            box-shadow: 0 7px 14px rgba(37, 99, 235, 0.4);
+        }
+
+        /* FOOTER TEXT */
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6B7280;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-theme .footer {
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #4C6FFF;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .footer a:hover {
+            color: #3548e8;
+            background: rgba(76, 111, 255, 0.08);
+            text-decoration: underline;
+        }
+
+        body.dark-theme .footer a {
+            color: #60a5fa;
+        }
+
+        body.dark-theme .footer a:hover {
+            color: #93c5fd;
+            background: rgba(96, 165, 250, 0.15);
+        }
+
+        /* ANIMATION */
+        @keyframes fadeSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ERROR MESSAGE STYLING */
+        .alert {
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: shake 0.5s ease;
+        }
+
+        #password {
+            color: black;
+        }
+
+        body.dark-theme #password {
+            color: #f3f4f6;
+        }
+
+        .alert-error {
+            background-color: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+        }
+
+        body.dark-theme .alert-error {
+            background-color: #451a1a;
+            border-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .alert i {
+            font-size: 16px;
+        }
+
+        /* Shake animation for error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fas fa-sun"></i>
+    </button>
 
     <div class="login-card">
 
@@ -206,30 +331,30 @@ body {
         <div class="subtitle">Secure login to RetailX manager panel</div>
 
         <form action="{% url 'manager_login' %}" method="post">
-    {% csrf_token %}
-    <div class="input-field">
-        <input type="text" name="username" placeholder="Enter Username" required>
-        <i class="fa-solid fa-user"></i>
-    </div>
+            {% csrf_token %}
+            <div class="input-field">
+                <input type="text" name="username" placeholder="Enter Username" required>
+                <i class="fa-solid fa-user"></i>
+            </div>
 
-    <div class="input-field">
-        <input type="password" id="password" name="password" placeholder="Enter Password" required>
-        <i class="fa-solid fa-eye" id="togglePw"></i>
-    </div>
+            <div class="input-field">
+                <input type="password" id="password" name="password" placeholder="Enter Password" required>
+                <i class="fa-solid fa-eye" id="togglePw"></i>
+            </div>
 
-    <button class="login-btn">Login</button>
-    <div class="footer">
-        Do not have an account? <a href="/manager_registration/">Register</a>
-    </div>
-</form>
-{% if error %}
-    <div class="error-message" style="margin-top: 15px; margin-bottom: 15px;">
-        <div class="alert alert-error">
-            <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
-        </div>
-    </div>
-{% endif %}
+            <button class="login-btn">Login</button>
+            <div class="footer">
+                Do not have an account? <a href="/manager_registration/">Register</a>
+            </div>
+        </form>
 
+        {% if error %}
+            <div class="error-message" style="margin-top: 15px; margin-bottom: 15px;">
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+                </div>
+            </div>
+        {% endif %}
 
         <div class="footer">RetailX Manager Panel</div>
     </div>
@@ -249,19 +374,47 @@ body {
             }
         });
 
-          // Add this at the end of your existing script
-document.addEventListener('DOMContentLoaded', function() {
-    const errorMessage = document.querySelector('.error-message');
-    if (errorMessage) {
-        setTimeout(() => {
-            errorMessage.style.opacity = '0';
-            errorMessage.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => {
-                errorMessage.style.display = 'none';
-            }, 500);
-        }, 5000); // 5 seconds
-    }
-});
+        // Auto-hide error message after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorMessage = document.querySelector('.error-message');
+            if (errorMessage) {
+                setTimeout(() => {
+                    errorMessage.style.opacity = '0';
+                    errorMessage.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            }
+        });
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+        const body = document.body;
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-theme');
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-theme');
+            
+            // Update icon and localStorage
+            if (body.classList.contains('dark-theme')) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'light');
+            }
+        });
     </script>
 
 </body>
