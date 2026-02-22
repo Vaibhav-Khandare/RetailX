@@ -1,21 +1,21 @@
 // ============================================
-// RETAILX MANAGER DASHBOARD - ADVANCED CASHIER MANAGEMENT
+// RETAILX MANAGER DASHBOARD - ADVANCED MANAGEMENT SYSTEM
 // ============================================
 
-console.log('🚀 manager_home.js is loading...');
+console.log('🚀 RetailX Manager Dashboard initializing...');
 
 // Ensure jQuery is available
 if (typeof $ === 'undefined') {
     console.error('❌ jQuery is not loaded!');
 } else {
-    console.log('✅ jQuery version:', $.fn.jquery);
+    console.log('✅ jQuery loaded successfully');
 }
 
 // Create RetailX namespace
 window.RetailX = window.RetailX || {};
 
 // ============================================
-// CSRF TOKEN HELPER FUNCTION
+// CSRF TOKEN HELPER
 // ============================================
 function getCSRFToken() {
     let cookieValue = null;
@@ -33,31 +33,23 @@ function getCSRFToken() {
 }
 
 // ============================================
-// CORE UTILITY FUNCTIONS
+// TOAST NOTIFICATION SYSTEM
 // ============================================
-
-/**
- * Shows a toast notification
- * @param {string} message - Message to display
- * @param {string} type - Type of notification (success, error, warning, info)
- * @param {number} duration - Duration in milliseconds
- */
 RetailX.showToast = function(message, type = 'info', duration = 3000) {
-    console.log(`Toast: ${message} (${type})`);
     const toast = document.getElementById('toast');
-    if (toast) {
-        toast.textContent = message;
-        toast.className = `toast show ${type}`;
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, duration);
-    }
+    if (!toast) return;
+    
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
 };
 
-/**
- * Shows success modal with message
- * @param {string} message - Success message to display
- */
+// ============================================
+// SUCCESS MODAL
+// ============================================
 RetailX.showSuccessModal = function(message) {
     $('#successMessage').text(message);
     $('#successModal').fadeIn(300).css('display', 'flex');
@@ -66,11 +58,9 @@ RetailX.showSuccessModal = function(message) {
     }, 2000);
 };
 
-/**
- * Formats a date to readable string
- * @param {Date} date - Date object to format
- * @returns {string} Formatted date string
- */
+// ============================================
+// DATE FORMATTER
+// ============================================
 RetailX.formatDate = function(date) {
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -80,51 +70,96 @@ RetailX.formatDate = function(date) {
 };
 
 // ============================================
-// NOTIFICATION MANAGER - FIXED (POPUP INSTEAD OF SIDEBAR)
+// SIDEBAR MANAGER - FIXED, NO CONTENT SHIFT
 // ============================================
+RetailX.SidebarManager = {
+    init: function() {
+        console.log('📱 Initializing Sidebar Manager...');
+        this.bindEvents();
+        this.checkScreenSize();
+        
+        // Listen for window resize
+        $(window).on('resize', () => {
+            this.checkScreenSize();
+        });
+    },
+    
+    bindEvents: function() {
+        // Mobile menu toggle
+        $('#mobileMenuToggle').on('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleSidebar();
+        });
+        
+        // Sidebar close button
+        $('#sidebarClose').on('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.hideSidebar();
+        });
+        
+        // Overlay click
+        $('#sidebarOverlay').on('click', () => {
+            this.hideSidebar();
+        });
+        
+        // Close sidebar when clicking a menu item on mobile
+        $('.menu-item').on('click', () => {
+            if ($(window).width() <= 768) {
+                this.hideSidebar();
+            }
+        });
+        
+        // ESC key to close sidebar on mobile
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' && $(window).width() <= 768) {
+                this.hideSidebar();
+            }
+        });
+    },
+    
+    checkScreenSize: function() {
+        if ($(window).width() > 768) {
+            // Desktop: always show sidebar
+            $('#sidebar').removeClass('hidden');
+            $('#sidebarOverlay').removeClass('active');
+            $('#mainContent').removeClass('full-width');
+        } else {
+            // Mobile: hide sidebar by default
+            $('#sidebar').addClass('hidden');
+            $('#sidebarOverlay').removeClass('active');
+            $('#mainContent').addClass('full-width');
+        }
+    },
+    
+    toggleSidebar: function() {
+        if ($(window).width() <= 768) {
+            $('#sidebar').toggleClass('hidden');
+            $('#sidebarOverlay').toggleClass('active');
+        }
+    },
+    
+    hideSidebar: function() {
+        if ($(window).width() <= 768) {
+            $('#sidebar').addClass('hidden');
+            $('#sidebarOverlay').removeClass('active');
+        }
+    }
+};
 
+// ============================================
+// NOTIFICATION MANAGER
+// ============================================
 RetailX.NotificationManager = {
     notifications: [
-        {
-            id: 1,
-            type: 'info',
-            title: 'Welcome to RetailX Manager Dashboard',
-            time: 'Just now',
-            read: false
-        },
-        {
-            id: 2,
-            type: 'success',
-            title: 'Cashier John Smith was added successfully',
-            time: '5 min ago',
-            read: false
-        },
-        {
-            id: 3,
-            type: 'warning',
-            title: '3 cashiers have incomplete profiles',
-            time: '1 hour ago',
-            read: false
-        },
-        {
-            id: 4,
-            type: 'info',
-            title: 'System update scheduled for tonight',
-            time: '3 hours ago',
-            read: true
-        },
-        {
-            id: 5,
-            type: 'success',
-            title: 'Weekly report is ready for download',
-            time: '5 hours ago',
-            read: true
-        }
+        { id: 1, type: 'info', title: 'Welcome to RetailX Manager Dashboard', time: 'Just now', read: false },
+        { id: 2, type: 'success', title: 'Cashier John Smith was added successfully', time: '5 min ago', read: false },
+        { id: 3, type: 'warning', title: '3 cashiers have incomplete profiles', time: '1 hour ago', read: false },
+        { id: 4, type: 'info', title: 'System update scheduled for tonight', time: '3 hours ago', read: true },
+        { id: 5, type: 'success', title: 'Weekly report is ready for download', time: '5 hours ago', read: true }
     ],
 
-    /**
-     * Initialize notification manager
-     */
     init: function() {
         console.log('🔔 Initializing Notification Manager...');
         this.updateBadge();
@@ -132,97 +167,64 @@ RetailX.NotificationManager = {
         this.renderNotifications();
     },
 
-    /**
-     * Bind notification-related events
-     */
     bindEvents: function() {
-        const self = this;
-
-        // Notification button click
-        $('#notificationsBtn').off('click').on('click', function(e) {
-            e.stopPropagation();
+        $('#notificationsBtn').on('click', (e) => {
             e.preventDefault();
-            self.togglePopup();
+            e.stopPropagation();
+            this.togglePopup();
         });
 
-        // Close button
-        $('#closeNotificationsBtn').off('click').on('click', function() {
-            self.hidePopup();
+        $('#closeNotificationsBtn').on('click', () => {
+            this.hidePopup();
         });
 
-        // Click outside to close
-        $(document).off('click').on('click', function(e) {
+        $(document).on('click', (e) => {
             if (!$(e.target).closest('#notificationPopup').length && 
                 !$(e.target).closest('#notificationsBtn').length) {
-                self.hidePopup();
+                this.hidePopup();
             }
         });
 
-        // Mark all as read
-        $('#markAllReadBtn').off('click').on('click', function() {
-            self.markAllAsRead();
+        $('#markAllReadBtn').on('click', () => {
+            this.markAllAsRead();
         });
 
-        // View all notifications
-        $('#viewAllNotificationsBtn').off('click').on('click', function() {
-            self.showAllNotifications();
+        $('#viewAllNotificationsBtn').on('click', () => {
+            this.showAllNotifications();
         });
 
-        // Individual notification click
         $(document).on('click', '.notification-item', function() {
             const id = $(this).data('id');
-            self.markAsRead(id);
+            RetailX.NotificationManager.markAsRead(id);
         });
 
-        // ESC key to close
-        $(document).off('keydown').on('keydown', function(e) {
+        $(document).on('keydown', (e) => {
             if (e.key === 'Escape' && $('#notificationPopup').hasClass('show')) {
-                self.hidePopup();
+                this.hidePopup();
             }
         });
     },
 
-    /**
-     * Toggle notification popup visibility
-     */
     togglePopup: function() {
-        const $popup = $('#notificationPopup');
-        if ($popup.hasClass('show')) {
-            this.hidePopup();
-        } else {
-            this.showPopup();
+        $('#notificationPopup').toggleClass('show');
+        if ($('#notificationPopup').hasClass('show')) {
+            this.renderNotifications();
         }
     },
 
-    /**
-     * Show notification popup
-     */
-    showPopup: function() {
-        $('#notificationPopup').addClass('show');
-        this.renderNotifications(); // Refresh notifications when opening
-    },
-
-    /**
-     * Hide notification popup
-     */
     hidePopup: function() {
         $('#notificationPopup').removeClass('show');
     },
 
-    /**
-     * Render notifications in the popup
-     */
     renderNotifications: function() {
         const $container = $('#notificationPopupBody');
         $container.empty();
 
-        // Show only unread first, then read, limit to 5 for popup
-        const unreadNotifications = this.notifications.filter(n => !n.read);
-        const readNotifications = this.notifications.filter(n => n.read).slice(0, 3);
-        
-        const displayNotifications = [...unreadNotifications, ...readNotifications].slice(0, 8);
+        const unread = this.notifications.filter(n => !n.read);
+        const read = this.notifications.filter(n => n.read).slice(0, 3);
+        const display = [...unread, ...read].slice(0, 8);
 
-        if (displayNotifications.length === 0) {
+        if (display.length === 0) {
             $container.html(`
                 <div class="empty-notifications">
                     <i class="fas fa-bell-slash"></i>
@@ -230,46 +232,38 @@ RetailX.NotificationManager = {
                 </div>
             `);
         } else {
-            displayNotifications.forEach(notification => {
-                const unreadClass = !notification.read ? 'unread' : '';
-                const icon = this.getNotificationIcon(notification.type);
+            display.forEach(n => {
+                const unreadClass = !n.read ? 'unread' : '';
+                const icon = this.getIcon(n.type);
                 
-                const item = `
-                    <div class="notification-item ${unreadClass}" data-id="${notification.id}">
-                        <div class="notification-icon ${notification.type}">
+                $container.append(`
+                    <div class="notification-item ${unreadClass}" data-id="${n.id}">
+                        <div class="notification-icon ${n.type}">
                             <i class="fas ${icon}"></i>
                         </div>
                         <div class="notification-content">
-                            <p>${notification.title}</p>
-                            <span class="notification-time"><i class="far fa-clock"></i> ${notification.time}</span>
+                            <p>${n.title}</p>
+                            <span class="notification-time"><i class="far fa-clock"></i> ${n.time}</span>
                         </div>
-                        ${!notification.read ? '<span class="notification-badge">New</span>' : ''}
+                        ${!n.read ? '<span class="notification-badge">New</span>' : ''}
                     </div>
-                `;
-                $container.append(item);
+                `);
             });
         }
 
         this.updateBadge();
     },
 
-    /**
-     * Get icon class based on notification type
-     * @param {string} type - Notification type
-     * @returns {string} FontAwesome icon class
-     */
-    getNotificationIcon: function(type) {
-        switch(type) {
-            case 'success': return 'fa-check-circle';
-            case 'warning': return 'fa-exclamation-triangle';
-            case 'error': return 'fa-times-circle';
-            default: return 'fa-info-circle';
-        }
+    getIcon: function(type) {
+        const icons = {
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle',
+            error: 'fa-times-circle',
+            info: 'fa-info-circle'
+        };
+        return icons[type] || 'fa-info-circle';
     },
 
-    /**
-     * Update notification badge count
-     */
     updateBadge: function() {
         const unreadCount = this.notifications.filter(n => !n.read).length;
         const $badge = $('.badge');
@@ -281,10 +275,6 @@ RetailX.NotificationManager = {
         }
     },
 
-    /**
-     * Mark a notification as read
-     * @param {number} id - Notification ID
-     */
     markAsRead: function(id) {
         const notification = this.notifications.find(n => n.id === id);
         if (notification && !notification.read) {
@@ -295,9 +285,6 @@ RetailX.NotificationManager = {
         }
     },
 
-    /**
-     * Mark all notifications as read
-     */
     markAllAsRead: function() {
         this.notifications.forEach(n => n.read = true);
         this.renderNotifications();
@@ -305,48 +292,34 @@ RetailX.NotificationManager = {
         RetailX.showToast('All notifications marked as read', 'success');
     },
 
-    /**
-     * Show all notifications in a modal
-     */
     showAllNotifications: function() {
         this.hidePopup();
         
-        // Create a modal with all notifications
-        const allNotificationsHtml = this.notifications.map(notification => {
-            const icon = this.getNotificationIcon(notification.type);
-            const unreadClass = !notification.read ? 'unread' : '';
-            
+        const html = this.notifications.map(n => {
+            const icon = this.getIcon(n.type);
+            const unreadClass = !n.read ? 'unread' : '';
             return `
-                <div class="notification-item ${unreadClass}" data-id="${notification.id}">
-                    <div class="notification-icon ${notification.type}">
+                <div class="notification-item ${unreadClass}" data-id="${n.id}">
+                    <div class="notification-icon ${n.type}">
                         <i class="fas ${icon}"></i>
                     </div>
                     <div class="notification-content">
-                        <p>${notification.title}</p>
-                        <span class="notification-time"><i class="far fa-clock"></i> ${notification.time}</span>
+                        <p>${n.title}</p>
+                        <span class="notification-time"><i class="far fa-clock"></i> ${n.time}</span>
                     </div>
-                    ${!notification.read ? '<span class="notification-badge">New</span>' : ''}
                 </div>
             `;
         }).join('');
 
         Swal.fire({
             title: 'All Notifications',
-            html: `<div class="notifications-modal-content" style="max-height: 400px; overflow-y: auto;">${allNotificationsHtml || '<p>No notifications</p>'}</div>`,
+            html: `<div style="max-height: 400px; overflow-y: auto;">${html || '<p>No notifications</p>'}</div>`,
             showCloseButton: true,
             showConfirmButton: false,
-            width: '500px',
-            customClass: {
-                popup: 'notifications-swal-popup'
-            }
+            width: '500px'
         });
     },
 
-    /**
-     * Add a new notification
-     * @param {string} title - Notification title
-     * @param {string} type - Notification type
-     */
     addNotification: function(title, type = 'info') {
         const newNotification = {
             id: this.notifications.length + 1,
@@ -358,7 +331,6 @@ RetailX.NotificationManager = {
         
         this.notifications.unshift(newNotification);
         
-        // Keep only last 20 notifications
         if (this.notifications.length > 20) {
             this.notifications = this.notifications.slice(0, 20);
         }
@@ -366,7 +338,6 @@ RetailX.NotificationManager = {
         this.renderNotifications();
         this.updateBadge();
         
-        // Show popup briefly to alert user
         if (!$('#notificationPopup').hasClass('show')) {
             this.showPopup();
             setTimeout(() => this.hidePopup(), 3000);
@@ -377,154 +348,100 @@ RetailX.NotificationManager = {
 };
 
 // ============================================
-// CHATBOT MODULE (Copied from Admin)
+// CHATBOT MODULE
 // ============================================
-
 RetailX.Chatbot = {
-    /**
-     * Initialize chatbot
-     */
     init: function() {
         console.log('🤖 Initializing Chatbot...');
         this.bindEvents();
     },
 
-    /**
-     * Bind chatbot events
-     */
     bindEvents: function() {
-        const self = this;
-
-        // Enter key in input field
-        $('#chatbot-input').on('keypress', function(e) {
-            if (e.which === 13) { // Enter key
+        $('#chatbot-input').on('keypress', (e) => {
+            if (e.which === 13) {
                 e.preventDefault();
-                self.sendMessage();
+                this.sendMessage();
             }
         });
     },
 
-    /**
-     * Send message to chatbot
-     */
     sendMessage: function() {
-        const input = document.getElementById('chatbot-input');
-        const messages = document.getElementById('chatbot-messages');
+        const input = $('#chatbot-input');
+        const messages = $('#chatbot-messages');
+        const message = input.val().trim();
 
-        if (!input || !messages) {
-            console.error('Chatbot elements not found');
-            return;
-        }
-
-        const message = input.value.trim();
-        if (message === "") {
+        if (!message) {
             RetailX.showToast('Please enter a message', 'warning');
             return;
         }
 
-        // Show user message
-        messages.innerHTML += `
+        // Add user message
+        messages.append(`
             <div class="chat-user">
                 <span>${this.escapeHtml(message)}</span>
             </div>
-        `;
+        `);
+        
+        input.val('');
+        messages.scrollTop(messages[0].scrollHeight);
 
-        input.value = "";
-        messages.scrollTop = messages.scrollHeight;
-
-        // Show typing indicator
-        const typingId = "typing-" + Date.now();
-        messages.innerHTML += `
+        // Add typing indicator
+        const typingId = 'typing-' + Date.now();
+        messages.append(`
             <div class="chat-bot" id="${typingId}">
                 <span>🤖 Typing...</span>
             </div>
-        `;
-        messages.scrollTop = messages.scrollHeight;
+        `);
+        messages.scrollTop(messages[0].scrollHeight);
 
-        // Send message to Django backend
-        fetch("/chatbot/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken()
+        // Send to backend
+        $.ajax({
+            url: '/chatbot/',
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            contentType: 'application/json',
+            data: JSON.stringify({ message: message }),
+            success: (data) => {
+                $(`#${typingId}`).remove();
+                messages.append(`
+                    <div class="chat-bot">
+                        <span>${this.escapeHtml(data.reply)}</span>
+                    </div>
+                `);
+                messages.scrollTop(messages[0].scrollHeight);
             },
-            body: JSON.stringify({ message: message })
-        })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("Network response was not ok");
+            error: (xhr, status, error) => {
+                console.error('Chatbot error:', error);
+                $(`#${typingId}`).remove();
+                messages.append(`
+                    <div class="chat-bot">
+                        <span>⚠️ Sorry, I'm having trouble connecting. Please try again.</span>
+                    </div>
+                `);
+                messages.scrollTop(messages[0].scrollHeight);
+                RetailX.NotificationManager.addNotification('Chatbot connection error', 'error');
             }
-            return res.json();
-        })
-        .then(data => {
-            // Remove typing indicator
-            const typingElement = document.getElementById(typingId);
-            if (typingElement) typingElement.remove();
-
-            // Add bot response
-            messages.innerHTML += `
-                <div class="chat-bot">
-                    <span>${this.escapeHtml(data.reply)}</span>
-                </div>
-            `;
-            messages.scrollTop = messages.scrollHeight;
-        })
-        .catch(error => {
-            console.error("Chatbot error:", error);
-            
-            // Remove typing indicator
-            const typingElement = document.getElementById(typingId);
-            if (typingElement) typingElement.remove();
-
-            // Show error message
-            messages.innerHTML += `
-                <div class="chat-bot">
-                    <span>⚠️ Sorry, I'm having trouble connecting. Please try again.</span>
-                </div>
-            `;
-            messages.scrollTop = messages.scrollHeight;
-            
-            RetailX.NotificationManager.addNotification('Chatbot connection error', 'error');
         });
     },
 
-    /**
-     * Escape HTML special characters
-     * @param {string} text - Text to escape
-     * @returns {string} Escaped text
-     */
     escapeHtml: function(text) {
-        const div = document.createElement("div");
+        const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     },
 
-    /**
-     * Toggle chatbot visibility
-     */
     toggleChatbot: function() {
-        const box = document.getElementById('chatbot-box');
-        if (!box) {
-            console.log("Chatbot box not found");
-            return;
-        }
-
-        if (box.style.display === "none" || box.style.display === "") {
-            box.style.display = "flex";
-            console.log("Opening chatbot");
-            
-            // Focus input field
-            setTimeout(() => {
-                document.getElementById('chatbot-input')?.focus();
-            }, 300);
+        const box = $('#chatbot-box');
+        if (box.css('display') === 'none' || box.css('display') === '') {
+            box.css('display', 'flex');
+            setTimeout(() => $('#chatbot-input').focus(), 300);
         } else {
-            box.style.display = "none";
-            console.log("Closing chatbot");
+            box.css('display', 'none');
         }
     }
 };
 
-// Global function for HTML onclick
+// Global functions for HTML onclick
 window.toggleChatbot = function() {
     RetailX.Chatbot.toggleChatbot();
 };
@@ -536,7 +453,6 @@ window.sendMessage = function() {
 // ============================================
 // CASHIER MANAGEMENT MODULE
 // ============================================
-
 RetailX.CashierManager = {
     cashierList: [],
     filteredList: [],
@@ -548,278 +464,212 @@ RetailX.CashierManager = {
     sortOrder: 'asc',
     currentStep: 1,
 
-    /**
-     * Initialize Cashier Management
-     */
     init: function() {
         console.log('📋 Initializing Cashier Management...');
-        this.checkElements();
         this.bindEvents();
         this.loadCashierData();
         this.initFormSteps();
         this.initPasswordStrength();
     },
 
-    /**
-     * Check if all required elements exist
-     */
-    checkElements: function() {
-        const requiredIds = [
-            'staffTableBody', 'staffTableLoading', 'staffTableEmpty', 'staffTableError',
-            'staffSearch', 'refreshStaffBtn', 'addStaffBtn', 'clearSearch',
-            'totalCashiers', 'activeCashiers', 'withEmail', 'uniqueUsernames',
-            'prevPage', 'nextPage', 'startCount', 'endCount', 'totalCount',
-            'sortBy', 'itemsPerPage', 'retryLoadBtn'
-        ];
-        
-        let missing = [];
-        requiredIds.forEach(id => {
-            if (!document.getElementById(id)) {
-                missing.push(id);
-            }
-        });
-        
-        if (missing.length > 0) {
-            console.warn('⚠️ Missing elements:', missing);
-        } else {
-            console.log('✅ All required elements found');
-        }
-    },
-
-    /**
-     * Bind all events
-     */
     bindEvents: function() {
-        const self = this;
-
         // Add Cashier Button
-        $('#addStaffBtn').off('click').on('click', function() {
-            self.openAddCashierModal();
+        $('#addStaffBtn').on('click', (e) => {
+            e.preventDefault();
+            this.openAddCashierModal();
         });
 
-        // Search input with debounce
-        $('#staffSearch').off('input').on('input', function() {
-            const searchTerm = $(this).val();
-            if (searchTerm.length > 0) {
-                $('#clearSearch').show();
-            } else {
-                $('#clearSearch').hide();
-            }
-            clearTimeout(self.debounceTimer);
-            self.debounceTimer = setTimeout(() => {
-                self.currentPage = 1;
-                self.filterAndSortCashiers();
+        // Search with debounce
+        $('#staffSearch').on('input', () => {
+            const searchTerm = $('#staffSearch').val();
+            $('#clearSearch').toggle(searchTerm.length > 0);
+            
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => {
+                this.currentPage = 1;
+                this.filterAndSort();
             }, 300);
         });
 
         // Clear search
-        $('#clearSearch').off('click').on('click', function() {
+        $('#clearSearch').on('click', () => {
             $('#staffSearch').val('').trigger('input');
-            $(this).hide();
         });
 
         // Refresh button
-        $('#refreshStaffBtn').off('click').on('click', function() {
-            const icon = $(this).find('i');
-            icon.addClass('fa-spin');
-            self.loadCashierData();
+        $('#refreshStaffBtn').on('click', (e) => {
+            e.preventDefault();
+            $(e.currentTarget).find('i').addClass('fa-spin');
+            this.loadCashierData();
             setTimeout(() => {
-                icon.removeClass('fa-spin');
+                $(e.currentTarget).find('i').removeClass('fa-spin');
                 RetailX.showToast('Cashier data refreshed', 'success');
-                RetailX.NotificationManager.addNotification('Cashier data refreshed successfully', 'success');
             }, 800);
         });
 
         // Retry button
-        $('#retryLoadBtn').off('click').on('click', function() {
-            self.loadCashierData();
+        $('#retryLoadBtn').on('click', (e) => {
+            e.preventDefault();
+            this.loadCashierData();
         });
 
-        // Sort by
-        $('#sortBy').off('change').on('change', function() {
-            self.sortBy = $(this).val();
-            self.currentPage = 1;
-            self.filterAndSortCashiers();
+        // Sort by dropdown
+        $('#sortBy').on('change', () => {
+            this.sortBy = $('#sortBy').val();
+            this.currentPage = 1;
+            this.filterAndSort();
         });
 
         // Items per page
-        $('#itemsPerPage').off('change').on('change', function() {
-            self.itemsPerPage = parseInt($(this).val());
-            self.currentPage = 1;
-            self.filterAndSortCashiers();
+        $('#itemsPerPage').on('change', () => {
+            this.itemsPerPage = parseInt($('#itemsPerPage').val());
+            this.currentPage = 1;
+            this.filterAndSort();
         });
 
         // Column sorting
-        $('#sort-id, #sort-name, #sort-username, #sort-email').off('click').on('click', function() {
-            const column = this.id.replace('sort-', '');
-            self.sortBy = column === 'id' ? 'id' : 
+        $('#sort-id, #sort-name, #sort-username, #sort-email').on('click', (e) => {
+            e.preventDefault();
+            const column = e.currentTarget.id.replace('sort-', '');
+            this.sortBy = column === 'id' ? 'id' : 
                          column === 'name' ? 'fullname' : column;
-            self.sortOrder = self.sortOrder === 'asc' ? 'desc' : 'asc';
-            self.currentPage = 1;
-            self.filterAndSortCashiers();
+            this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+            this.currentPage = 1;
+            this.filterAndSort();
             
-            // Update sort icons
             $('.fa-sort').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
-            $(this).removeClass('fa-sort').addClass(self.sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+            $(e.currentTarget).removeClass('fa-sort')
+                .addClass(this.sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
         });
 
         // Pagination
-        $('#prevPage').off('click').on('click', function() {
-            if (self.currentPage > 1) {
-                self.currentPage--;
-                self.renderCurrentPage();
-            }
-        });
-
-        $('#nextPage').off('click').on('click', function() {
-            const totalPages = Math.ceil(self.filteredList.length / self.itemsPerPage);
-            if (self.currentPage < totalPages) {
-                self.currentPage++;
-                self.renderCurrentPage();
-            }
-        });
-
-        // Staff Form Submit
-        $('#staffForm').off('submit').on('submit', function(e) {
+        $('#prevPage').on('click', (e) => {
             e.preventDefault();
-            self.handleCashierFormSubmit();
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.renderCurrentPage();
+            }
         });
 
-        // Modal Close Buttons
-        $('.modal-close, .cancel-btn').off('click').on('click', function() {
+        $('#nextPage').on('click', (e) => {
+            e.preventDefault();
+            const totalPages = Math.ceil(this.filteredList.length / this.itemsPerPage);
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.renderCurrentPage();
+            }
+        });
+
+        // Form submit
+        $('#staffForm').on('submit', (e) => {
+            e.preventDefault();
+            this.handleFormSubmit();
+        });
+
+        // Modal close buttons
+        $('.modal-close, .cancel-btn').on('click', (e) => {
+            e.preventDefault();
             $('.modal').fadeOut(300);
-            self.resetCashierForm();
+            this.resetForm();
         });
 
         // Close success modal
-        $('#closeSuccessModal').off('click').on('click', function() {
+        $('#closeSuccessModal').on('click', (e) => {
+            e.preventDefault();
             $('#successModal').fadeOut(300);
         });
 
         // Click outside modal to close
-        $(window).off('click').on('click', function(e) {
+        $(window).on('click', (e) => {
             if ($(e.target).hasClass('modal')) {
                 $('.modal').fadeOut(300);
-                self.resetCashierForm();
+                this.resetForm();
             }
         });
 
-        // Delete Confirmation
-        $('#confirmDeleteBtn').off('click').on('click', function() {
-            self.deleteCashier();
+        // Delete confirmation
+        $('#confirmDeleteBtn').on('click', (e) => {
+            e.preventDefault();
+            this.deleteCashier();
         });
 
-        $('#cancelDeleteBtn').off('click').on('click', function() {
+        $('#cancelDeleteBtn').on('click', (e) => {
+            e.preventDefault();
             $('#deleteConfirmModal').fadeOut(300);
-            self.deleteCashierId = null;
+            this.deleteCashierId = null;
         });
 
-        // View Modal Edit Button
-        $('#editFromViewBtn').off('click').on('click', function() {
+        // View modal edit button
+        $('#editFromViewBtn').on('click', (e) => {
+            e.preventDefault();
             const cashierId = $('#viewStaffModal').data('cashierId');
             $('#viewStaffModal').fadeOut(300);
             setTimeout(() => {
-                self.openEditCashierModal(cashierId);
+                this.openEditCashierModal(cashierId);
             }, 300);
         });
 
-        // View Modal Actions
-        $('#messageStaff').off('click').on('click', function() {
+        // View modal actions
+        $('#messageStaff').on('click', (e) => {
+            e.preventDefault();
             const email = $('#viewStaffEmail').text();
             RetailX.showToast(`Message feature coming soon for ${email}`, 'info');
         });
 
-        $('#resetPasswordStaff').off('click').on('click', function() {
+        $('#resetPasswordStaff').on('click', (e) => {
+            e.preventDefault();
             const name = $('#viewStaffFullName').text();
             RetailX.showToast(`Password reset email sent to ${name}`, 'success');
-            RetailX.NotificationManager.addNotification(`Password reset requested for ${name}`, 'info');
         });
 
-        $('#closeViewModal').off('click').on('click', function() {
+        $('#closeViewModal').on('click', (e) => {
+            e.preventDefault();
             $('#viewStaffModal').fadeOut(300);
         });
 
         // Summary card clicks
-        $('#totalCashiersCard, #activeCashiersCard, #emailCard, #usernameCard').off('click').on('click', function() {
-            const filter = this.id;
-            RetailX.showToast(`Filtering by ${filter}`, 'info');
+        $('#totalCashiersCard, #activeCashiersCard, #emailCard, #usernameCard').on('click', (e) => {
+            e.preventDefault();
+            RetailX.showToast(`Filtering feature coming soon`, 'info');
         });
 
         // Export button
-        $('#exportStaffBtn').off('click').on('click', function() {
-            self.exportToCSV();
-        });
-
-        // Fullscreen
-        $('#fullscreenBtn').off('click').on('click', function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        });
-
-        // Mobile menu toggle
-        $('#mobileMenuToggle').off('click').on('click', function() {
-            $('.sidebar').toggleClass('active');
-        });
-
-        // Logout
-        $('#logoutBtn').off('click').on('click', function(e) {
+        $('#exportStaffBtn').on('click', (e) => {
             e.preventDefault();
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'You will be logged out of the system',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, logout'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '/logout';
-                }
-            });
+            this.exportToCSV();
         });
 
         // Apply date range
-        $('#applyDateRange').off('click').on('click', function() {
-            const startDate = $('#startDate').val();
-            const endDate = $('#endDate').val();
-            RetailX.showToast(`Date range applied: ${startDate} to ${endDate}`, 'success');
+        $('#applyDateRange').on('click', (e) => {
+            e.preventDefault();
+            const start = $('#startDate').val();
+            const end = $('#endDate').val();
+            RetailX.showToast(`Date range applied: ${start} to ${end}`, 'success');
         });
 
         // Chart period change
-        $('#revenuePeriod, #categoryPeriod').off('change').on('change', function() {
+        $('#revenuePeriod, #categoryPeriod').on('change', (e) => {
+            e.preventDefault();
             RetailX.showToast('Chart period updated', 'info');
         });
     },
 
-    /**
-     * Initialize form steps
-     */
     initFormSteps: function() {
-        const self = this;
-        
-        $('.next-step').off('click').on('click', function() {
-            const nextStep = $(this).data('next');
-            if (self.validateStep(self.currentStep)) {
-                self.goToStep(nextStep);
+        $('.next-step').on('click', (e) => {
+            e.preventDefault();
+            const next = $(e.currentTarget).data('next');
+            if (this.validateStep(this.currentStep)) {
+                this.goToStep(next);
             }
         });
 
-        $('.prev-step').off('click').on('click', function() {
-            const prevStep = $(this).data('prev');
-            self.goToStep(prevStep);
+        $('.prev-step').on('click', (e) => {
+            e.preventDefault();
+            const prev = $(e.currentTarget).data('prev');
+            this.goToStep(prev);
         });
     },
 
-    /**
-     * Go to specific step
-     * @param {number} step - Step number
-     */
     goToStep: function(step) {
         this.currentStep = step;
         $('.form-step').removeClass('active');
@@ -828,45 +678,37 @@ RetailX.CashierManager = {
         $('.progress-step').removeClass('active');
         $(`.progress-step[data-step="${step}"]`).addClass('active');
         
-        // Update review data
         if (step == 3) {
             this.updateReviewData();
         }
     },
 
-    /**
-     * Validate current step
-     * @param {number} step - Step number
-     * @returns {boolean} Validation result
-     */
     validateStep: function(step) {
         let isValid = true;
         
         if (step === 1) {
-            // Validate Step 1
-            const fullname = $('#staffFullName').val().trim();
+            const name = $('#staffFullName').val().trim();
             const email = $('#staffEmail').val().trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
             $('.error-message').removeClass('show').empty();
             
-            if (!fullname) {
+            if (!name) {
                 $('#fullNameError').text('Full name is required').addClass('show');
                 isValid = false;
             }
             
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email) {
                 $('#emailError').text('Email is required').addClass('show');
                 isValid = false;
             } else if (!emailRegex.test(email)) {
                 $('#emailError').text('Please enter a valid email').addClass('show');
-                isValid = false;
+                isValid =false;
             }
         } else if (step === 2) {
-            // Validate Step 2
             const username = $('#staffUsername').val().trim();
             const password = $('#staffPassword').val();
-            const confirmPassword = $('#staffConfirmPassword').val();
+            const confirm = $('#staffConfirmPassword').val();
             
             $('.error-message').removeClass('show').empty();
             
@@ -887,7 +729,7 @@ RetailX.CashierManager = {
                     isValid = false;
                 }
                 
-                if (password !== confirmPassword) {
+                if (password !== confirm) {
                     $('#confirmPasswordError').text('Passwords do not match').addClass('show');
                     isValid = false;
                 }
@@ -897,78 +739,57 @@ RetailX.CashierManager = {
         return isValid;
     },
 
-    /**
-     * Update review data
-     */
     updateReviewData: function() {
         $('#reviewFullName').text($('#staffFullName').val().trim() || '-');
         $('#reviewEmail').text($('#staffEmail').val().trim() || '-');
         $('#reviewUsername').text($('#staffUsername').val().trim() || '-');
     },
 
-    /**
-     * Initialize password strength meter
-     */
     initPasswordStrength: function() {
         $('#staffPassword').on('input', function() {
             const password = $(this).val();
-            const strengthBar = $('.strength-bar');
+            const bar = $('.strength-bar');
             
             if (!password) {
-                strengthBar.removeClass('weak medium strong').css('width', '0');
+                bar.removeClass('weak medium strong').css('width', '0');
                 return;
             }
             
             let strength = 0;
-            
-            // Check length
-            if (password.length >= 8) strength += 1;
-            if (password.length >= 12) strength += 1;
-            
-            // Check for numbers
-            if (/\d/.test(password)) strength += 1;
-            
-            // Check for special characters
-            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 1;
-            
-            // Check for uppercase
-            if (/[A-Z]/.test(password)) strength += 1;
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
             
             if (strength <= 2) {
-                strengthBar.removeClass('medium strong').addClass('weak');
+                bar.removeClass('medium strong').addClass('weak');
             } else if (strength <= 4) {
-                strengthBar.removeClass('weak strong').addClass('medium');
+                bar.removeClass('weak strong').addClass('medium');
             } else {
-                strengthBar.removeClass('weak medium').addClass('strong');
+                bar.removeClass('weak medium').addClass('strong');
             }
         });
     },
 
-    /**
-     * Load Cashier Data from Database
-     */
     loadCashierData: function() {
-        const self = this;
-
-        // Show loading
         $('#staffTableLoading').fadeIn(200);
         $('#staffTableBody').empty();
         $('#staffTableError').hide();
 
-        // Try to get data from Django context
-        const staffDataElement = document.getElementById('staff-data');
-        if (staffDataElement && staffDataElement.dataset.cashiers) {
+        // Try from hidden data
+        const dataEl = document.getElementById('staff-data');
+        if (dataEl && dataEl.dataset.cashiers) {
             try {
-                const cashiersData = JSON.parse(staffDataElement.dataset.cashiers);
-                if (cashiersData && cashiersData.length > 0) {
-                    console.log('📊 Loaded', cashiersData.length, 'cashiers from Django');
-                    self.cashierList = cashiersData;
-                    self.filteredList = [...cashiersData];
-                    self.filterAndSortCashiers();
+                const data = JSON.parse(dataEl.dataset.cashiers);
+                if (data && data.length > 0) {
+                    this.cashierList = data;
+                    this.filteredList = [...data];
+                    this.filterAndSort();
                     $('#staffTableLoading').fadeOut(200);
                     $('#staffTableEmpty').hide();
-                    self.updateCashierSummary(cashiersData);
-                    self.addActivity('System', 'Cashier data loaded', 'success');
+                    this.updateSummary(data);
+                    this.addActivity('System', 'Cashier data loaded', 'success');
                     return;
                 }
             } catch(e) {
@@ -976,51 +797,42 @@ RetailX.CashierManager = {
             }
         }
 
-        // If no data in context, make AJAX call
+        // Fallback to AJAX
         $.ajax({
             url: '/api/cashiers/',
             method: 'GET',
-            headers: {
-                'X-CSRFToken': getCSRFToken()
-            },
-            success: function(response) {
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            success: (response) => {
                 if (response.success && response.cashiers) {
-                    self.cashierList = response.cashiers;
-                    self.filteredList = [...response.cashiers];
-                    self.filterAndSortCashiers();
-                    self.updateCashierSummary(response.cashiers);
-                    self.addActivity('System', 'Cashier data loaded', 'success');
-                    RetailX.NotificationManager.addNotification('Cashier data loaded successfully', 'success');
+                    this.cashierList = response.cashiers;
+                    this.filteredList = [...response.cashiers];
+                    this.filterAndSort();
+                    this.updateSummary(response.cashiers);
+                    this.addActivity('System', 'Cashier data loaded', 'success');
                 } else {
-                    self.showEmptyState();
+                    this.showEmptyState();
                 }
                 $('#staffTableLoading').fadeOut(200);
             },
-            error: function(xhr, status, error) {
+            error: (xhr, status, error) => {
                 console.error('Error loading cashiers:', error);
                 $('#staffTableLoading').fadeOut(200);
                 $('#staffTableError').fadeIn(200);
                 RetailX.showToast('Failed to load cashiers', 'error');
-                RetailX.NotificationManager.addNotification('Failed to load cashier data', 'error');
             }
         });
     },
 
-    /**
-     * Filter and sort cashiers
-     */
-    filterAndSortCashiers: function() {
-        const searchTerm = $('#staffSearch').val().toLowerCase().trim();
+    filterAndSort: function() {
+        const search = $('#staffSearch').val().toLowerCase().trim();
         
-        // Filter
-        this.filteredList = this.cashierList.filter(cashier => {
-            if (!searchTerm) return true;
-            return (cashier.fullname && cashier.fullname.toLowerCase().includes(searchTerm)) ||
-                   (cashier.username && cashier.username.toLowerCase().includes(searchTerm)) ||
-                   (cashier.email && cashier.email.toLowerCase().includes(searchTerm));
+        this.filteredList = this.cashierList.filter(c => {
+            if (!search) return true;
+            return (c.fullname && c.fullname.toLowerCase().includes(search)) ||
+                   (c.username && c.username.toLowerCase().includes(search)) ||
+                   (c.email && c.email.toLowerCase().includes(search));
         });
 
-        // Sort
         this.filteredList.sort((a, b) => {
             let valA = a[this.sortBy] || '';
             let valB = b[this.sortBy] || '';
@@ -1033,33 +845,22 @@ RetailX.CashierManager = {
                 valB = valB.toString().toLowerCase();
             }
             
-            if (this.sortOrder === 'asc') {
-                return valA > valB ? 1 : -1;
-            } else {
-                return valA < valB ? 1 : -1;
-            }
+            return this.sortOrder === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
         });
 
         this.renderCurrentPage();
     },
 
-    /**
-     * Render current page
-     */
     renderCurrentPage: function() {
         const start = (this.currentPage - 1) * this.itemsPerPage;
         const end = Math.min(start + this.itemsPerPage, this.filteredList.length);
         const pageData = this.filteredList.slice(start, end);
 
-        this.renderCashierTable(pageData);
+        this.renderTable(pageData);
         this.updatePagination();
     },
 
-    /**
-     * Render Cashier Table
-     * @param {Array} data - Cashier data to render
-     */
-    renderCashierTable: function(data) {
+    renderTable: function(data) {
         const tbody = $('#staffTableBody');
         tbody.empty();
 
@@ -1070,54 +871,45 @@ RetailX.CashierManager = {
 
         $('#staffTableEmpty').hide();
 
-        data.forEach(cashier => {
-            const row = `
-                <tr data-id="${cashier.id}">
-                    <td><span class="staff-id">#${cashier.id}</span></td>
-                    <td><span class="staff-name">${cashier.fullname || 'N/A'}</span></td>
-                    <td><span class="staff-username">@${cashier.username || 'N/A'}</span></td>
-                    <td><span class="staff-email">${cashier.email || 'N/A'}</span></td>
-                    <td>
-                        <span class="status-badge active">
-                            <i class="fas fa-check-circle"></i> Active
-                        </span>
-                    </td>
+        data.forEach(c => {
+            tbody.append(`
+                <tr data-id="${c.id}">
+                    <td><span class="staff-id">#${c.id}</span></td>
+                    <td><span class="staff-name">${c.fullname || 'N/A'}</span></td>
+                    <td><span class="staff-username">@${c.username || 'N/A'}</span></td>
+                    <td><span class="staff-email">${c.email || 'N/A'}</span></td>
+                    <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Active</span></td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn view" onclick="RetailX.CashierManager.viewCashier(${cashier.id})" title="View Details">
+                            <button class="action-btn view" onclick="RetailX.CashierManager.viewCashier(${c.id})" title="View">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="action-btn edit" onclick="RetailX.CashierManager.openEditCashierModal(${cashier.id})" title="Edit">
+                            <button class="action-btn edit" onclick="RetailX.CashierManager.openEditCashierModal(${c.id})" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="action-btn delete" onclick="RetailX.CashierManager.openDeleteModal(${cashier.id}, '${(cashier.fullname || '').replace(/'/g, "\\'")}')" title="Delete">
+                            <button class="action-btn delete" onclick="RetailX.CashierManager.openDeleteModal(${c.id}, '${(c.fullname || '').replace(/'/g, "\\'")}')" title="Delete">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
                     </td>
                 </tr>
-            `;
-            tbody.append(row);
+            `);
         });
     },
 
-    /**
-     * Update pagination
-     */
     updatePagination: function() {
-        const totalItems = this.filteredList.length;
-        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+        const total = this.filteredList.length;
+        const pages = Math.ceil(total / this.itemsPerPage);
         const start = (this.currentPage - 1) * this.itemsPerPage + 1;
-        const end = Math.min(start + this.itemsPerPage - 1, totalItems);
+        const end = Math.min(start + this.itemsPerPage - 1, total);
 
-        $('#startCount').text(totalItems > 0 ? start : 0);
+        $('#startCount').text(total > 0 ? start : 0);
         $('#endCount').text(end);
-        $('#totalCount').text(totalItems);
+        $('#totalCount').text(total);
 
-        // Generate page numbers
         let pageNumbers = '';
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+        for (let i = 1; i <= pages; i++) {
+            if (i === 1 || i === pages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
                 pageNumbers += `<span class="page-number ${i === this.currentPage ? 'active' : ''}" data-page="${i}">${i}</span>`;
             } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
                 pageNumbers += '<span class="page-number">...</span>';
@@ -1125,52 +917,44 @@ RetailX.CashierManager = {
         }
         $('#pageNumbers').html(pageNumbers);
 
-        // Bind page number clicks
-        $('.page-number[data-page]').off('click').on('click', function() {
-            const page = parseInt($(this).data('page'));
-            RetailX.CashierManager.currentPage = page;
-            RetailX.CashierManager.renderCurrentPage();
+        $('.page-number[data-page]').off('click').on('click', (e) => {
+            e.preventDefault();
+            const page = parseInt($(e.currentTarget).data('page'));
+            this.currentPage = page;
+            this.renderCurrentPage();
         });
 
-        // Update prev/next buttons
         $('#prevPage').prop('disabled', this.currentPage === 1);
-        $('#nextPage').prop('disabled', this.currentPage === totalPages || totalItems === 0);
+        $('#nextPage').prop('disabled', this.currentPage === pages || total === 0);
     },
 
-    /**
-     * Update Cashier Summary Cards
-     * @param {Array} data - Cashier data
-     */
-    updateCashierSummary: function(data) {
+    updateSummary: function(data) {
         const total = data.length;
         const withEmail = data.filter(c => c.email && c.email.includes('@')).length;
-        const uniqueUsernames = new Set(data.map(c => c.username)).size;
+        const unique = new Set(data.map(c => c.username)).size;
 
         $('#totalCashiers').text(total);
         $('#activeCashiers').text(total);
         $('#withEmail').text(withEmail);
-        $('#uniqueUsernames').text(uniqueUsernames);
+        $('#uniqueUsernames').text(unique);
 
         // Animate numbers
         $('.summary-value').each(function() {
             const $this = $(this);
+            const final = parseInt($this.text());
             $this.prop('Counter', 0).animate({
-                Counter: $this.text()
+                Counter: final
             }, {
                 duration: 1000,
-                easing: 'swing',
-                step: function(now) {
+                step: (now) => {
                     $this.text(Math.ceil(now));
                 }
             });
         });
     },
 
-    /**
-     * Open Add Cashier Modal
-     */
     openAddCashierModal: function() {
-        this.resetCashierForm();
+        this.resetForm();
         this.currentStep = 1;
         this.goToStep(1);
         $('#staffModalTitle').html('<i class="fas fa-user-plus"></i> Add New Cashier');
@@ -1181,10 +965,6 @@ RetailX.CashierManager = {
         $('#staffModal').fadeIn(300).css('display', 'flex');
     },
 
-    /**
-     * Open Edit Cashier Modal
-     * @param {number} cashierId - Cashier ID
-     */
     openEditCashierModal: function(cashierId) {
         const cashier = this.cashierList.find(c => c.id === cashierId);
         if (!cashier) {
@@ -1192,19 +972,16 @@ RetailX.CashierManager = {
             return;
         }
 
-        this.resetCashierForm();
+        this.resetForm();
         this.currentStep = 3;
         this.goToStep(3);
 
-        // Fill form with cashier data
         $('#staffModalTitle').html('<i class="fas fa-edit"></i> Edit Cashier');
         $('#formAction').val('edit');
         $('#staffId').val(cashier.id);
         $('#staffFullName').val(cashier.fullname || '');
         $('#staffUsername').val(cashier.username || '');
         $('#staffEmail').val(cashier.email || '');
-        
-        // Password not required for edit
         $('#staffPassword').prop('required', false);
         $('#staffConfirmPassword').prop('required', false);
         
@@ -1212,10 +989,6 @@ RetailX.CashierManager = {
         $('#staffModal').fadeIn(300).css('display', 'flex');
     },
 
-    /**
-     * View Cashier Details
-     * @param {number} cashierId - Cashier ID
-     */
     viewCashier: function(cashierId) {
         const cashier = this.cashierList.find(c => c.id === cashierId);
         if (!cashier) {
@@ -1223,10 +996,8 @@ RetailX.CashierManager = {
             return;
         }
 
-        // Set view modal data
         $('#viewStaffModal').data('cashierId', cashierId);
         
-        // Update avatar
         const name = encodeURIComponent(cashier.fullname || 'User');
         $('#viewStaffAvatar').attr('src', `https://ui-avatars.com/api/?name=${name}&background=4361ee&color=fff&size=80`);
         
@@ -1240,10 +1011,7 @@ RetailX.CashierManager = {
         $('#viewStaffModal').fadeIn(300).css('display', 'flex');
     },
 
-    /**
-     * Handle Cashier Form Submit
-     */
-    handleCashierFormSubmit: function() {
+    handleFormSubmit: function() {
         if (!this.validateStep(3)) {
             this.goToStep(2);
             RetailX.showToast('Please complete all required fields', 'error');
@@ -1259,102 +1027,61 @@ RetailX.CashierManager = {
         };
 
         const action = $('#formAction').val();
+        const btn = $('#submitStaffBtn');
+        const originalText = btn.html();
+        
+        btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
 
-        // Show loading on button
-        const submitBtn = $('#submitStaffBtn');
-        const originalText = submitBtn.html();
-        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+        const url = action === 'add' ? '/api/cashiers/add/' : `/api/cashiers/${formData.id}/edit/`;
+        const method = action === 'add' ? 'POST' : 'PUT';
 
-        if (action === 'add') {
-            // Add new cashier via AJAX
-            $.ajax({
-                url: '/api/cashiers/add/',
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCSRFToken()
-                },
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                success: function(response) {
-                    if (response.success) {
-                        RetailX.showSuccessModal('Cashier added successfully!');
-                        // Add to local list
-                        RetailX.CashierManager.cashierList.push(response.cashier);
-                        RetailX.CashierManager.filteredList = [...RetailX.CashierManager.cashierList];
-                        RetailX.CashierManager.filterAndSortCashiers();
-                        RetailX.CashierManager.updateCashierSummary(RetailX.CashierManager.cashierList);
-                        $('#staffModal').fadeOut(300);
-                        RetailX.CashierManager.resetCashierForm();
-                        RetailX.CashierManager.addActivity('System', `New cashier ${formData.fullname} added`, 'success');
-                        RetailX.NotificationManager.addNotification(`New cashier ${formData.fullname} added`, 'success');
+        $.ajax({
+            url: url,
+            method: method,
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: (response) => {
+                if (response.success) {
+                    RetailX.showSuccessModal(action === 'add' ? 'Cashier added successfully!' : 'Cashier updated successfully!');
+                    
+                    if (action === 'add') {
+                        this.cashierList.push(response.cashier);
                     } else {
-                        RetailX.showToast(response.error || 'Failed to add cashier', 'error');
-                    }
-                },
-                error: function(xhr) {
-                    const response = xhr.responseJSON;
-                    RetailX.showToast(response?.error || 'Server error', 'error');
-                },
-                complete: function() {
-                    submitBtn.html(originalText).prop('disabled', false);
-                }
-            });
-        } else {
-            // Edit existing cashier via AJAX
-            $.ajax({
-                url: `/api/cashiers/${formData.id}/edit/`,
-                method: 'PUT',
-                headers: {
-                    'X-CSRFToken': getCSRFToken()
-                },
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                success: function(response) {
-                    if (response.success) {
-                        RetailX.showSuccessModal('Cashier updated successfully!');
-                        // Update local list
-                        const index = RetailX.CashierManager.cashierList.findIndex(c => c.id == formData.id);
+                        const index = this.cashierList.findIndex(c => c.id == formData.id);
                         if (index !== -1) {
-                            RetailX.CashierManager.cashierList[index].fullname = formData.fullname;
-                            RetailX.CashierManager.cashierList[index].username = formData.username;
-                            RetailX.CashierManager.cashierList[index].email = formData.email;
+                            Object.assign(this.cashierList[index], response.cashier);
                         }
-                        RetailX.CashierManager.filteredList = [...RetailX.CashierManager.cashierList];
-                        RetailX.CashierManager.filterAndSortCashiers();
-                        RetailX.CashierManager.updateCashierSummary(RetailX.CashierManager.cashierList);
-                        $('#staffModal').fadeOut(300);
-                        RetailX.CashierManager.resetCashierForm();
-                        RetailX.CashierManager.addActivity('System', `Cashier ${formData.fullname} updated`, 'info');
-                        RetailX.NotificationManager.addNotification(`Cashier ${formData.fullname} updated`, 'info');
-                    } else {
-                        RetailX.showToast(response.error || 'Failed to update cashier', 'error');
                     }
-                },
-                error: function(xhr) {
-                    const response = xhr.responseJSON;
-                    RetailX.showToast(response?.error || 'Server error', 'error');
-                },
-                complete: function() {
-                    submitBtn.html(originalText).prop('disabled', false);
+                    
+                    this.filteredList = [...this.cashierList];
+                    this.filterAndSort();
+                    this.updateSummary(this.cashierList);
+                    $('#staffModal').fadeOut(300);
+                    this.resetForm();
+                    
+                    const msg = action === 'add' ? `New cashier ${formData.fullname} added` : `Cashier ${formData.fullname} updated`;
+                    this.addActivity('System', msg, 'success');
+                } else {
+                    RetailX.showToast(response.error || 'Operation failed', 'error');
                 }
-            });
-        }
+            },
+            error: (xhr) => {
+                const response = xhr.responseJSON;
+                RetailX.showToast(response?.error || 'Server error', 'error');
+            },
+            complete: () => {
+                btn.html(originalText).prop('disabled', false);
+            }
+        });
     },
 
-    /**
-     * Open Delete Confirmation Modal
-     * @param {number} cashierId - Cashier ID
-     * @param {string} cashierName - Cashier Name
-     */
     openDeleteModal: function(cashierId, cashierName) {
         this.deleteCashierId = cashierId;
         $('#deleteStaffName').text(cashierName);
         $('#deleteConfirmModal').fadeIn(300).css('display', 'flex');
     },
 
-    /**
-     * Delete Cashier
-     */
     deleteCashier: function() {
         if (!this.deleteCashierId) return;
 
@@ -1362,48 +1089,40 @@ RetailX.CashierManager = {
         const cashier = this.cashierList.find(c => c.id === cashierId);
         if (!cashier) return;
 
-        // Show loading
-        const deleteBtn = $('#confirmDeleteBtn');
-        const originalText = deleteBtn.html();
-        deleteBtn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+        const btn = $('#confirmDeleteBtn');
+        const originalText = btn.html();
+        
+        btn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
 
-        // AJAX call to delete
         $.ajax({
             url: `/api/cashiers/${cashierId}/delete/`,
             method: 'DELETE',
-            headers: {
-                'X-CSRFToken': getCSRFToken()
-            },
-            success: function(response) {
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            success: (response) => {
                 if (response.success) {
                     RetailX.showSuccessModal('Cashier deleted successfully!');
-                    // Remove from local list
-                    RetailX.CashierManager.cashierList = RetailX.CashierManager.cashierList.filter(c => c.id !== cashierId);
-                    RetailX.CashierManager.filteredList = [...RetailX.CashierManager.cashierList];
-                    RetailX.CashierManager.filterAndSortCashiers();
-                    RetailX.CashierManager.updateCashierSummary(RetailX.CashierManager.cashierList);
+                    this.cashierList = this.cashierList.filter(c => c.id !== cashierId);
+                    this.filteredList = [...this.cashierList];
+                    this.filterAndSort();
+                    this.updateSummary(this.cashierList);
                     $('#deleteConfirmModal').fadeOut(300);
-                    RetailX.CashierManager.addActivity('System', `Cashier ${cashier.fullname} removed`, 'warning');
-                    RetailX.NotificationManager.addNotification(`Cashier ${cashier.fullname} was removed`, 'warning');
+                    this.addActivity('System', `Cashier ${cashier.fullname} removed`, 'warning');
                 } else {
                     RetailX.showToast(response.error || 'Failed to delete cashier', 'error');
                 }
             },
-            error: function(xhr) {
+            error: (xhr) => {
                 const response = xhr.responseJSON;
                 RetailX.showToast(response?.error || 'Server error', 'error');
             },
-            complete: function() {
-                deleteBtn.html(originalText).prop('disabled', false);
-                RetailX.CashierManager.deleteCashierId = null;
+            complete: () => {
+                btn.html(originalText).prop('disabled', false);
+                this.deleteCashierId = null;
             }
         });
     },
 
-    /**
-     * Reset Cashier Form
-     */
-    resetCashierForm: function() {
+    resetForm: function() {
         $('#staffForm')[0].reset();
         $('.error-message').removeClass('show').empty();
         $('.strength-bar').removeClass('weak medium strong').css('width', '0');
@@ -1413,16 +1132,10 @@ RetailX.CashierManager = {
         this.goToStep(1);
     },
 
-    /**
-     * Add activity to timeline
-     * @param {string} user - User name
-     * @param {string} action - Action description
-     * @param {string} type - Activity type
-     */
     addActivity: function(user, action, type = 'info') {
         const timeline = $('#staffActivities');
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         
         let icon = 'fa-info-circle';
         let color = '#3b82f6';
@@ -1435,38 +1148,33 @@ RetailX.CashierManager = {
             color = '#f59e0b';
         }
 
-        const newActivity = `
-            <div class="timeline-item" style="opacity: 0; transform: translateY(-20px);">
-                <div class="timeline-icon" style="color: ${color};">
+        const activity = `
+            <div class="timeline-item" style="opacity:0; transform:translateY(-20px);">
+                <div class="timeline-icon" style="color:${color};">
                     <i class="fas ${icon}"></i>
                 </div>
                 <div class="timeline-content">
                     <p>${user}: ${action}</p>
-                    <span class="timeline-time"><i class="far fa-clock"></i> ${timeStr}</span>
+                    <span class="timeline-time"><i class="far fa-clock"></i> ${time}</span>
                 </div>
             </div>
         `;
 
-        timeline.prepend(newActivity);
-
-        // Animate new activity
+        timeline.prepend(activity);
+        
         setTimeout(() => {
             timeline.find('.timeline-item:first-child').css({
-                'opacity': '1',
-                'transform': 'translateY(0)',
-                'transition': 'all 0.3s ease'
+                opacity: 1,
+                transform: 'translateY(0)',
+                transition: 'all 0.3s ease'
             });
         }, 10);
 
-        // Limit activities to 10
         if (timeline.children().length > 10) {
             timeline.children().last().remove();
         }
     },
 
-    /**
-     * Export to CSV
-     */
     exportToCSV: function() {
         const headers = ['ID', 'Full Name', 'Username', 'Email', 'Status'];
         const data = this.cashierList.map(c => [
@@ -1491,67 +1199,66 @@ RetailX.CashierManager = {
         window.URL.revokeObjectURL(url);
         
         RetailX.showToast('Cashier list exported successfully', 'success');
-        RetailX.NotificationManager.addNotification('Cashier data exported to CSV', 'success');
     },
 
-    /**
-     * Show empty state
-     */
     showEmptyState: function() {
         $('#staffTableEmpty').fadeIn(200);
+    }
+};
+
+// Expose global methods
+window.viewCashier = (id) => RetailX.CashierManager.viewCashier(id);
+window.editCashier = (id) => RetailX.CashierManager.openEditCashierModal(id);
+window.deleteCashier = (id, name) => RetailX.CashierManager.openDeleteModal(id, name);
+window.togglePassword = (inputId) => {
+    const input = document.getElementById(inputId);
+    if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+        const icon = event.currentTarget.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        }
     }
 };
 
 // ============================================
 // PAGE NAVIGATION
 // ============================================
-
 RetailX.Navigation = {
-    /**
-     * Initialize navigation
-     */
     init: function() {
-        const self = this;
-        
-        $('.menu-item[data-page]').on('click', function(e) {
+        $('.menu-item[data-page]').on('click', (e) => {
             e.preventDefault();
-            
-            const page = $(this).data('page');
-            self.switchPage(page);
+            const page = $(e.currentTarget).data('page');
+            this.switchPage(page);
             
             $('.menu-item').removeClass('active');
-            $(this).addClass('active');
+            $(e.currentTarget).addClass('active');
 
-            // Close mobile menu if open
             if ($(window).width() <= 768) {
-                $('.sidebar').removeClass('active');
+                RetailX.SidebarManager.hideSidebar();
             }
         });
     },
 
-    /**
-     * Switch to a specific page
-     * @param {string} page - Page identifier
-     */
     switchPage: function(page) {
         $('.page').hide().removeClass('active');
         $(`#${page}-page`).fadeIn(400).addClass('active');
 
         const titles = {
-            'dashboard': 'Dashboard',
-            'overview': 'Store Overview',
-            'inventory': 'Inventory Management',
-            'staff': 'Cashier Management',
-            'analysis': 'Analysis',
-            'transactions': 'Transactions',
-            'reports': 'Reports',
-            'settings': 'Settings'
+            dashboard: 'Dashboard',
+            overview: 'Store Overview',
+            inventory: 'Inventory Management',
+            staff: 'Cashier Management',
+            analysis: 'Analysis',
+            transactions: 'Transactions',
+            reports: 'Reports',
+            settings: 'Settings'
         };
 
         $('#pageTitle').text(titles[page] || 'Dashboard');
         $('#breadcrumb').text(`Home / ${titles[page] || 'Dashboard'}`);
         
-        // Refresh data when switching to staff page
         if (page === 'staff') {
             RetailX.CashierManager.loadCashierData();
         }
@@ -1559,25 +1266,17 @@ RetailX.Navigation = {
 };
 
 // ============================================
-// DASHBOARD FUNCTIONS
+// DASHBOARD
 // ============================================
-
 RetailX.Dashboard = {
-    /**
-     * Initialize dashboard
-     */
     init: function() {
         console.log('📊 Initializing Dashboard...');
         this.loadMockData();
         this.startClock();
         this.initCharts();
         this.initPrediction();
-        console.log('📈 Prediction module initialized');
     },
 
-    /**
-     * Load mock data (for demo purposes)
-     */
     loadMockData: function() {
         $('#totalRevenue').text('$156,780');
         $('#inventoryValue').text('$82,340');
@@ -1591,9 +1290,6 @@ RetailX.Dashboard = {
         $('#avgOrderValue').text('$122.50');
     },
 
-    /**
-     * Start real-time clock
-     */
     startClock: function() {
         const update = () => {
             const now = new Date();
@@ -1613,11 +1309,7 @@ RetailX.Dashboard = {
         setInterval(update, 1000);
     },
 
-    /**
-     * Initialize charts
-     */
     initCharts: function() {
-        // Revenue Chart
         const ctx = document.getElementById('revenueChart')?.getContext('2d');
         if (ctx) {
             window.revenueChart = new Chart(ctx, {
@@ -1641,36 +1333,17 @@ RetailX.Dashboard = {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#0f172a',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            callbacks: {
-                                label: function(context) {
-                                    return ' $' + context.parsed.y.toLocaleString();
-                                }
-                            }
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: '#e2e8f0' },
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value;
-                                }
-                            }
-                        },
-                        x: { grid: { display: false } }
+                            ticks: { callback: (v) => '$' + v }
+                        }
                     }
                 }
             });
         }
 
-        // Category Chart
         const catCtx = document.getElementById('categoryChart')?.getContext('2d');
         if (catCtx) {
             new Chart(catCtx, {
@@ -1689,164 +1362,128 @@ RetailX.Dashboard = {
                     maintainAspectRatio: false,
                     cutout: '70%',
                     plugins: {
-                        legend: { 
-                            position: 'bottom',
-                            labels: { 
-                                usePointStyle: true, 
-                                boxWidth: 8,
-                                padding: 20
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
                     }
                 }
             });
         }
     },
 
-    /**
-     * Initialize prediction module
-     */
     initPrediction: function() {
-        console.log('🔮 Initializing Prediction Module...');
-        const festivalSelect = $('#predictFestival');
-        const productSelect = $('#predictProduct');
-        const dateInput = $('#predictDate');
-        const predictBtn = $('#predictBtn');
-        const resultDiv = $('#predictionResult');
+        const festival = $('#predictFestival');
+        const product = $('#predictProduct');
+        const date = $('#predictDate');
+        const btn = $('#predictBtn');
+        const result = $('#predictionResult');
 
-        if (!festivalSelect.length) {
-            console.error('❌ Prediction elements not found in DOM!');
-            return;
-        }
-
-        // Load products when festival changes
-        festivalSelect.on('change', function() {
-            const festival = $(this).val();
-            console.log('Festival selected:', festival);
-            if (!festival) {
-                productSelect.prop('disabled', true).html('<option value="">Select Product</option>');
-                resultDiv.fadeOut();
+        festival.on('change', (e) => {
+            e.preventDefault();
+            const val = festival.val();
+            if (!val) {
+                product.prop('disabled', true).html('<option value="">Select Product</option>');
+                result.fadeOut();
                 return;
             }
-            console.log('Fetching products for festival:', festival);
+
             $.ajax({
                 url: '/api/products-for-festival/',
-                data: { festival: festival },
-                success: function(data) {
-                    console.log('Products response:', data);
-                    productSelect.prop('disabled', false).empty().append('<option value="">Select Product</option>');
+                data: { festival: val },
+                success: (data) => {
+                    product.prop('disabled', false).empty().append('<option value="">Select Product</option>');
                     if (data.products && data.products.length > 0) {
-                        data.products.forEach(function(product) {
-                            productSelect.append(`<option value="${product}">${product}</option>`);
+                        data.products.forEach(p => {
+                            product.append(`<option value="${p}">${p}</option>`);
                         });
                     } else {
-                        productSelect.append('<option value="">No products found</option>').prop('disabled', true);
+                        product.append('<option value="">No products found</option>').prop('disabled', true);
                         RetailX.showToast('No models found for this festival', 'warning');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('AJAX error:', error);
+                error: () => {
                     RetailX.showToast('Failed to load products', 'error');
                 }
             });
         });
 
-        // Predict button click
-        predictBtn.on('click', function() {
-            const festival = festivalSelect.val();
-            const product = productSelect.val();
-            const date = dateInput.val();
-            if (!festival || !product || !date) {
+        btn.on('click', (e) => {
+            e.preventDefault();
+            const fVal = festival.val();
+            const pVal = product.val();
+            const dVal = date.val();
+            
+            if (!fVal || !pVal || !dVal) {
                 RetailX.showToast('Please select festival, product, and date', 'warning');
                 return;
             }
-            console.log('Predicting:', {festival, product, date});
-            $(this).html('<i class="fas fa-spinner fa-spin"></i> Predicting...').prop('disabled', true);
+
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Predicting...').prop('disabled', true);
+
             $.ajax({
                 url: '/api/predict/',
-                data: { festival: festival, product: product, date: date },
-                success: function(data) {
-                    console.log('Prediction response:', data);
+                data: { festival: fVal, product: pVal, date: dVal },
+                success: (data) => {
                     if (data.error) {
                         RetailX.showToast(data.error, 'error');
                         return;
                     }
                     $('#predUnits').text(data.predicted_units);
                     $('#predRevenue').text(data.predicted_revenue.toFixed(2));
-                    resultDiv.fadeIn();
-
-                    // Update charts with the predicted point
-                    RetailX.Dashboard.updateChartWithPrediction(data);
+                    result.fadeIn();
+                    this.updateChartWithPrediction(data);
                 },
-                error: function(xhr) {
-                    const errorMsg = xhr.responseJSON?.error || 'Prediction failed';
-                    console.error('Prediction error:', errorMsg);
-                    RetailX.showToast(errorMsg, 'error');
+                error: (xhr) => {
+                    const msg = xhr.responseJSON?.error || 'Prediction failed';
+                    RetailX.showToast(msg, 'error');
                 },
-                complete: function() {
-                    predictBtn.html('<i class="fas fa-magic"></i> Predict').prop('disabled', false);
+                complete: () => {
+                    btn.html('<i class="fas fa-magic"></i> Predict').prop('disabled', false);
                 }
             });
         });
     },
 
-    /**
-     * Update chart with prediction point
-     * @param {Object} prediction - Prediction data
-     */
     updateChartWithPrediction: function(prediction) {
-        console.log('Updating chart with prediction:', prediction);
-        if (window.revenueChart) {
-            const chart = window.revenueChart;
-            const newLabel = prediction.date;
-            
-            // Check if label already exists, if not add it
-            if (!chart.data.labels.includes(newLabel)) {
-                chart.data.labels.push(newLabel);
-                // Add null to original dataset for the new label
-                chart.data.datasets[0].data.push(null);
-            }
-            
-            // Find or create a predictions dataset
-            let predDataset = chart.data.datasets.find(ds => ds.label === 'Predicted');
-            if (!predDataset) {
-                predDataset = {
-                    label: 'Predicted',
-                    data: [],
-                    borderColor: '#f97316',
-                    backgroundColor: '#f97316',
-                    pointRadius: 8,
-                    pointHoverRadius: 10,
-                    showLine: false,
-                    type: 'scatter'
-                };
-                // Initialize with nulls for all existing labels
-                for (let i = 0; i < chart.data.labels.length; i++) {
-                    predDataset.data.push(null);
-                }
-                chart.data.datasets.push(predDataset);
-            }
-            
-            // Ensure predDataset data length matches labels
-            while (predDataset.data.length < chart.data.labels.length) {
-                predDataset.data.push(null);
-            }
-            
-            // Set the predicted value at the index of the new label
-            const index = chart.data.labels.indexOf(newLabel);
-            predDataset.data[index] = prediction.predicted_revenue;
-            
-            chart.update();
+        if (!window.revenueChart) return;
+        
+        const chart = window.revenueChart;
+        const label = prediction.date;
+        
+        if (!chart.data.labels.includes(label)) {
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(null);
         }
+        
+        let predSet = chart.data.datasets.find(ds => ds.label === 'Predicted');
+        if (!predSet) {
+            predSet = {
+                label: 'Predicted',
+                data: [],
+                borderColor: '#f97316',
+                backgroundColor: '#f97316',
+                pointRadius: 8,
+                pointHoverRadius: 10,
+                showLine: false,
+                type: 'scatter'
+            };
+            chart.data.labels.forEach(() => predSet.data.push(null));
+            chart.data.datasets.push(predSet);
+        }
+        
+        while (predSet.data.length < chart.data.labels.length) {
+            predSet.data.push(null);
+        }
+        
+        const index = chart.data.labels.indexOf(label);
+        predSet.data[index] = prediction.predicted_revenue;
+        chart.update();
     }
 };
 
 // ============================================
 // INITIALIZATION
 // ============================================
-
 $(document).ready(function() {
-    console.log('✅ Document ready, initializing application...');
+    console.log('✅ Initializing RetailX Dashboard...');
 
     // Hide preloader
     setTimeout(() => {
@@ -1854,7 +1491,8 @@ $(document).ready(function() {
         setTimeout(() => $('#global-loader').hide(), 400);
     }, 600);
 
-    // Initialize modules
+    // Initialize all modules
+    RetailX.SidebarManager.init();
     RetailX.Navigation.init();
     RetailX.Dashboard.init();
     RetailX.CashierManager.init();
@@ -1863,41 +1501,3 @@ $(document).ready(function() {
 
     console.log('✅ All modules initialized successfully');
 });
-
-// ============================================
-// EXPOSE GLOBAL FUNCTIONS
-// ============================================
-
-window.viewCashier = function(cashierId) {
-    RetailX.CashierManager.viewCashier(cashierId);
-};
-
-window.editCashier = function(cashierId) {
-    RetailX.CashierManager.openEditCashierModal(cashierId);
-};
-
-window.deleteCashier = function(cashierId, cashierName) {
-    RetailX.CashierManager.openDeleteModal(cashierId, cashierName);
-};
-
-/**
- * Toggle password visibility
- * @param {string} inputId - ID of the password input
- */
-window.togglePassword = function(inputId) {
-    const input = document.getElementById(inputId);
-    if (input) {
-        const type = input.type === 'password' ? 'text' : 'password';
-        input.type = type;
-        const icon = event.currentTarget.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-        }
-    }
-};
-
-// No back functionality
-window.noBack = function() {
-    window.history.forward();
-};
