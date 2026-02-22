@@ -36,6 +36,12 @@ function getCSRFToken() {
 // CORE UTILITY FUNCTIONS
 // ============================================
 
+/**
+ * Shows a toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification (success, error, warning, info)
+ * @param {number} duration - Duration in milliseconds
+ */
 RetailX.showToast = function(message, type = 'info', duration = 3000) {
     console.log(`Toast: ${message} (${type})`);
     const toast = document.getElementById('toast');
@@ -48,6 +54,10 @@ RetailX.showToast = function(message, type = 'info', duration = 3000) {
     }
 };
 
+/**
+ * Shows success modal with message
+ * @param {string} message - Success message to display
+ */
 RetailX.showSuccessModal = function(message) {
     $('#successMessage').text(message);
     $('#successModal').fadeIn(300).css('display', 'flex');
@@ -56,6 +66,11 @@ RetailX.showSuccessModal = function(message) {
     }, 2000);
 };
 
+/**
+ * Formats a date to readable string
+ * @param {Date} date - Date object to format
+ * @returns {string} Formatted date string
+ */
 RetailX.formatDate = function(date) {
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -107,6 +122,9 @@ RetailX.NotificationManager = {
         }
     ],
 
+    /**
+     * Initialize notification manager
+     */
     init: function() {
         console.log('🔔 Initializing Notification Manager...');
         this.updateBadge();
@@ -114,6 +132,9 @@ RetailX.NotificationManager = {
         this.renderNotifications();
     },
 
+    /**
+     * Bind notification-related events
+     */
     bindEvents: function() {
         const self = this;
 
@@ -161,6 +182,9 @@ RetailX.NotificationManager = {
         });
     },
 
+    /**
+     * Toggle notification popup visibility
+     */
     togglePopup: function() {
         const $popup = $('#notificationPopup');
         if ($popup.hasClass('show')) {
@@ -170,15 +194,24 @@ RetailX.NotificationManager = {
         }
     },
 
+    /**
+     * Show notification popup
+     */
     showPopup: function() {
         $('#notificationPopup').addClass('show');
         this.renderNotifications(); // Refresh notifications when opening
     },
 
+    /**
+     * Hide notification popup
+     */
     hidePopup: function() {
         $('#notificationPopup').removeClass('show');
     },
 
+    /**
+     * Render notifications in the popup
+     */
     renderNotifications: function() {
         const $container = $('#notificationPopupBody');
         $container.empty();
@@ -220,6 +253,11 @@ RetailX.NotificationManager = {
         this.updateBadge();
     },
 
+    /**
+     * Get icon class based on notification type
+     * @param {string} type - Notification type
+     * @returns {string} FontAwesome icon class
+     */
     getNotificationIcon: function(type) {
         switch(type) {
             case 'success': return 'fa-check-circle';
@@ -229,6 +267,9 @@ RetailX.NotificationManager = {
         }
     },
 
+    /**
+     * Update notification badge count
+     */
     updateBadge: function() {
         const unreadCount = this.notifications.filter(n => !n.read).length;
         const $badge = $('.badge');
@@ -240,6 +281,10 @@ RetailX.NotificationManager = {
         }
     },
 
+    /**
+     * Mark a notification as read
+     * @param {number} id - Notification ID
+     */
     markAsRead: function(id) {
         const notification = this.notifications.find(n => n.id === id);
         if (notification && !notification.read) {
@@ -250,6 +295,9 @@ RetailX.NotificationManager = {
         }
     },
 
+    /**
+     * Mark all notifications as read
+     */
     markAllAsRead: function() {
         this.notifications.forEach(n => n.read = true);
         this.renderNotifications();
@@ -257,6 +305,9 @@ RetailX.NotificationManager = {
         RetailX.showToast('All notifications marked as read', 'success');
     },
 
+    /**
+     * Show all notifications in a modal
+     */
     showAllNotifications: function() {
         this.hidePopup();
         
@@ -291,6 +342,11 @@ RetailX.NotificationManager = {
         });
     },
 
+    /**
+     * Add a new notification
+     * @param {string} title - Notification title
+     * @param {string} type - Notification type
+     */
     addNotification: function(title, type = 'info') {
         const newNotification = {
             id: this.notifications.length + 1,
@@ -321,6 +377,163 @@ RetailX.NotificationManager = {
 };
 
 // ============================================
+// CHATBOT MODULE (Copied from Admin)
+// ============================================
+
+RetailX.Chatbot = {
+    /**
+     * Initialize chatbot
+     */
+    init: function() {
+        console.log('🤖 Initializing Chatbot...');
+        this.bindEvents();
+    },
+
+    /**
+     * Bind chatbot events
+     */
+    bindEvents: function() {
+        const self = this;
+
+        // Enter key in input field
+        $('#chatbot-input').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                self.sendMessage();
+            }
+        });
+    },
+
+    /**
+     * Send message to chatbot
+     */
+    sendMessage: function() {
+        const input = document.getElementById('chatbot-input');
+        const messages = document.getElementById('chatbot-messages');
+
+        if (!input || !messages) {
+            console.error('Chatbot elements not found');
+            return;
+        }
+
+        const message = input.value.trim();
+        if (message === "") {
+            RetailX.showToast('Please enter a message', 'warning');
+            return;
+        }
+
+        // Show user message
+        messages.innerHTML += `
+            <div class="chat-user">
+                <span>${this.escapeHtml(message)}</span>
+            </div>
+        `;
+
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+
+        // Show typing indicator
+        const typingId = "typing-" + Date.now();
+        messages.innerHTML += `
+            <div class="chat-bot" id="${typingId}">
+                <span>🤖 Typing...</span>
+            </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+
+        // Send message to Django backend
+        fetch("/chatbot/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return res.json();
+        })
+        .then(data => {
+            // Remove typing indicator
+            const typingElement = document.getElementById(typingId);
+            if (typingElement) typingElement.remove();
+
+            // Add bot response
+            messages.innerHTML += `
+                <div class="chat-bot">
+                    <span>${this.escapeHtml(data.reply)}</span>
+                </div>
+            `;
+            messages.scrollTop = messages.scrollHeight;
+        })
+        .catch(error => {
+            console.error("Chatbot error:", error);
+            
+            // Remove typing indicator
+            const typingElement = document.getElementById(typingId);
+            if (typingElement) typingElement.remove();
+
+            // Show error message
+            messages.innerHTML += `
+                <div class="chat-bot">
+                    <span>⚠️ Sorry, I'm having trouble connecting. Please try again.</span>
+                </div>
+            `;
+            messages.scrollTop = messages.scrollHeight;
+            
+            RetailX.NotificationManager.addNotification('Chatbot connection error', 'error');
+        });
+    },
+
+    /**
+     * Escape HTML special characters
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text
+     */
+    escapeHtml: function(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    /**
+     * Toggle chatbot visibility
+     */
+    toggleChatbot: function() {
+        const box = document.getElementById('chatbot-box');
+        if (!box) {
+            console.log("Chatbot box not found");
+            return;
+        }
+
+        if (box.style.display === "none" || box.style.display === "") {
+            box.style.display = "flex";
+            console.log("Opening chatbot");
+            
+            // Focus input field
+            setTimeout(() => {
+                document.getElementById('chatbot-input')?.focus();
+            }, 300);
+        } else {
+            box.style.display = "none";
+            console.log("Closing chatbot");
+        }
+    }
+};
+
+// Global function for HTML onclick
+window.toggleChatbot = function() {
+    RetailX.Chatbot.toggleChatbot();
+};
+
+window.sendMessage = function() {
+    RetailX.Chatbot.sendMessage();
+};
+
+// ============================================
 // CASHIER MANAGEMENT MODULE
 // ============================================
 
@@ -335,7 +548,9 @@ RetailX.CashierManager = {
     sortOrder: 'asc',
     currentStep: 1,
 
-    // Initialize Cashier Management
+    /**
+     * Initialize Cashier Management
+     */
     init: function() {
         console.log('📋 Initializing Cashier Management...');
         this.checkElements();
@@ -345,7 +560,9 @@ RetailX.CashierManager = {
         this.initPasswordStrength();
     },
 
-    // Check if all required elements exist
+    /**
+     * Check if all required elements exist
+     */
     checkElements: function() {
         const requiredIds = [
             'staffTableBody', 'staffTableLoading', 'staffTableEmpty', 'staffTableError',
@@ -369,7 +586,9 @@ RetailX.CashierManager = {
         }
     },
 
-    // Bind all events
+    /**
+     * Bind all events
+     */
     bindEvents: function() {
         const self = this;
 
@@ -578,7 +797,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Initialize form steps
+    /**
+     * Initialize form steps
+     */
     initFormSteps: function() {
         const self = this;
         
@@ -595,7 +816,10 @@ RetailX.CashierManager = {
         });
     },
 
-    // Go to specific step
+    /**
+     * Go to specific step
+     * @param {number} step - Step number
+     */
     goToStep: function(step) {
         this.currentStep = step;
         $('.form-step').removeClass('active');
@@ -610,7 +834,11 @@ RetailX.CashierManager = {
         }
     },
 
-    // Validate current step
+    /**
+     * Validate current step
+     * @param {number} step - Step number
+     * @returns {boolean} Validation result
+     */
     validateStep: function(step) {
         let isValid = true;
         
@@ -669,14 +897,18 @@ RetailX.CashierManager = {
         return isValid;
     },
 
-    // Update review data
+    /**
+     * Update review data
+     */
     updateReviewData: function() {
         $('#reviewFullName').text($('#staffFullName').val().trim() || '-');
         $('#reviewEmail').text($('#staffEmail').val().trim() || '-');
         $('#reviewUsername').text($('#staffUsername').val().trim() || '-');
     },
 
-    // Initialize password strength meter
+    /**
+     * Initialize password strength meter
+     */
     initPasswordStrength: function() {
         $('#staffPassword').on('input', function() {
             const password = $(this).val();
@@ -712,7 +944,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Load Cashier Data from Database
+    /**
+     * Load Cashier Data from Database
+     */
     loadCashierData: function() {
         const self = this;
 
@@ -772,7 +1006,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Filter and sort cashiers
+    /**
+     * Filter and sort cashiers
+     */
     filterAndSortCashiers: function() {
         const searchTerm = $('#staffSearch').val().toLowerCase().trim();
         
@@ -807,7 +1043,9 @@ RetailX.CashierManager = {
         this.renderCurrentPage();
     },
 
-    // Render current page
+    /**
+     * Render current page
+     */
     renderCurrentPage: function() {
         const start = (this.currentPage - 1) * this.itemsPerPage;
         const end = Math.min(start + this.itemsPerPage, this.filteredList.length);
@@ -817,7 +1055,10 @@ RetailX.CashierManager = {
         this.updatePagination();
     },
 
-    // Render Cashier Table
+    /**
+     * Render Cashier Table
+     * @param {Array} data - Cashier data to render
+     */
     renderCashierTable: function(data) {
         const tbody = $('#staffTableBody');
         tbody.empty();
@@ -860,7 +1101,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Update pagination
+    /**
+     * Update pagination
+     */
     updatePagination: function() {
         const totalItems = this.filteredList.length;
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
@@ -894,7 +1137,10 @@ RetailX.CashierManager = {
         $('#nextPage').prop('disabled', this.currentPage === totalPages || totalItems === 0);
     },
 
-    // Update Cashier Summary Cards
+    /**
+     * Update Cashier Summary Cards
+     * @param {Array} data - Cashier data
+     */
     updateCashierSummary: function(data) {
         const total = data.length;
         const withEmail = data.filter(c => c.email && c.email.includes('@')).length;
@@ -920,7 +1166,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Open Add Cashier Modal
+    /**
+     * Open Add Cashier Modal
+     */
     openAddCashierModal: function() {
         this.resetCashierForm();
         this.currentStep = 1;
@@ -933,7 +1181,10 @@ RetailX.CashierManager = {
         $('#staffModal').fadeIn(300).css('display', 'flex');
     },
 
-    // Open Edit Cashier Modal
+    /**
+     * Open Edit Cashier Modal
+     * @param {number} cashierId - Cashier ID
+     */
     openEditCashierModal: function(cashierId) {
         const cashier = this.cashierList.find(c => c.id === cashierId);
         if (!cashier) {
@@ -961,7 +1212,10 @@ RetailX.CashierManager = {
         $('#staffModal').fadeIn(300).css('display', 'flex');
     },
 
-    // View Cashier Details
+    /**
+     * View Cashier Details
+     * @param {number} cashierId - Cashier ID
+     */
     viewCashier: function(cashierId) {
         const cashier = this.cashierList.find(c => c.id === cashierId);
         if (!cashier) {
@@ -986,7 +1240,9 @@ RetailX.CashierManager = {
         $('#viewStaffModal').fadeIn(300).css('display', 'flex');
     },
 
-    // Handle Cashier Form Submit
+    /**
+     * Handle Cashier Form Submit
+     */
     handleCashierFormSubmit: function() {
         if (!this.validateStep(3)) {
             this.goToStep(2);
@@ -1085,14 +1341,20 @@ RetailX.CashierManager = {
         }
     },
 
-    // Open Delete Confirmation Modal
+    /**
+     * Open Delete Confirmation Modal
+     * @param {number} cashierId - Cashier ID
+     * @param {string} cashierName - Cashier Name
+     */
     openDeleteModal: function(cashierId, cashierName) {
         this.deleteCashierId = cashierId;
         $('#deleteStaffName').text(cashierName);
         $('#deleteConfirmModal').fadeIn(300).css('display', 'flex');
     },
 
-    // Delete Cashier
+    /**
+     * Delete Cashier
+     */
     deleteCashier: function() {
         if (!this.deleteCashierId) return;
 
@@ -1138,7 +1400,9 @@ RetailX.CashierManager = {
         });
     },
 
-    // Reset Cashier Form
+    /**
+     * Reset Cashier Form
+     */
     resetCashierForm: function() {
         $('#staffForm')[0].reset();
         $('.error-message').removeClass('show').empty();
@@ -1149,7 +1413,12 @@ RetailX.CashierManager = {
         this.goToStep(1);
     },
 
-    // Add activity to timeline
+    /**
+     * Add activity to timeline
+     * @param {string} user - User name
+     * @param {string} action - Action description
+     * @param {string} type - Activity type
+     */
     addActivity: function(user, action, type = 'info') {
         const timeline = $('#staffActivities');
         const now = new Date();
@@ -1195,7 +1464,9 @@ RetailX.CashierManager = {
         }
     },
 
-    // Export to CSV
+    /**
+     * Export to CSV
+     */
     exportToCSV: function() {
         const headers = ['ID', 'Full Name', 'Username', 'Email', 'Status'];
         const data = this.cashierList.map(c => [
@@ -1223,7 +1494,9 @@ RetailX.CashierManager = {
         RetailX.NotificationManager.addNotification('Cashier data exported to CSV', 'success');
     },
 
-    // Show empty state
+    /**
+     * Show empty state
+     */
     showEmptyState: function() {
         $('#staffTableEmpty').fadeIn(200);
     }
@@ -1234,6 +1507,9 @@ RetailX.CashierManager = {
 // ============================================
 
 RetailX.Navigation = {
+    /**
+     * Initialize navigation
+     */
     init: function() {
         const self = this;
         
@@ -1253,6 +1529,10 @@ RetailX.Navigation = {
         });
     },
 
+    /**
+     * Switch to a specific page
+     * @param {string} page - Page identifier
+     */
     switchPage: function(page) {
         $('.page').hide().removeClass('active');
         $(`#${page}-page`).fadeIn(400).addClass('active');
@@ -1283,15 +1563,21 @@ RetailX.Navigation = {
 // ============================================
 
 RetailX.Dashboard = {
+    /**
+     * Initialize dashboard
+     */
     init: function() {
         console.log('📊 Initializing Dashboard...');
         this.loadMockData();
         this.startClock();
         this.initCharts();
-        this.initPrediction();  // NEW: initialize prediction module
+        this.initPrediction();
         console.log('📈 Prediction module initialized');
     },
 
+    /**
+     * Load mock data (for demo purposes)
+     */
     loadMockData: function() {
         $('#totalRevenue').text('$156,780');
         $('#inventoryValue').text('$82,340');
@@ -1305,6 +1591,9 @@ RetailX.Dashboard = {
         $('#avgOrderValue').text('$122.50');
     },
 
+    /**
+     * Start real-time clock
+     */
     startClock: function() {
         const update = () => {
             const now = new Date();
@@ -1324,6 +1613,9 @@ RetailX.Dashboard = {
         setInterval(update, 1000);
     },
 
+    /**
+     * Initialize charts
+     */
     initCharts: function() {
         // Revenue Chart
         const ctx = document.getElementById('revenueChart')?.getContext('2d');
@@ -1411,7 +1703,9 @@ RetailX.Dashboard = {
         }
     },
 
-    // ================== NEW PREDICTION MODULE =================
+    /**
+     * Initialize prediction module
+     */
     initPrediction: function() {
         console.log('🔮 Initializing Prediction Module...');
         const festivalSelect = $('#predictFestival');
@@ -1496,11 +1790,15 @@ RetailX.Dashboard = {
         });
     },
 
+    /**
+     * Update chart with prediction point
+     * @param {Object} prediction - Prediction data
+     */
     updateChartWithPrediction: function(prediction) {
         console.log('Updating chart with prediction:', prediction);
         if (window.revenueChart) {
             const chart = window.revenueChart;
-            const newLabel = prediction.date; // e.g., "2026-02-20"
+            const newLabel = prediction.date;
             
             // Check if label already exists, if not add it
             if (!chart.data.labels.includes(newLabel)) {
@@ -1520,7 +1818,7 @@ RetailX.Dashboard = {
                     pointRadius: 8,
                     pointHoverRadius: 10,
                     showLine: false,
-                    type: 'scatter' // treat as scatter points
+                    type: 'scatter'
                 };
                 // Initialize with nulls for all existing labels
                 for (let i = 0; i < chart.data.labels.length; i++) {
@@ -1541,7 +1839,6 @@ RetailX.Dashboard = {
             chart.update();
         }
     }
-    // ================== END NEW PREDICTION MODULE =================
 };
 
 // ============================================
@@ -1562,6 +1859,7 @@ $(document).ready(function() {
     RetailX.Dashboard.init();
     RetailX.CashierManager.init();
     RetailX.NotificationManager.init();
+    RetailX.Chatbot.init();
 
     console.log('✅ All modules initialized successfully');
 });
@@ -1582,6 +1880,10 @@ window.deleteCashier = function(cashierId, cashierName) {
     RetailX.CashierManager.openDeleteModal(cashierId, cashierName);
 };
 
+/**
+ * Toggle password visibility
+ * @param {string} inputId - ID of the password input
+ */
 window.togglePassword = function(inputId) {
     const input = document.getElementById(inputId);
     if (input) {

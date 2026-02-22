@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +8,7 @@
     <title>RetailX - Manager Command Center</title>
     
     <!-- CSS Files -->
-    <link rel="stylesheet" href="/static/css/manager_home.css">
+    <link rel="stylesheet" href="{% static 'css/manager_home.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -816,6 +818,26 @@
         </div>
     </div>
 
+    <!-- ========== CHATBOT (Same as Admin) ========== -->
+    <div id="chatbot-button" onclick="toggleChatbot()">🤖</div>
+
+    <div id="chatbot-box">
+        <div id="chatbot-header">
+            <span>🤖 RetailX Assistant</span>
+            <span style="cursor: pointer;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
+        </div>
+        <div id="chatbot-messages">
+            <!-- Messages will appear here -->
+            <div class="chat-bot">
+                <span>👋 Hello! I'm your RetailX Assistant. How can I help you today?</span>
+            </div>
+        </div>
+        <div id="chatbot-input-area">
+            <input type="text" id="chatbot-input" placeholder="Type message..." autocomplete="off">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div class="toast-container" id="toast"></div>
 
@@ -826,7 +848,7 @@
          style="display: none;"></div>
 
     <!-- JavaScript File -->
-    <script src="/static/js/manager_home.js"></script>
+    <script src="{% static 'js/manager_home.js' %}"></script>
     <script>
         window.history.forward();
         function noBack() {
