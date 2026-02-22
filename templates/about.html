@@ -1,310 +1,915 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>About RetailX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetailX · about</title>
 
-    <!-- Main CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- GSAP & ScrollTrigger (kept for other animations) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- Tilt.js for 3D hover -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            cursor: none;
         }
 
         body {
-            scroll-behavior: smooth;
-            background: #f5f7fb;
-            font-family: 'Segoe UI', sans-serif;
-            color: #333;
+            font-family: "Inter", sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.2;
+            overflow-x: hidden;
         }
 
-        :root {
-            --primary: #4f46e5;
-            --gray: #6b7280;
-            --light: #ffffff;
-            --border-radius: 10px;
-            --box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6366f1;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+        }
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.15s;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(2px);
         }
 
-        /* ======= HERO HEADER ======= */
-        .hero-header {
-            background: #ffffff;
-            padding: 40px 0;
-            border-bottom: 1px solid #e5e7eb;
-            animation: fadeDown 0.8s ease;
+        /* Animated background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: moveGradient 20s ease infinite;
         }
 
-        .hero-container {
-    width: 90%;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* ✅ KEY FIX */
-}
+        @keyframes moveGradient {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-2%, -1%) scale(1.02); }
+            66% { transform: translate(2%, 1%) scale(0.98); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
 
-        .hero-left {
+        /* Header */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 2rem 3rem;
+            transition: background 0.3s, backdrop-filter 0.3s, padding 0.3s;
+            background: transparent;
+            backdrop-filter: none;
+        }
+
+        .site-header.scrolled {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 1.2rem 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header-container {
+            max-width: 1440px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
-            flex-direction: column; /* ✅ THIS IS THE KEY */
+            justify-content: space-between;
         }
 
-       
-
-        .hero-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1f2937;
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(145deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Blue X */
-        .hero-title span {
-            color: var(--primary);
+        .nav-links {
+            display: flex;
+            gap: 3rem;
         }
 
-        .hero-subtitle {
-            font-size: 14px;
-            color: #6b7280;
-            margin-top: 1px;
-        }
-        .hero-right a {
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary);
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: 0.3s ease;
-}
-
-.hero-right a:hover {
-    background: var(--primary);
-    color: #fff;
-}
-
-
-        @keyframes fadeDown {
-            from {
-                opacity: 0;
-                transform: translateY(-15px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .nav-links a {
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.2s;
+            letter-spacing: 0.02em;
+            mix-blend-mode: difference;
         }
 
-        /* ======= PAGE SECTIONS ======= */
-        .section {
-            padding: 60px 20px;
-            margin: auto;
-            max-width: 1200px;
+        .nav-links a:hover {
+            color: white;
         }
 
-        .section h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 20px;
-            font-size: 2rem;
+        /* Sections */
+        section {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 8rem 3rem;
+            position: relative;
+            z-index: 2;
         }
 
-        .section p {
-            color: var(--gray);
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto 20px auto;
-            line-height: 1.6;
+        /* Hero - now all lines visible immediately, centered */
+        .hero {
+            min-height: calc(100vh - 80px);
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 3rem;
         }
 
-        /* ======= LIST ======= */
-        .about-list {
+        .hero-line {
+            font-size: clamp(3rem, 12vw, 8rem);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+            opacity: 1; /* all visible */
+        }
+
+        .hero-line span {
+            background: linear-gradient(145deg, #ffffff, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: 1.2rem;
+            color: #aaa;
             max-width: 600px;
-            margin: 20px auto 0;
+            margin-top: 3rem;
+            line-height: 1.5;
+            opacity: 1; /* visible */
+        }
+
+        /* Mission */
+        .mission-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .mission-block h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+        }
+
+        .mission-block p {
+            font-size: 1.8rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: #ddd;
+        }
+
+        .mission-block p strong {
+            color: white;
+            font-weight: 700;
+        }
+
+        .mission-list {
             list-style: none;
         }
 
-        .about-list li {
+        .mission-list li {
+            font-size: 1.4rem;
+            font-weight: 500;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #bbb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transform: translateX(-20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .mission-list li.revealed {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .mission-list li::before {
+            content: "◆";
+            color: #6366f1;
             font-size: 1rem;
-            color: var(--gray);
-            padding: 10px 0 10px 28px;
+            opacity: 0.6;
+        }
+
+        /* Team Showcase */
+        .team-showcase {
+            padding: 0;
+            max-width: none;
+        }
+
+        .member-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 3rem;
+            background: #0a0a0a;
             position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
         }
 
-        .about-list li::before {
-            content: "✔";
-            position: absolute;
-            left: 0;
-            color: var(--primary);
-            font-weight: bold;
+        .member-container {
+            max-width: 1440px;
+            width: 100%;
+            display: flex;
+            gap: 6rem;
+            align-items: center;
         }
 
-        /* ======= CARDS ======= */
-        .card-grid {
-            display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            margin-top: 30px;
+        .member-image {
+            flex: 1.2;
+            position: relative;
+            perspective: 1000px;
         }
 
-        .card {
-            background-color: var(--light);
-            padding: 25px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            transition: 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-6px);
-        }
-
-        .card h3 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        /* ======= TEAM ======= */
-        .team-grid {
-            display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            margin-top: 30px;
-        }
-
-        .team-card {
-            background-color: var(--light);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            text-align: center;
-            box-shadow: var(--box-shadow);
-            transition: 0.3s;
-        }
-
-        .team-card:hover {
-            transform: translateY(-6px);
-        }
-
-        .team-card img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+        .member-image img {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
             object-fit: cover;
-            margin-bottom: 10px;
+            border-radius: 2rem;
+            box-shadow: 0 30px 40px -20px rgba(0,0,0,0.8);
+            transition: transform 0.6s ease, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.05);
+            transform-style: preserve-3d;
         }
 
-        .team-card h3 {
-            color: var(--primary);
-            margin-bottom: 5px;
+        .member-section:hover .member-image img:not([data-tilt]) {
+            transform: scale(1.02) rotateY(2deg);
+            box-shadow: 0 40px 60px -20px #6366f1;
         }
 
-        .team-card span {
-            color: var(--gray);
+        .member-info {
+            flex: 1;
+            padding-right: 2rem;
+        }
+
+        .member-number {
+            font-size: 1rem;
+            color: #6366f1;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            border: 1px solid #6366f1;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            background: rgba(99,102,241,0.05);
+            letter-spacing: 0.05em;
+        }
+
+        .member-name {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(145deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .member-role {
+            font-size: 1.2rem;
+            color: #6366f1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+        }
+
+        .member-desc {
+            font-size: 1.1rem;
+            color: #aaa;
+            line-height: 1.7;
+            max-width: 500px;
+        }
+
+        .member-progress {
+            position: fixed;
+            bottom: 2rem;
+            left: 3rem;
+            color: #888;
             font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 90;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            mix-blend-mode: difference;
+        }
+
+        /* Awards */
+        .awards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .award-item {
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding-left: 2rem;
+        }
+
+        .award-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .award-label {
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Expertise */
+        .expertise-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .expertise-card {
+            background: rgba(255,255,255,0.02);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+            transform-style: preserve-3d;
+        }
+
+        .expertise-card:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+            transform: translateY(-5px) rotateX(2deg);
+            box-shadow: 0 20px 40px -15px #6366f1;
+        }
+
+        .expertise-icon {
+            font-size: 2.5rem;
+            color: #6366f1;
+            margin-bottom: 1.5rem;
+        }
+
+        .expertise-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .expertise-card p {
+            color: #aaa;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            padding: 8rem 3rem;
+        }
+
+        .cta-title {
+            font-size: clamp(2rem, 6vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+
+        .cta-title span {
+            background: linear-gradient(145deg, #fff, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: white;
+            color: #0a0a0a;
+            text-decoration: none;
+            padding: 1.5rem 4rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            margin-top: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-btn:hover::before {
+            left: 100%;
+        }
+
+        .cta-btn:hover {
+            background: #6366f1;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .counter-row {
+            display: flex;
+            gap: 3rem;
+            justify-content: flex-end;
+            margin-top: 3rem;
+        }
+
+        .counter-item {
+            text-align: right;
+        }
+
+        .counter-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .counter-label {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        /* Scroll hint */
+        .scroll-hint {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            writing-mode: vertical-rl;
+            z-index: 90;
+            mix-blend-mode: difference;
+        }
+
+        .scroll-hint i {
+            margin-bottom: 1rem;
+            animation: bounce 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        @media (max-width: 900px) {
+            .site-header {
+                padding: 1.5rem 2rem;
+            }
+            .hero {
+                min-height: calc(100vh - 70px);
+                margin-top: 70px;
+            }
+            .mission-grid, .expertise-grid {
+                grid-template-columns: 1fr;
+            }
+            .awards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            section {
+                padding: 4rem 1.5rem;
+            }
+            .hero-line {
+                font-size: 3rem;
+            }
+            .nav-links {
+                gap: 1.5rem;
+            }
+            .member-container {
+                flex-direction: column;
+                gap: 3rem;
+            }
+            .member-image {
+                width: 100%;
+            }
+            .member-info {
+                padding-right: 0;
+                text-align: center;
+            }
+            .member-desc {
+                max-width: 100%;
+            }
+            .member-progress {
+                left: 1rem;
+                bottom: 1rem;
+            }
+            .cursor, .cursor-follower {
+                display: none;
+            }
         }
     </style>
 </head>
-
 <body>
 
-<header class="hero-header">
-    <div class="hero-container">
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
 
-        <!-- LEFT -->
-        <div class="hero-left">
-            <div class="hero-title">Retail<span>X</span></div>
-            <div class="hero-subtitle">Smart Inventory Management System</div>
-        </div>
+    <!-- Animated Background -->
+    <div class="gradient-bg"></div>
 
-        <!-- RIGHT -->
-        <div class="hero-right">
-            <a href="/">Home</a>
-
-        </div>
-
+    <!-- Scroll Hint -->
+    <div class="scroll-hint">
+        <i class="fas fa-arrow-down"></i> SCROLL
     </div>
-</header>
 
-<!-- ======= ABOUT CONTENT ======= -->
+    <!-- Progress Indicator -->
+    <div class="member-progress" id="memberProgress">001 / 005</div>
 
-<div class="section">
-    <h2>Problem Statement</h2>
-    <p>Traditional inventory systems depend on manual record keeping, leading to stock mismatch, billing errors, and inefficient management.</p>
-    <p>RetailX solves this with centralized, automated, and intelligent inventory management.</p>
-</div>
+    <!-- Header -->
+    <header class="site-header" id="mainHeader">
+        <div class="header-container">
+            <div class="logo">RETAIL<span style="color:white;">X</span></div>
+            <div class="nav-links">
+                <a href="#">Work</a>
+                <a href="#" class="active">About</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </header>
 
-<div class="section">
-    <h2>Project Objectives</h2>
-    <ul class="about-list">
-        <li>Automate inventory and billing</li>
-        <li>Reduce human errors</li>
-        <li>Real-time stock updates</li>
-        <li>Improve retail efficiency</li>
-        <li>Data-driven decisions</li>
-    </ul>
-</div>
+    <!-- Hero Section – all lines visible now -->
+    <section class="hero">
+        <div class="hero-line">WE ARE</div>
+        <div class="hero-line"><span>RETAIL</span>X</div>
+        <div class="hero-line">A SMART INVENTORY</div>
+        <div class="hero-line">PLATFORM</div>
+        <div class="hero-sub">
+            We build intelligent tools that eliminate stock errors, speed up billing, and give retailers real‑time control.
+        </div>
+    </section>
 
-<div class="section">
-    <h2>Key Features</h2>
-    <div class="card-grid">
-        <div class="card">
-            <h3>📦 Product Management</h3>
-            <p>Easy product handling.</p>
+    <!-- Mission -->
+    <section>
+        <div class="mission-grid">
+            <div class="mission-block">
+                <h2>NICE TO MEET YOU</h2>
+                <p>
+                    A team of <strong>five dedicated developers</strong> with a wide range of talents – from frontend finesse to AI‑driven predictions – who bring a fresh perspective to retail management.
+                </p>
+            </div>
+            <div class="mission-block">
+                <h2>WHAT WE SOLVE</h2>
+                <ul class="mission-list">
+                    <li>Manual stock errors</li>
+                    <li>Slow, inaccurate billing</li>
+                    <li>No real‑time visibility</li>
+                    <li>Missed sales opportunities</li>
+                </ul>
+            </div>
         </div>
-        <div class="card">
-            <h3>📊 Stock Tracking</h3>
-            <p>Live inventory updates.</p>
-        </div>
-        <div class="card">
-            <h3>🧾 Billing</h3>
-            <p>Fast & accurate billing.</p>
-        </div>
-        <div class="card">
-            <h3>🤖 AI Insights</h3>
-            <p>Smart stock predictions.</p>
-        </div>
-    </div>
-</div>
+    </section>
 
-<div class="section">
-    <h2>Our Team</h2>
-    <div class="team-grid">
-        <div class="team-card">
-            <img src="{% static 'images/lina.jpeg' %}">
-            <h3>Lina Dhande</h3>
-            <span>Frontend & AI Developer. 
-               I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Data Science and AI/ML, which strengthened my understanding of data-driven and intelligent systems.
+    <!-- Team Showcase -->
+    <section class="team-showcase">
+        <div class="member-section" data-index="1">
+            <div class="member-container">
+                <div class="member-image">
+                    <img src="{% static 'images/vaibhav.jpeg' %}" alt="Vaibhav Khandare" data-tilt>
+                </div>
+                <div class="member-info">
+                    <span class="member-number">001</span>
+                    <h2 class="member-name">Vaibhav Khandare</h2>
+                    <div class="member-role">Lead · Full‑Stack</div>
+                    <p class="member-desc">Frontend and Backend Developer.
+Hi, I’m Vaibhav Khandare, a Computer Engineering student and the creator of RetailX. I’m passionate about building practical, data-driven solutions for the retail domain. As the team lead, I focus on developing scalable backend systems, user-friendly interfaces, and smart features using technologies like Python, Django, Android, and data analytics, with the goal of creating simple, reliable, and future-ready products.</p>
+                </div>
+            </div>
         </div>
-        <div class="team-card">
-            <img src="{% static 'images/vaibhav.jpeg' %}">
-            <h3>Vaibhav Khandare</h3>
-            <span>Frontend and Backend Developer.
-Hi, I’m Vaibhav Khandare, a Computer Engineering student and the creator of RetailX. I’m passionate about building practical, data-driven solutions for the retail domain. As the team lead, I focus on developing scalable backend systems, user-friendly interfaces, and smart features using technologies like Python, Django, Android, and data analytics, with the goal of creating simple, reliable, and future-ready products.
-            </span>
+        <div class="member-section" data-index="2">
+            <div class="member-container">
+                <div class="member-image">
+                    <img src="{% static 'images/aayush.jpeg' %}" alt="Ayush Thakre" data-tilt>
+                </div>
+                <div class="member-info">
+                    <span class="member-number">002</span>
+                    <h2 class="member-name">Ayush Thakre</h2>
+                    <div class="member-role">Backend & Database</div>
+                    <p class="member-desc">Database Manager and Backend Developer.
+                Hello! I’m Ayush Thakare, a Computer Engineering diploma student with a strong interest in software development and real-world applications. I have hands-on experience with Python, Java, C++, HTML, CSS, SQL, and specialize in Python Django backend development. As the backend developer and database designer of RetailX, I focus on building scalable server logic, efficient data handling, and core system workflows. I enjoy exploring AI, automation, and new technologies, with the goal of developing simple, reliable, and industry-ready solutions.</p>
+                </div>
+            </div>
         </div>
-        <div class="team-card">
-            <img src="{% static 'images/aayush.jpeg' %}">
-            <h3>Ayush Thakre</h3>
-            <span>Database Manager and Backend Developer.
-                Hello! I’m Ayush Thakare, a Computer Engineering diploma student with a strong interest in software development and real-world applications. I have hands-on experience with Python, Java, C++, HTML, CSS, SQL, and specialize in Python Django backend development. As the backend developer and database designer of RetailX, I focus on building scalable server logic, efficient data handling, and core system workflows. I enjoy exploring AI, automation, and new technologies, with the goal of developing simple, reliable, and industry-ready solutions.
-            </span>
+        <div class="member-section" data-index="3">
+            <div class="member-container">
+                <div class="member-image">
+                    <img src="{% static 'images/om.jpeg' %}" alt="Om Chandane" data-tilt>
+                </div>
+                <div class="member-info">
+                    <span class="member-number">003</span>
+                    <h2 class="member-name">Om Chandane</h2>
+                    <div class="member-role">Database & Planning</div>
+                    <p class="member-desc">My name is Om Chandane, and I am a Computer Engineering student and a core group member of the RetailX project. As a decision-maker, I contribute to planning and technical discussions to meet real-world retail requirements. My primary role focuses on database design and management, ensuring efficient and secure data handling.
+I also support backend development by assisting with business logic and system integration, aiming to build scalable and reliable solutions.</p>
+                </div>
+            </div>
         </div>
-        <div class="team-card">
-            <img src="{% static 'images/om.jpeg' %}">
-            <h3>Om chandane</h3>
-            <span>My name is Om Chandane, and I am a Computer Engineering student and a core group member of the RetailX project. As a decision-maker, I contribute to planning and technical discussions to meet real-world retail requirements. My primary role focuses on database design and management, ensuring efficient and secure data handling.
-I also support backend development by assisting with business logic and system integration, aiming to build scalable and reliable solutions.</span>
+        <div class="member-section" data-index="4">
+            <div class="member-container">
+                <div class="member-image">
+                    <img src="{% static 'images/prachi.jpeg' %}" alt="Prachi Funde" data-tilt>
+                </div>
+                <div class="member-info">
+                    <span class="member-number">004</span>
+                    <h2 class="member-name">Prachi Funde</h2>
+                    <div class="member-role">Frontend Developer</div>
+                    <p class="member-desc">I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Shegaon, where I worked with HTML, CSS, and JavaScript and developed a complete Hostel Management System.</p>
+                </div>
+            </div>
         </div>
-        <div class="team-card">
-            <img src="{% static 'images/prachi.jpeg' %}">
-            <h3>Prachi Funde</h3>
-            <span>Frontend & AI Developer. I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Shegaon, where I worked with HTML, CSS, and JavaScript and developed a complete Hostel Management System.</span>
+        <div class="member-section" data-index="5">
+            <div class="member-container">
+                <div class="member-image">
+                    <img src="{% static 'images/lina.jpeg' %}" alt="Lina Dhande" data-tilt>
+                </div>
+                <div class="member-info">
+                    <span class="member-number">005</span>
+                    <h2 class="member-name">Lina Dhande</h2>
+                    <div class="member-role">Frontend & AI</div>
+                    <p class="member-desc">Frontend & AI Developer. 
+               I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Data Science and AI/ML, which strengthened my understanding of data-driven and intelligent systems.</p>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </section>
 
+    <!-- Awards -->
+    <section>
+        <h2 class="section-header">[[ IMPACT ]]</h2>
+        <div class="awards-grid">
+            <div class="award-item">
+                <div class="award-number" id="award1">0</div>
+                <div class="award-label">Team members</div>
+            </div>
+            <div class="award-item">
+                <div class="award-number" id="award2">0</div>
+                <div class="award-label">Core features</div>
+            </div>
+            <div class="award-item">
+                <div class="award-number" id="award3">0</div>
+                <div class="award-label">Stores (target)</div>
+            </div>
+            <div class="award-item">
+                <div class="award-number" id="award4">0</div>
+                <div class="award-label">Real‑time sync</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Expertise -->
+    <section>
+        <h2 class="section-header">[[ EXPERTISE ]]</h2>
+        <div class="expertise-grid">
+            <div class="expertise-card">
+                <div class="expertise-icon"><i class="fas fa-cubes"></i></div>
+                <h3>Product<br>Management</h3>
+                <p>Easily add, edit, and organise products. Bulk import, categories, variants.</p>
+            </div>
+            <div class="expertise-card">
+                <div class="expertise-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>Live Stock<br>Tracking</h3>
+                <p>Inventory updates instantly with every sale. Low‑stock alerts keep you prepared.</p>
+            </div>
+            <div class="expertise-card">
+                <div class="expertise-icon"><i class="fas fa-bolt"></i></div>
+                <h3>Intelligent<br>Billing</h3>
+                <p>Fast POS with barcode scanning, discount handling, multiple payment modes.</p>
+            </div>
+            <div class="expertise-card">
+                <div class="expertise-icon"><i class="fas fa-brain"></i></div>
+                <h3>AI Demand<br>Forecast</h3>
+                <p>Predict sales trends and optimise stock using built‑in ML models.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2 class="cta-title">READY TO TRANSFORM<br>YOUR <span>RETAIL</span>?</h2>
+        <a href="#" class="cta-btn">LET'S WORK TOGETHER →</a>
+        <div class="counter-row">
+            <div class="counter-item">
+                <div class="counter-number" id="counterTeam">5</div>
+                <div class="counter-label">team</div>
+            </div>
+            <div class="counter-item">
+                <div class="counter-number" id="counterFeatures">4</div>
+                <div class="counter-label">features</div>
+            </div>
+            <div class="counter-item">
+                <div class="counter-number" id="counterInfinity">∞</div>
+                <div class="counter-label">possibilities</div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (function() {
+            // Custom cursor
+            const cursor = document.getElementById('cursor');
+            const follower = document.getElementById('cursorFollower');
+
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, { duration: 0.1, x: e.clientX, y: e.clientY });
+                gsap.to(follower, { duration: 0.3, x: e.clientX, y: e.clientY });
+            });
+
+            const hoverElements = document.querySelectorAll('a, button, .expertise-card, .member-image img');
+            hoverElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    gsap.to(cursor, { duration: 0.2, scale: 1.5, backgroundColor: 'rgba(99,102,241,0.2)' });
+                    gsap.to(follower, { duration: 0.2, scale: 1.2, backgroundColor: 'rgba(99,102,241,0.1)' });
+                });
+                el.addEventListener('mouseleave', () => {
+                    gsap.to(cursor, { duration: 0.2, scale: 1, backgroundColor: 'transparent' });
+                    gsap.to(follower, { duration: 0.2, scale: 1, backgroundColor: 'rgba(99,102,241,0.2)' });
+                });
+            });
+
+            // Header scroll
+            const header = document.getElementById('mainHeader');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // GSAP ScrollTrigger
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Mission list items stagger on scroll
+            gsap.from('.mission-list li', {
+                scrollTrigger: {
+                    trigger: '.mission-grid',
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                },
+                x: -30,
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.2
+            });
+
+            // Team members fade in
+            gsap.utils.toArray('.member-section').forEach((section, i) => {
+                gsap.from(section.querySelector('.member-image'), {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 70%',
+                        toggleActions: 'play none none reverse'
+                    },
+                    x: -100,
+                    opacity: 0,
+                    duration: 1
+                });
+                gsap.from(section.querySelector('.member-info'), {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 70%',
+                        toggleActions: 'play none none reverse'
+                    },
+                    x: 100,
+                    opacity: 0,
+                    duration: 1,
+                    delay: 0.2
+                });
+            });
+
+            // Animated counters
+            function animateCounter(element, target, suffix = '') {
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        element.textContent = target + suffix;
+                        clearInterval(timer);
+                    } else {
+                        element.textContent = Math.floor(current) + suffix;
+                    }
+                }, 20);
+            }
+
+            ScrollTrigger.create({
+                trigger: '.awards-grid',
+                start: 'top 80%',
+                onEnter: () => {
+                    animateCounter(document.getElementById('award1'), 5);
+                    animateCounter(document.getElementById('award2'), 4);
+                    animateCounter(document.getElementById('award3'), 100, '+');
+                    animateCounter(document.getElementById('award4'), 24, '/7');
+                },
+                once: true
+            });
+
+            // Tilt effect
+            VanillaTilt.init(document.querySelectorAll('[data-tilt]'), {
+                max: 10,
+                speed: 400,
+                glare: true,
+                'max-glare': 0.3,
+                gyroscope: true
+            });
+
+            // Member progress
+            const memberSections = document.querySelectorAll('.member-section');
+            const progressEl = document.getElementById('memberProgress');
+            const memberObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const index = entry.target.getAttribute('data-index');
+                        const total = memberSections.length;
+                        progressEl.textContent = `${String(index).padStart(3, '0')} / ${String(total).padStart(3, '0')}`;
+                    }
+                });
+            }, { threshold: 0.6 });
+
+            memberSections.forEach(section => memberObserver.observe(section));
+
+            // Parallax background
+            gsap.to('.gradient-bg', {
+                scrollTrigger: {
+                    trigger: 'body',
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 1
+                },
+                y: (i, target) => -ScrollTrigger.maxScroll * 0.2,
+                ease: 'none'
+            });
+        })();
+    </script>
 </body>
 </html>

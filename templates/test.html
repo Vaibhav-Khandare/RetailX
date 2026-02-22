@@ -1,24 +1,310 @@
+
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Simple Table</title>
+    <meta charset="UTF-8">
+    <title>About RetailX</title>
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            scroll-behavior: smooth;
+            background: #f5f7fb;
+            font-family: 'Segoe UI', sans-serif;
+            color: #333;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --gray: #6b7280;
+            --light: #ffffff;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+
+        /* ======= HERO HEADER ======= */
+        .hero-header {
+            background: #ffffff;
+            padding: 40px 0;
+            border-bottom: 1px solid #e5e7eb;
+            animation: fadeDown 0.8s ease;
+        }
+
+        .hero-container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* ✅ KEY FIX */
+}
+
+        .hero-left {
+            display: flex;
+            align-items: center;
+            flex-direction: column; /* ✅ THIS IS THE KEY */
+        }
+
+       
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* Blue X */
+        .hero-title span {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 1px;
+        }
+        .hero-right a {
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: 0.3s ease;
+}
+
+.hero-right a:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ======= PAGE SECTIONS ======= */
+        .section {
+            padding: 60px 20px;
+            margin: auto;
+            max-width: 1200px;
+        }
+
+        .section h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .section p {
+            color: var(--gray);
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            line-height: 1.6;
+        }
+
+        /* ======= LIST ======= */
+        .about-list {
+            max-width: 600px;
+            margin: 20px auto 0;
+            list-style: none;
+        }
+
+        .about-list li {
+            font-size: 1rem;
+            color: var(--gray);
+            padding: 10px 0 10px 28px;
+            position: relative;
+        }
+
+        .about-list li::before {
+            content: "✔";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* ======= CARDS ======= */
+        .card-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: var(--light);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        /* ======= TEAM ======= */
+        .team-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            margin-top: 30px;
+        }
+
+        .team-card {
+            background-color: var(--light);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            transition: 0.3s;
+        }
+
+        .team-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .team-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .team-card h3 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .team-card span {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
+
 <body>
-    <form action="" method="post">
-        {% csrf_token %}
-        <table border="1" cellpadding="10" cellspacing="0">
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-            </tr>
-            {% for x in dic %}
-            <tr>
-                <td>{{x.sku}}</td>
-                <td>{{x.product_name}}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </form>
+
+<header class="hero-header">
+    <div class="hero-container">
+
+        <!-- LEFT -->
+        <div class="hero-left">
+            <div class="hero-title">Retail<span>X</span></div>
+            <div class="hero-subtitle">Smart Inventory Management System</div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="hero-right">
+            <a href="/">Home</a>
+
+        </div>
+
+    </div>
+</header>
+
+<!-- ======= ABOUT CONTENT ======= -->
+
+<div class="section">
+    <h2>Problem Statement</h2>
+    <p>Traditional inventory systems depend on manual record keeping, leading to stock mismatch, billing errors, and inefficient management.</p>
+    <p>RetailX solves this with centralized, automated, and intelligent inventory management.</p>
+</div>
+
+<div class="section">
+    <h2>Project Objectives</h2>
+    <ul class="about-list">
+        <li>Automate inventory and billing</li>
+        <li>Reduce human errors</li>
+        <li>Real-time stock updates</li>
+        <li>Improve retail efficiency</li>
+        <li>Data-driven decisions</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>Key Features</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h3>📦 Product Management</h3>
+            <p>Easy product handling.</p>
+        </div>
+        <div class="card">
+            <h3>📊 Stock Tracking</h3>
+            <p>Live inventory updates.</p>
+        </div>
+        <div class="card">
+            <h3>🧾 Billing</h3>
+            <p>Fast & accurate billing.</p>
+        </div>
+        <div class="card">
+            <h3>🤖 AI Insights</h3>
+            <p>Smart stock predictions.</p>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Our Team</h2>
+    <div class="team-grid">
+        <div class="team-card">
+            <img src="{% static 'images/lina.jpeg' %}">
+            <h3>Lina Dhande</h3>
+            <span>Frontend & AI Developer. 
+               I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Data Science and AI/ML, which strengthened my understanding of data-driven and intelligent systems.
+        </div>
+        <div class="team-card">
+            <img src="{% static 'images/vaibhav.jpeg' %}">
+            <h3>Vaibhav Khandare</h3>
+            <span>Frontend and Backend Developer.
+Hi, I’m Vaibhav Khandare, a Computer Engineering student and the creator of RetailX. I’m passionate about building practical, data-driven solutions for the retail domain. As the team lead, I focus on developing scalable backend systems, user-friendly interfaces, and smart features using technologies like Python, Django, Android, and data analytics, with the goal of creating simple, reliable, and future-ready products.
+            </span>
+        </div>
+        <div class="team-card">
+            <img src="{% static 'images/aayush.jpeg' %}">
+            <h3>Ayush Thakre</h3>
+            <span>Database Manager and Backend Developer.
+                Hello! I’m Ayush Thakare, a Computer Engineering diploma student with a strong interest in software development and real-world applications. I have hands-on experience with Python, Java, C++, HTML, CSS, SQL, and specialize in Python Django backend development. As the backend developer and database designer of RetailX, I focus on building scalable server logic, efficient data handling, and core system workflows. I enjoy exploring AI, automation, and new technologies, with the goal of developing simple, reliable, and industry-ready solutions.
+            </span>
+        </div>
+        <div class="team-card">
+            <img src="{% static 'images/om.jpeg' %}">
+            <h3>Om chandane</h3>
+            <span>My name is Om Chandane, and I am a Computer Engineering student and a core group member of the RetailX project. As a decision-maker, I contribute to planning and technical discussions to meet real-world retail requirements. My primary role focuses on database design and management, ensuring efficient and secure data handling.
+I also support backend development by assisting with business logic and system integration, aiming to build scalable and reliable solutions.</span>
+        </div>
+        <div class="team-card">
+            <img src="{% static 'images/prachi.jpeg' %}">
+            <h3>Prachi Funde</h3>
+            <span>Frontend & AI Developer. I am a final-year Diploma student in Computer Engineering and the developer of RetailX, a smart inventory and billing system. Through this project, I have applied my skills in Python, Django, HTML, CSS, and data analytics to build practical features for retail management. I have also completed a three-month internship in Shegaon, where I worked with HTML, CSS, and JavaScript and developed a complete Hostel Management System.</span>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
