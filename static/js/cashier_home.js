@@ -111,6 +111,14 @@ RetailX.clearState = function() {
 // ============================================
 RetailX.Database = {
     products: [
+        // =============================================================
+        // PASTE YOUR 900+ PRODUCT RECORDS HERE
+        // Each record must have: sku, barcode, name, category, price, stock
+        // Example:
+        // { sku: 'ELEC001', barcode: '8801234567890', name: 'Samsung 65" 4K Smart TV', category: 'Electronics', price: 899.99, stock: 25 },
+        // =============================================================
+
+        
         // Electronics (50 products - abbreviated for brevity, include all from your list)
         { sku: 'ELEC001', barcode: '8801234567890', name: 'Samsung 65" 4K Smart TV', category: 'Electronics', price: 899.99, stock: 25 },
         { sku: 'ELEC002', barcode: '8801234567891', name: 'LG 55" OLED TV', category: 'Electronics', price: 1299.99, stock: 15 },
@@ -474,6 +482,7 @@ RetailX.Database = {
         { sku: 'BOOK048', barcode: '9781234567937', name: 'Network Security', category: 'Books', price: 42.99, stock: 123 },
         { sku: 'BOOK049', barcode: '9781234567938', name: 'Cloud Computing', category: 'Books', price: 37.99, stock: 145 },
         { sku: 'BOOK050', barcode: '9781234567939', name: 'DevOps Handbook', category: 'Books', price: 34.99, stock: 134 }
+    
     ],
 
     searchProducts: function(query) {
@@ -667,7 +676,7 @@ RetailX.Utils = {
 };
 
 // ============================================
-// QR SCANNER MODULE
+// QR SCANNER MODULE (UPDATED WITH DROIDCAM FIX & DEBUG LOGS)
 // ============================================
 RetailX.QRScanner = {
     init: function() {
@@ -716,7 +725,21 @@ RetailX.QRScanner = {
         });
     },
 
+    // Helper to disable/enable apply/capture buttons during enumeration
+    disableApplyButton: function(disabled) {
+        $('#applyCameraBtn').prop('disabled', disabled);
+        $('#captureQRBtn').prop('disabled', disabled);
+        if (disabled) {
+            $('#applyCameraBtn').addClass('disabled');
+            $('#captureQRBtn').addClass('disabled');
+        } else {
+            $('#applyCameraBtn').removeClass('disabled');
+            $('#captureQRBtn').removeClass('disabled');
+        }
+    },
+
     enumerateCameras: function() {
+        const self = this;
         if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
             RetailX.Utils.showToast('Camera Detection', 'Your browser does not support camera enumeration', 'warning');
             return;
@@ -735,9 +758,14 @@ RetailX.QRScanner = {
                 if (RetailX.State.availableCameras.length > 0) {
                     RetailX.Utils.showToast('Cameras Detected', `Found ${RetailX.State.availableCameras.length} camera(s)`, 'success');
                 }
+                // Enable buttons after enumeration completes
+                self.disableApplyButton(false);
+                $('#qr-status').html('<i class="fas fa-info-circle"></i> Cameras detected. Select a camera and click "Capture QR".');
             })
             .catch(err => {
                 console.error('Error enumerating cameras:', err);
+                self.disableApplyButton(false);
+                $('#qr-status').html('<i class="fas fa-exclamation-triangle"></i> Camera enumeration failed. Try default.');
             });
     },
 
@@ -751,6 +779,7 @@ RetailX.QRScanner = {
         select.append('<option value="default">📷 Default Camera</option>');
         select.append('<option value="environment">📱 Back Camera</option>');
         select.append('<option value="user">🤳 Front Camera</option>');
+        select.append('<option value="droidcam">📱 DroidCam (Mobile Camera)</option>');
         
         if (RetailX.State.availableCameras.length > 0) {
             select.append('<option disabled>──────────</option>');
@@ -783,14 +812,29 @@ RetailX.QRScanner = {
     },
 
     applyCameraSelection: function(selection) {
-        if (selection === 'default') {
+        const self = this;
+        
+        // Special handling for DroidCam: try to find a device with "droidcam" in label
+        if (selection === 'droidcam') {
+            const droidCamDevice = RetailX.State.availableCameras.find(device => 
+                device.label && device.label.toLowerCase().includes('droidcam')
+            );
+            if (droidCamDevice) {
+                RetailX.State.currentCamera = droidCamDevice.deviceId;
+                RetailX.Utils.showToast('DroidCam Found', 'Using DroidCam as camera source', 'success');
+            } else {
+                RetailX.Utils.showToast('DroidCam Not Found', 'Falling back to back camera', 'warning');
+                RetailX.State.currentCamera = 'environment';
+                $('#cameraSelect').val('environment');
+            }
+        } else if (selection === 'default') {
             RetailX.State.currentCamera = '';
         } else if (selection === 'environment' || selection === 'user') {
             RetailX.State.currentCamera = selection;
         } else {
+            // Assume it's a deviceId
             RetailX.State.currentCamera = selection;
         }
-        
         this.startCamera();
     },
 
@@ -811,11 +855,16 @@ RetailX.QRScanner = {
     openScanner: function() {
         $('#qrScannerModal').addClass('show');
         $('#qr-result').removeClass('show').empty();
-        $('#qr-status').html('<i class="fas fa-info-circle"></i> Select camera and click "Capture QR"');
+        $('#qr-status').html('<i class="fas fa-info-circle"></i> Detecting cameras...');
+        
+        // Disable buttons until enumeration completes
+        this.disableApplyButton(true);
         
         this.enumerateCameras();
         
         setTimeout(() => {
+            // Start with default camera (environment) while enumeration runs
+            RetailX.State.currentCamera = 'environment';
             this.startCamera();
         }, 500);
     },
@@ -966,6 +1015,7 @@ RetailX.QRScanner = {
     },
 
     processQRData: function(qrData) {
+        console.log('QR Data received:', qrData); // Debug log
         const product = RetailX.Database.getProductByQR(qrData);
         
         if (product) {
