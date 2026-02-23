@@ -1531,16 +1531,16 @@ def predict_single_product(festival_name, product_name, target_date):
     return predicted_sales
 
 
-# ================== INVENTORY CSV ENDPOINT (NEW) =================
-
+# ================== INVENTORY CSV ENDPOINT (IMPROVED) =================
 INVENTORY_CSV_PATH = r"C:\Users\Om\OneDrive\Desktop\CPP_Project\RetailX\static\Dataset_CSV\updated_product_dataset.csv"
+
+def _normalize_column_name(col):
+    """Convert column name to a standard key (lowercase, no underscores/spaces)"""
+    return col.strip().lower().replace(' ', '').replace('_', '')
 
 @csrf_exempt
 @never_cache
 def get_random_inventory(request):
-    """
-    Read the CSV, pick 50 random products, and return as JSON.
-    """
     if not os.path.exists(INVENTORY_CSV_PATH):
         return JsonResponse({'error': 'CSV file not found'}, status=404)
 
@@ -1548,15 +1548,57 @@ def get_random_inventory(request):
     try:
         with open(INVENTORY_CSV_PATH, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
-            for row in reader:
-                # Ensure numeric fields are converted
+            # Build a mapping from normalized column names to actual CSV headers
+            field_mapping = {}
+            for col in reader.fieldnames:
+                norm = _normalize_column_name(col)
+                # Map expected keys to actual column names
+                if norm in ('serialno', 'serial', 'sno', 'serial_no'):
+                    field_mapping['serial_no'] = col
+                elif norm in ('productname', 'product', 'name', 'product_name'):
+                    field_mapping['product_name'] = col
+                elif norm in ('category', 'cat'):
+                    field_mapping['category'] = col
+                elif norm in ('price', 'cost', 'sellingprice'):
+                    field_mapping['price'] = col
+                elif norm in ('quantity', 'qty', 'stock', 'in_stock'):
+                    field_mapping['quantity'] = col
+                elif norm in ('subcategory', 'subcat', 'sub_category'):
+                    field_mapping['subcategory'] = col
+
+            for idx, row in enumerate(reader, start=1):
+                # Helper to get value with fallback
+                def get_val(key, default=''):
+                    actual_col = field_mapping.get(key)
+                    return row.get(actual_col, '').strip() if actual_col else default
+
+                # Extract values
+                serial_no = get_val('serial_no', str(idx))
+                product_name = get_val('product_name', 'Unknown')
+                category = get_val('category', 'General')
+                subcategory = get_val('subcategory', '')
+
+                # Price conversion
+                price_str = get_val('price', '0').replace('$', '').replace(',', '').strip()
+                try:
+                    price = float(price_str) if price_str else 0.0
+                except ValueError:
+                    price = 0.0
+
+                # Quantity conversion
+                qty_str = get_val('quantity', '0').replace(',', '').strip()
+                try:
+                    quantity = int(float(qty_str)) if qty_str else 0
+                except ValueError:
+                    quantity = 0
+
                 product = {
-                    'serial_no': row.get('serial_no', ''),
-                    'product_name': row.get('product_name', ''),
-                    'category': row.get('category', ''),
-                    'price': float(row.get('price', 0)),
-                    'quantity': int(row.get('quantity', 0)),
-                    'subcategory': row.get('subcategory', ''),
+                    'serial_no': serial_no,
+                    'product_name': product_name,
+                    'category': category,
+                    'price': price,
+                    'quantity': quantity,
+                    'subcategory': subcategory,
                 }
                 products.append(product)
     except Exception as e:
@@ -1566,7 +1608,7 @@ def get_random_inventory(request):
     random.shuffle(products)
     selected = products[:50]
 
-    # Add a unique ID for each row (needed for actions)
+    # Add a unique ID for frontend actions (even though we removed action buttons, keep for possible future use)
     for idx, p in enumerate(selected):
         p['id'] = idx + 1
 
