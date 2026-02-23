@@ -891,6 +891,19 @@ def admin_home(request):
             festival_error = festival_result.get("error")
     # ============================================================
 
+    # --- 🔽 NEW: Handle AJAX request for festival predictions 🔽 ---
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Return JSON with the festival data
+        import json
+        response_data = {
+            'detected_festival': detected_festival,
+            'top_products': top_products,
+            'least_products': least_products,
+            'festival_error': festival_error,
+        }
+        return JsonResponse(response_data)
+    # --- 🔼 END ADDITION 🔼 ---
+
     # ================== CONTEXT ================================
     # Convert products to JSON-safe format
     import json

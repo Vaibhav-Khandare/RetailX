@@ -60,6 +60,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup mobile menu toggle
     setupMobileMenu();
     
+    // --- ADD DEFAULT CHATBOT WELCOME MESSAGE ---
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    if (chatbotMessages && chatbotMessages.children.length === 0) {
+        chatbotMessages.innerHTML = `
+            <div class="chat-bot">
+                <span>Hello! I'm your RetailX Assistant. How can I help you today?</span>
+            </div>
+        `;
+    }
+    // --- END ADD ---
+    
+    // --- ALLOW ENTER KEY TO SEND CHAT MESSAGE ---
+    const chatbotInput = document.getElementById('chatbot-input');
+    if (chatbotInput) {
+        chatbotInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent any default form submission
+                sendMessage();
+            }
+        });
+    }
+    // --- END ADD ---
+    
     // Check if we have festival data to display
     setTimeout(function() {
         const festivalEl = document.getElementById('detected-festival');
@@ -331,12 +354,79 @@ function setupFormHandlers() {
         });
     }
     
-    // Festival Search Form
+    // Festival Search Form - handle with AJAX and visibility toggle
     const festivalForm = document.getElementById('festivalSearchForm');
     if (festivalForm) {
         festivalForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent page reload
+            
             showLoading();
-            // Form will submit normally, but we show loading
+            
+            // Get form data
+            const formData = new FormData(festivalForm);
+            const params = new URLSearchParams(formData).toString();
+            
+            // Send AJAX request
+            fetch(window.location.pathname + '?' + params, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update hidden data elements
+                const topDataEl = document.getElementById('top-products-data');
+                const leastDataEl = document.getElementById('least-products-data');
+                const festivalEl = document.getElementById('detected-festival');
+                const festivalNameSpan = document.getElementById('festival-name');
+                const bannerEl = document.getElementById('festival-banner');
+                const chartsEl = document.getElementById('festival-charts');
+                const emptyEl = document.getElementById('festival-empty');
+                
+                if (topDataEl) {
+                    topDataEl.dataset.products = JSON.stringify(data.top_products || []);
+                }
+                if (leastDataEl) {
+                    leastDataEl.dataset.products = JSON.stringify(data.least_products || []);
+                }
+                if (festivalEl) {
+                    festivalEl.dataset.festival = data.detected_festival || '';
+                }
+                
+                // Toggle visibility based on whether we have a festival
+                const hasFestival = data.detected_festival && data.detected_festival !== '';
+                
+                if (bannerEl) {
+                    bannerEl.style.display = hasFestival ? 'flex' : 'none';
+                    if (hasFestival && festivalNameSpan) {
+                        festivalNameSpan.textContent = data.detected_festival;
+                    }
+                }
+                if (chartsEl) {
+                    chartsEl.style.display = hasFestival ? 'grid' : 'none';
+                }
+                if (emptyEl) {
+                    emptyEl.style.display = hasFestival ? 'none' : 'flex';
+                }
+                
+                // Re-initialize festival charts
+                if (typeof initFestivalCharts === 'function') {
+                    initFestivalCharts();
+                }
+                
+                hideLoading();
+                showToast('Prediction updated', 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideLoading();
+                showToast('Failed to load prediction', 'error');
+            });
         });
     }
 }
