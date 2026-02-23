@@ -19,6 +19,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
+            /* cursor: none; Hide default cursor */
         }
 
         body {
@@ -37,6 +38,39 @@
             background: linear-gradient(to bottom, #1a1f2e 0%, #1a1f2e 45%, #0f1219 45%);
         }
 
+        /* Custom Cursor – copied from about page */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4C6FFF; /* primary color */
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            mix-blend-mode: difference;
+            will-change: transform;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(76, 111, 255, 0.2); /* primary with opacity */
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.15s;
+            backdrop-filter: blur(2px);
+            will-change: transform;
+        }
+
         /* Theme toggle button */
         .theme-toggle {
             position: fixed;
@@ -49,7 +83,7 @@
             width: 48px;
             height: 48px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
+            /* cursor: none; will be overridden by custom cursor, but keep */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -173,7 +207,7 @@
             right: 18px;
             transform: translateY(-50%);
             color: #9CA3AF;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: color 0.3s;
         }
 
@@ -199,7 +233,7 @@
             border-radius: 10px;
             font-size: 16px;
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: none; will be overridden by custom cursor */
             transition: all 0.3s ease;
             margin-top: 10px;
         }
@@ -312,9 +346,23 @@
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
+
+        /* Hide cursor on small screens (optional, same as about page) */
+        @media (max-width: 900px) {
+            .cursor, .cursor-follower {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Custom Cursor Elements -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
 
     <!-- Theme Toggle Button -->
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -364,6 +412,7 @@
 
     <!-- SHOW/HIDE PASSWORD -->
     <script>
+        // Password toggle
         const pw = document.getElementById("password");
         const toggle = document.getElementById("togglePw");
 
@@ -407,7 +456,6 @@
         themeToggle.addEventListener('click', () => {
             body.classList.toggle('dark-theme');
             
-            // Update icon and localStorage
             if (body.classList.contains('dark-theme')) {
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
@@ -418,7 +466,54 @@
                 localStorage.setItem('theme', 'light');
             }
         });
-    </script>
 
+        // ========== CUSTOM CURSOR SCRIPT ==========
+        const cursor = document.getElementById('cursor');
+        const follower = document.getElementById('cursorFollower');
+
+        if (cursor && follower) {
+            // Use requestAnimationFrame for smooth movement
+            let mouseX = 0, mouseY = 0;
+            let cursorX = 0, cursorY = 0;
+            let followerX = 0, followerY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function animate() {
+                // Smooth follow for cursor (faster)
+                cursorX += (mouseX - cursorX) * 0.3;
+                cursorY += (mouseY - cursorY) * 0.3;
+                cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+
+                // Smoother for follower
+                followerX += (mouseX - followerX) * 0.15;
+                followerY += (mouseY - followerY) * 0.15;
+                follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%)`;
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // Hover effect on interactive elements
+            const hoverElements = document.querySelectorAll('a, button, .logo, .input-field i, .login-btn, .theme-toggle');
+            hoverElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1.5)`;
+                    cursor.style.backgroundColor = 'rgba(76, 111, 255, 0.2)';
+                    follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1.2)`;
+                    follower.style.backgroundColor = 'rgba(76, 111, 255, 0.1)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1)`;
+                    cursor.style.backgroundColor = 'transparent';
+                    follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1)`;
+                    follower.style.backgroundColor = 'rgba(76, 111, 255, 0.2)';
+                });
+            });
+        }
+    </script>
 </body>
 </html>

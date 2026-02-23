@@ -19,6 +19,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
+            /* cursor: none; Hide default cursor */
         }
 
         body {
@@ -32,6 +33,39 @@
             position: relative;
             overflow-x: hidden;
             transition: background 0.3s ease;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4C6FFF;
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            mix-blend-mode: difference;
+            will-change: transform;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(76, 111, 255, 0.2);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.15s;
+            backdrop-filter: blur(2px);
+            will-change: transform;
         }
 
         /* Background circles - light mode */
@@ -74,18 +108,18 @@
             width: 48px;
             height: 48px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.4rem;
-            color: #4C6FFF; /* Changed from green to blue */
+            color: #4C6FFF;
             transition: all 0.3s ease;
         }
 
         .theme-toggle:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(76, 111, 255, 0.3); /* Blue shadow */
+            box-shadow: 0 6px 16px rgba(76, 111, 255, 0.3);
         }
 
         body.dark-theme .theme-toggle {
@@ -100,7 +134,7 @@
             background: #fff;
             padding: 40px 35px;
             border-radius: 18px;
-            box-shadow: 0 15px 35px rgba(76, 111, 255, 0.15); /* Blue shadow */
+            box-shadow: 0 15px 35px rgba(76, 111, 255, 0.15);
             text-align: center;
             animation: fadeSlideIn 0.6s ease-out;
             margin: 20px;
@@ -119,14 +153,14 @@
             height: 90px;
             border-radius: 50%;
             margin-bottom: 20px;
-            box-shadow: 0 6px 15px rgba(76, 111, 255, 0.15); /* Blue shadow */
+            box-shadow: 0 6px 15px rgba(76, 111, 255, 0.15);
             border: 3px solid white;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .logo:hover {
             transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(76, 111, 255, 0.3); /* Blue shadow */
+            box-shadow: 0 10px 25px rgba(76, 111, 255, 0.3);
         }
 
         body.dark-theme .logo {
@@ -177,9 +211,9 @@
         }
 
         .input-field input:focus {
-            border-color: #4C6FFF; /* Blue */
+            border-color: #4C6FFF;
             background: white;
-            box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1); /* Blue */
+            box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1);
         }
 
         body.dark-theme .input-field input {
@@ -190,7 +224,7 @@
 
         body.dark-theme .input-field input:focus {
             background: #1f2937;
-            border-color: #60a5fa; /* Light blue */
+            border-color: #60a5fa;
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
         }
 
@@ -217,13 +251,13 @@
         .input-field input:not(:placeholder-shown) + label {
             top: 0;
             font-size: 13px;
-            color: #4C6FFF; /* Blue */
+            color: #4C6FFF;
             font-weight: 500;
         }
 
         body.dark-theme .input-field input:focus + label,
         body.dark-theme .input-field input:not(:placeholder-shown) + label {
-            color: #60a5fa; /* Light blue */
+            color: #60a5fa;
         }
 
         .input-field i {
@@ -232,13 +266,13 @@
             right: 15px;
             transform: translateY(-50%);
             color: #9CA3AF;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: color 0.3s;
         }
 
         .input-field input:focus + label + i,
         .input-field input:not(:placeholder-shown) + label + i {
-            color: #4C6FFF; /* Blue */
+            color: #4C6FFF;
         }
 
         body.dark-theme .input-field i {
@@ -282,9 +316,9 @@
         }
 
         .otp-input:focus {
-            border-color: #4C6FFF; /* Blue */
+            border-color: #4C6FFF;
             background: white;
-            box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1); /* Blue */
+            box-shadow: 0 0 0 3px rgba(76, 111, 255, 0.1);
             outline: none;
         }
 
@@ -296,20 +330,20 @@
 
         body.dark-theme .otp-input:focus {
             background: #1f2937;
-            border-color: #60a5fa; /* Light blue */
+            border-color: #60a5fa;
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
         }
 
         /* OTP BUTTONS */
         .otp-btn {
-            background: #4C6FFF; /* Blue */
+            background: #4C6FFF;
             color: white;
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
@@ -319,9 +353,9 @@
         }
 
         .otp-btn:hover {
-            background: #3548e8; /* Darker blue */
+            background: #3548e8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 111, 255, 0.2); /* Blue shadow */
+            box-shadow: 0 4px 12px rgba(76, 111, 255, 0.2);
         }
 
         .otp-btn:disabled {
@@ -332,11 +366,11 @@
         }
 
         body.dark-theme .otp-btn {
-            background: #2563eb; /* Dark blue */
+            background: #2563eb;
         }
 
         body.dark-theme .otp-btn:hover {
-            background: #1d4ed8; /* Darker blue */
+            background: #1d4ed8;
             box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
         }
 
@@ -351,8 +385,8 @@
         }
 
         .resend-otp {
-            color: #4C6FFF; /* Blue */
-            cursor: pointer;
+            color: #4C6FFF;
+            /* cursor: pointer; */
             text-decoration: underline;
             font-size: 13px;
             margin-top: 10px;
@@ -360,31 +394,31 @@
         }
 
         .resend-otp:hover {
-            color: #3548e8; /* Darker blue */
+            color: #3548e8;
         }
 
         body.dark-theme .resend-otp {
-            color: #60a5fa; /* Light blue */
+            color: #60a5fa;
         }
 
         body.dark-theme .resend-otp:hover {
-            color: #93c5fd; /* Lighter blue */
+            color: #93c5fd;
         }
 
         /* ENHANCED REGISTER BUTTON */
         .reg-btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #4C6FFF 0%, #5A67D8 100%); /* Blue gradient */
+            background: linear-gradient(135deg, #4C6FFF 0%, #5A67D8 100%);
             color: #fff;
             border: none;
             border-radius: 10px;
             font-size: 16px;
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: all 0.3s ease;
             margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(76, 111, 255, 0.2); /* Blue shadow */
+            box-shadow: 0 4px 15px rgba(76, 111, 255, 0.2);
         }
 
         .reg-btn:hover {
@@ -426,19 +460,20 @@
         }
 
         .footer a {
-            color: #4C6FFF; /* Blue */
+            color: #4C6FFF;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
+            /* cursor: none; custom cursor */
         }
 
         .footer a:hover {
-            color: #3548e8; /* Darker blue */
+            color: #3548e8;
             text-decoration: underline;
         }
 
         body.dark-theme .footer a {
-            color: #60a5fa; /* Light blue */
+            color: #60a5fa;
         }
 
         body.dark-theme .footer a:hover {
@@ -545,12 +580,12 @@
         }
 
         .step.active .step-circle {
-            background: #4C6FFF; /* Blue */
+            background: #4C6FFF;
             color: white;
         }
 
         body.dark-theme .step.active .step-circle {
-            background: #2563eb; /* Dark blue */
+            background: #2563eb;
             color: white;
         }
 
@@ -576,12 +611,12 @@
         }
 
         .step.active .step-text {
-            color: #4C6FFF; /* Blue */
+            color: #4C6FFF;
             font-weight: 500;
         }
 
         body.dark-theme .step.active .step-text {
-            color: #60a5fa; /* Light blue */
+            color: #60a5fa;
         }
 
         /* BUTTON CONTAINER */
@@ -599,7 +634,7 @@
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: all 0.3s ease;
         }
 
@@ -617,20 +652,20 @@
         }
 
         .next-btn {
-            background: #4C6FFF; /* Blue */
+            background: #4C6FFF;
             color: white;
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: none; custom cursor */
             transition: all 0.3s ease;
             flex: 1;
         }
 
         .next-btn:hover {
-            background: #3548e8; /* Darker blue */
+            background: #3548e8;
         }
 
         .next-btn:disabled {
@@ -639,19 +674,33 @@
         }
 
         body.dark-theme .next-btn {
-            background: #2563eb; /* Dark blue */
+            background: #2563eb;
         }
 
         body.dark-theme .next-btn:hover {
-            background: #1d4ed8; /* Darker blue */
+            background: #1d4ed8;
         }
 
         body.dark-theme .next-btn:disabled {
             background: #4b5563;
         }
+
+        /* Hide cursor on small screens (optional, same as other pages) */
+        @media (max-width: 900px) {
+            .cursor, .cursor-follower {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Custom Cursor Elements -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
 
     <!-- Theme Toggle Button -->
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -1125,6 +1174,51 @@
 
     // Initialize
     showStep(1);
+
+    // ========== CUSTOM CURSOR SCRIPT ==========
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('cursorFollower');
+
+    if (cursor && follower) {
+        let mouseX = 0, mouseY = 0;
+        let cursorX = 0, cursorY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animate() {
+            cursorX += (mouseX - cursorX) * 0.3;
+            cursorY += (mouseY - cursorY) * 0.3;
+            cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+
+            followerX += (mouseX - followerX) * 0.15;
+            followerY += (mouseY - followerY) * 0.15;
+            follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%)`;
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Hover effect on interactive elements
+        const hoverElements = document.querySelectorAll('a, button, .logo, .input-field i, .reg-btn, .prev-btn, .next-btn, .otp-btn, .resend-otp, .footer a, .theme-toggle');
+        hoverElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1.5)`;
+                cursor.style.backgroundColor = 'rgba(76, 111, 255, 0.2)';
+                follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1.2)`;
+                follower.style.backgroundColor = 'rgba(76, 111, 255, 0.1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1)`;
+                cursor.style.backgroundColor = 'transparent';
+                follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1)`;
+                follower.style.backgroundColor = 'rgba(76, 111, 255, 0.2)';
+            });
+        });
+    }
     </script>
 
 </body>
