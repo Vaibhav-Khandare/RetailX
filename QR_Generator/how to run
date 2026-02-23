@@ -1,0 +1,3 @@
+pip install qrcode[pil]
+
+python make_qr.py 8801234567890
