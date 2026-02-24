@@ -1532,7 +1532,8 @@ def predict_single_product(festival_name, product_name, target_date):
 
 
 # ================== INVENTORY CSV ENDPOINT (IMPROVED) =================
-INVENTORY_CSV_PATH = r"C:\Users\Om\OneDrive\Desktop\CPP_Project\RetailX\static\Dataset_CSV\updated_product_dataset.csv"
+# Use BASE_DIR to construct a portable path
+INVENTORY_CSV_PATH = os.path.join(BASE_DIR, 'static', 'Dataset_CSV', 'updated_product_dataset.csv')
 
 def _normalize_column_name(col):
     """Convert column name to a standard key (lowercase, no underscores/spaces)"""
@@ -1608,7 +1609,7 @@ def get_random_inventory(request):
     random.shuffle(products)
     selected = products[:50]
 
-    # Add a unique ID for frontend actions (even though we removed action buttons, keep for possible future use)
+    # Add a unique ID for frontend actions
     for idx, p in enumerate(selected):
         p['id'] = idx + 1
 
