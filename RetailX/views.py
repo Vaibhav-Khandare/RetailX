@@ -1371,7 +1371,7 @@ def get_cashier_details(request, cashier_id):
 
 
 # -------------------------------------------------------------------
-# Logout View
+# Logout View (single, correct version)
 # -------------------------------------------------------------------
 def logout_view(request):
     request.session.flush()

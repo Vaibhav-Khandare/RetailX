@@ -1245,16 +1245,16 @@ RetailX.Dashboard = {
     },
 
     loadMockData: function() {
-        $('#totalRevenue').text('$156,780');
-        $('#inventoryValue').text('$82,340');
+        $('#totalRevenue').text('₹156,780');
+        $('#inventoryValue').text('₹82,340');
         $('#activeStaff').text(RetailX.CashierManager.cashierList.length || '8');
         $('#customerSatisfaction').text('94%');
-        $('#todayRevenue').text('$4,290');
+        $('#todayRevenue').text('₹4,290');
         $('#onlineOrders').text('127');
         $('#totalOrders').text('1,284');
         $('#newCustomers').text('342');
         $('#returnRate').text('2.4%');
-        $('#avgOrderValue').text('$122.50');
+        $('#avgOrderValue').text('₹122.50');
     },
 
     startClock: function() {
@@ -1304,7 +1304,7 @@ RetailX.Dashboard = {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { callback: (v) => '$' + v }
+                            ticks: { callback: (v) => '₹' + v }
                         }
                     }
                 }
@@ -1854,6 +1854,46 @@ RetailX.Inventory = {
 };
 
 // ============================================
+// LOGOUT HANDLER (UPDATED)
+// ============================================
+RetailX.Logout = {
+    init: function() {
+        $('#logoutBtn').on('click', (e) => {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You will be logged out of the system.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.performLogout();
+                }
+            });
+        });
+    },
+
+    performLogout: function() {
+        $.ajax({
+            url: '/logout/',
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            success: function() {
+                // ✅ Redirect to the correct manager login page
+                window.location.href = '/manager_login/';
+            },
+            error: function() {
+                // Fallback: direct GET logout or redirect to login
+                window.location.href = '/manager_login/';
+            }
+        });
+    }
+};
+
+// ============================================
 // INITIALIZATION
 // ============================================
 $(document).ready(function() {
@@ -1871,6 +1911,7 @@ $(document).ready(function() {
     RetailX.NotificationManager.init();
     RetailX.Chatbot.init();
     RetailX.Inventory.init();
+    RetailX.Logout.init();  // Initialize logout handler
 
     console.log('✅ All modules initialized successfully');
 });
