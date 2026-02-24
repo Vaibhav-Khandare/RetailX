@@ -1,3 +1,13 @@
 pip install qrcode[pil]
 
 python make_qr.py 8801234567890
+
+pip install python-barcode[images]
+
+python make_barcode.py 5901234123457
+
+Specify a different format:
+python make_barcode.py 1234567890 code128
+
+Specify a custom filename (without extension):
+python make_barcode.py "ABC-123" code39 my_custom_barcode

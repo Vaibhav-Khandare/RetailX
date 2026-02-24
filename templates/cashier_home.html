@@ -16,6 +16,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsQR Library for QR decoding -->
     <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- QuaggaJS for barcode scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 </head>
 <body data-cashier="{{ cashier_name }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 
@@ -101,11 +103,11 @@
                 <div class="kpi-pills">
                     <div class="pill">
                         <span>Shift Sales</span>
-                        <strong id="topbarSales">$0.00</strong>
+                        <strong id="topbarSales">₹0.00</strong>
                     </div>
                     <div class="pill">
                         <span>Drawer</span>
-                        <strong id="topbarDrawer">$150.00</strong>
+                        <strong id="topbarDrawer">₹150.00</strong>
                     </div>
                 </div>
                 <div class="action-icons">
@@ -138,7 +140,7 @@
                             <h3>Today's Collection</h3>
                             <i class="fas fa-wallet"></i>
                         </div>
-                        <div class="kpi-value" id="dashTotalSales">$0.00</div>
+                        <div class="kpi-value" id="dashTotalSales">₹0.00</div>
                         <div class="kpi-trend positive"><i class="fas fa-arrow-up"></i> Ongoing Shift</div>
                     </div>
                     <div class="kpi-card">
@@ -162,8 +164,8 @@
                             <h3>Avg. Order Value</h3>
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="kpi-value" id="dashAov">$0.00</div>
-                        <div class="kpi-trend positive"><i class="fas fa-arrow-up"></i> Target: $45.00</div>
+                        <div class="kpi-value" id="dashAov">₹0.00</div>
+                        <div class="kpi-trend positive"><i class="fas fa-arrow-up"></i> Target: ₹45.00</div>
                     </div>
                 </div>
 
@@ -220,8 +222,8 @@
                                 <i class="fas fa-barcode"></i>
                                 <input type="text" id="posBarcodeScanner" placeholder="Scan barcode or enter product code (Press Enter)" autocomplete="off" autofocus>
                                 <button class="btn-primary" id="posManualSearchBtn"><i class="fas fa-search"></i></button>
-                                <!-- Camera/QR Scan Button -->
-                                <button class="btn-primary" id="cameraScanBtn" style="margin-left: 8px; background: linear-gradient(135deg, #4cc9f0, #4361ee);" title="Scan QR Code with Camera">
+                                <!-- Camera Scan Button -->
+                                <button class="btn-primary" id="cameraScanBtn" style="margin-left: 8px; background: linear-gradient(135deg, #4cc9f0, #4361ee);" title="Scan QR or Barcode with Camera">
                                     <i class="fas fa-camera"></i>
                                 </button>
                             </div>
@@ -265,21 +267,21 @@
                             <div class="summary-lines">
                                 <div class="s-line">
                                     <span>Subtotal (<span id="cartItemCount">0</span> items)</span>
-                                    <span id="cartSubtotal">$0.00</span>
+                                    <span id="cartSubtotal">₹0.00</span>
                                 </div>
                                 <div class="s-line discount-line">
                                     <span>Discount <button class="edit-discount-btn" id="editDiscountBtn"><i class="fas fa-edit"></i></button></span>
-                                    <span id="cartDiscount" class="text-danger">-$0.00</span>
+                                    <span id="cartDiscount" class="text-danger">-₹0.00</span>
                                 </div>
                                 <div class="s-line">
                                     <span>Tax (Standard 8.5%)</span>
-                                    <span id="cartTax">$0.00</span>
+                                    <span id="cartTax">₹0.00</span>
                                 </div>
                             </div>
                             
                             <div class="grand-total-box">
                                 <span>TOTAL</span>
-                                <span id="cartGrandTotal">$0.00</span>
+                                <span id="cartGrandTotal">₹0.00</span>
                             </div>
 
                             <div class="payment-methods-grid">
@@ -298,20 +300,20 @@
                                 <div class="tender-input-wrapper">
                                     <label>Amount Tendered</label>
                                     <div class="input-with-currency">
-                                        <span>$</span>
+                                        <span>₹</span>
                                         <input type="number" id="tenderAmount" placeholder="0.00" step="0.01">
                                     </div>
                                 </div>
                                 <div class="quick-cash-grid">
                                     <button class="quick-cash-btn" data-val="exact">Exact</button>
-                                    <button class="quick-cash-btn" data-val="10">$10</button>
-                                    <button class="quick-cash-btn" data-val="20">$20</button>
-                                    <button class="quick-cash-btn" data-val="50">$50</button>
-                                    <button class="quick-cash-btn" data-val="100">$100</button>
+                                    <button class="quick-cash-btn" data-val="10">₹10</button>
+                                    <button class="quick-cash-btn" data-val="20">₹20</button>
+                                    <button class="quick-cash-btn" data-val="50">₹50</button>
+                                    <button class="quick-cash-btn" data-val="100">₹100</button>
                                 </div>
                                 <div class="change-display">
                                     <span>Change Due:</span>
-                                    <span id="changeDueAmount" class="change-amount">$0.00</span>
+                                    <span id="changeDueAmount" class="change-amount">₹0.00</span>
                                 </div>
                             </div>
 
@@ -397,19 +399,19 @@
                         <div class="report-stats-grid">
                             <div class="report-stat-box">
                                 <span class="label">Gross Sales</span>
-                                <span class="val text-primary" id="repGross">$0.00</span>
+                                <span class="val text-primary" id="repGross">₹0.00</span>
                             </div>
                             <div class="report-stat-box">
                                 <span class="label">Refunds</span>
-                                <span class="val text-danger" id="repRefunds">$0.00</span>
+                                <span class="val text-danger" id="repRefunds">₹0.00</span>
                             </div>
                             <div class="report-stat-box">
                                 <span class="label">Net Sales</span>
-                                <span class="val text-success" id="repNet">$0.00</span>
+                                <span class="val text-success" id="repNet">₹0.00</span>
                             </div>
                             <div class="report-stat-box">
                                 <span class="label">Tax Collected</span>
-                                <span class="val" id="repTax">$0.00</span>
+                                <span class="val" id="repTax">₹0.00</span>
                             </div>
                         </div>
                         
@@ -417,15 +419,15 @@
                             <h3>Tender Breakdown</h3>
                             <div class="tender-row">
                                 <span><i class="fas fa-money-bill-wave text-success"></i> Cash</span>
-                                <span id="repCash">$0.00</span>
+                                <span id="repCash">₹0.00</span>
                             </div>
                             <div class="tender-row">
                                 <span><i class="fas fa-credit-card text-info"></i> Credit/Debit</span>
-                                <span id="repCard">$0.00</span>
+                                <span id="repCard">₹0.00</span>
                             </div>
                             <div class="tender-row">
                                 <span><i class="fas fa-mobile-alt text-purple"></i> Digital Wallet</span>
-                                <span id="repDigital">$0.00</span>
+                                <span id="repDigital">₹0.00</span>
                             </div>
                         </div>
                     </div>
@@ -467,15 +469,29 @@
         </div>
     </div>
 
-    <!-- QR Scanner Modal with Enhanced Camera Options -->
-    <div class="modal" id="qrScannerModal">
+    <!-- Scanner Modal (QR & Barcode) -->
+    <div class="modal" id="scannerModal">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3><i class="fas fa-qrcode"></i> Scan QR Code</h3>
-                    <button class="modal-close" id="qrScannerClose"><i class="fas fa-times"></i></button>
+                    <h3><i class="fas fa-camera"></i> Scan with Camera</h3>
+                    <button class="modal-close" id="scannerClose"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Mode selector cards -->
+                    <div class="scanner-mode-selector">
+                        <div class="mode-card active" id="modeQR">
+                            <i class="fas fa-qrcode"></i>
+                            <span>QR Mode</span>
+                            <small>Auto-detect QR codes</small>
+                        </div>
+                        <div class="mode-card" id="modeBarcode">
+                            <i class="fas fa-barcode"></i>
+                            <span>Barcode Mode</span>
+                            <small>Auto-detect 1D barcodes</small>
+                        </div>
+                    </div>
+
                     <div class="qr-scanner-container">
                         <!-- Camera Selection Dropdown -->
                         <div class="camera-selector">
@@ -492,8 +508,8 @@
                         
                         <!-- Camera feed container -->
                         <div class="camera-container">
-                            <video id="qr-video" playsinline autoplay></video>
-                            <canvas id="qr-canvas" style="display: none;"></canvas>
+                            <video id="scanner-video" playsinline autoplay></video>
+                            <canvas id="scanner-canvas" style="display: none;"></canvas>
                         </div>
                         
                         <!-- Camera controls -->
@@ -504,23 +520,24 @@
                             <button id="detectCamerasBtn" class="btn-outline">
                                 <i class="fas fa-search"></i> Detect Cameras
                             </button>
-                            <button id="captureQRBtn" class="btn-primary">
-                                <i class="fas fa-camera"></i> Capture QR
+                            <!-- Manual capture button (optional) -->
+                            <button id="manualCaptureBtn" class="btn-primary" style="display: none;">
+                                <i class="fas fa-camera"></i> Capture
                             </button>
                         </div>
                         
                         <!-- Status display -->
-                        <div id="qr-status" class="qr-status">
-                            <i class="fas fa-info-circle"></i> Select camera and click "Capture QR"
+                        <div id="scanner-status" class="qr-status">
+                            <i class="fas fa-info-circle"></i> Select camera and mode
                         </div>
                         
                         <!-- Result display -->
-                        <div id="qr-result" class="qr-result" style="display: none;"></div>
+                        <div id="scanner-result" class="qr-result" style="display: none;"></div>
                     </div>
                     
                     <div class="scanner-instructions">
                         <i class="fas fa-info-circle"></i> 
-                        <strong>For DroidCam:</strong> Make sure DroidCam is running on your phone and connected via WiFi/USB. Select "DroidCam" from the dropdown and click Apply.
+                        <strong>Tip:</strong> Point camera at a QR code or barcode. Detection is automatic.
                     </div>
                 </div>
             </div>
@@ -538,7 +555,7 @@
                 <div class="modal-body text-center">
                     <div class="discount-toggle">
                         <button class="disc-type active" data-type="percent">% Percent</button>
-                        <button class="disc-type" data-type="amount">$ Amount</button>
+                        <button class="disc-type" data-type="amount">₹ Amount</button>
                     </div>
                     <input type="number" id="discountValueInput" class="large-input" placeholder="0" min="0">
                     <button class="btn-primary w-100 mt-20" id="confirmDiscountBtn">Apply Discount</button>

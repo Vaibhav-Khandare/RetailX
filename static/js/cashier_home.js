@@ -11,7 +11,7 @@ window.RetailX = window.RetailX || {};
 // ============================================
 RetailX.Config = {
     taxRate: 0.085, // 8.5% Standard Tax
-    currencySymbol: '$',
+    currencySymbol: '₹',
     storeName: 'RetailX Main',
     registerId: 'REG-04',
     maxCartItems: 100
@@ -26,7 +26,7 @@ RetailX.State = {
     currentBillNo: '',
     paymentMethod: 'cash',
     shift: {
-        startTime: null, // Will be set from localStorage or current time
+        startTime: null,
         totalSales: 0,
         totalRefunds: 0,
         billsGenerated: 0,
@@ -34,7 +34,7 @@ RetailX.State = {
         cashTendered: 0,
         cardTendered: 0,
         digitalTendered: 0,
-        isActive: true // Track if shift is active
+        isActive: true
     },
     transactions: [],
     heldBills: [],
@@ -43,47 +43,80 @@ RetailX.State = {
     currentCamera: 'environment',
     isCameraActive: false,
     availableCameras: [],
+    scanMode: 'qr', // 'qr' or 'barcode'
+    scanLoopActive: false,
+    scanLoopId: null,
+    quaggaInitialized: false,
+    scanningEnabled: false,
     initialized: false
 };
 
 // Load saved state from localStorage
 RetailX.loadSavedState = function() {
+    console.log('📦 loadSavedState called');
     try {
+        // Load shift if exists, otherwise start a new one
         const savedShift = localStorage.getItem('retailx_shift');
+        console.log('savedShift from localStorage:', savedShift);
+        
         if (savedShift) {
             const shiftData = JSON.parse(savedShift);
-            // Convert string date back to Date object
+            console.log('Parsed shiftData:', shiftData);
+            
             if (shiftData.startTime) {
                 shiftData.startTime = new Date(shiftData.startTime);
+                console.log('Converted startTime to Date:', shiftData.startTime);
+            } else {
+                console.warn('savedShift had no startTime');
             }
-            RetailX.State.shift = { ...RetailX.State.shift, ...shiftData };
-            console.log('✅ Loaded saved shift from localStorage');
+            
+            // Only load if shift is active; otherwise start a new one
+            if (shiftData.isActive) {
+                RetailX.State.shift = { ...RetailX.State.shift, ...shiftData };
+                console.log('✅ Loaded active shift from localStorage');
+            } else {
+                console.log('⚠️ Saved shift is inactive – starting new shift');
+                RetailX.State.shift.startTime = new Date();
+                RetailX.State.shift.isActive = true;
+            }
+        } else {
+            console.log('No saved shift found – starting new one');
+            RetailX.State.shift.startTime = new Date();
+            RetailX.State.shift.isActive = true;
         }
 
+        // If shift is active but startTime is missing (shouldn't happen), set it now
+        if (RetailX.State.shift.isActive && !RetailX.State.shift.startTime) {
+            console.warn('Shift was active without startTime – setting to now');
+            RetailX.State.shift.startTime = new Date();
+        }
+
+        // Load transactions (these persist even after logout)
         const savedTransactions = localStorage.getItem('retailx_transactions');
+        console.log('savedTransactions from localStorage:', savedTransactions);
+        
         if (savedTransactions) {
             const txData = JSON.parse(savedTransactions);
-            // Convert string dates back to Date objects
             RetailX.State.transactions = txData.map(tx => ({
                 ...tx,
                 date: new Date(tx.date)
             }));
-            console.log('✅ Loaded saved transactions from localStorage');
-        }
-
-        // If no saved shift, start a new one
-        if (!RetailX.State.shift.startTime) {
-            RetailX.State.shift.startTime = new Date();
-            RetailX.State.shift.isActive = true;
-            RetailX.saveState();
+            console.log(`✅ Loaded ${RetailX.State.transactions.length} transactions`);
+        } else {
+            RetailX.State.transactions = [];
+            console.log('No saved transactions');
         }
     } catch (e) {
         console.error('Error loading saved state:', e);
-        // Start new shift on error
+        // Fallback – start a new shift
         RetailX.State.shift.startTime = new Date();
         RetailX.State.shift.isActive = true;
         RetailX.State.transactions = [];
+        console.log('Fallback: new shift started');
     }
+    
+    // Final check
+    console.log('Final shift state:', RetailX.State.shift);
 };
 
 // Save state to localStorage
@@ -95,15 +128,30 @@ RetailX.saveState = function() {
         };
         localStorage.setItem('retailx_shift', JSON.stringify(shiftToSave));
         localStorage.setItem('retailx_transactions', JSON.stringify(RetailX.State.transactions));
+        console.log('✅ State saved to localStorage');
     } catch (e) {
         console.error('Error saving state:', e);
     }
 };
 
-// Clear state on shift end
+// Clear shift on logout – transactions are NOT cleared
 RetailX.clearState = function() {
+    console.log('🔴 clearState called – ending shift');
     localStorage.removeItem('retailx_shift');
-    localStorage.removeItem('retailx_transactions');
+    // Do NOT remove transactions – they persist across logins
+    // Reset shift in memory to inactive (but keep startTime as null)
+    RetailX.State.shift = {
+        startTime: null,
+        totalSales: 0,
+        totalRefunds: 0,
+        billsGenerated: 0,
+        itemsSold: 0,
+        cashTendered: 0,
+        cardTendered: 0,
+        digitalTendered: 0,
+        isActive: false
+    };
+    console.log('Shift reset to inactive');
 };
 
 // ============================================
@@ -111,12 +159,10 @@ RetailX.clearState = function() {
 // ============================================
 RetailX.Database = {
     products: [
-        // =============================================================
-        // PASTE YOUR 900+ PRODUCT RECORDS HERE
-        // Each record must have: sku, barcode, name, category, price, stock
-        // Example:
+        // ... (your existing 900+ products) ...
+        // For brevity, I've kept the same list as before; ensure it's included in your actual file.
         // { sku: 'ELEC001', barcode: '8801234567890', name: 'Samsung 65" 4K Smart TV', category: 'Electronics', price: 899.99, stock: 25 },
-        // =============================================================
+        // ... rest of the products
 
         
         // Electronics (50 products - abbreviated for brevity, include all from your list)
@@ -599,6 +645,85 @@ RetailX.Utils = {
         }
     },
 
+    // Print receipt for a given transaction
+    printReceipt: function(transaction) {
+        if (!transaction) {
+            RetailX.Utils.showToast('No Receipt', 'No transaction selected', 'error');
+            return false;
+        }
+
+        // Generate receipt HTML using same logic as in POS.completeTransaction
+        let itemsHtml = '';
+        transaction.items.forEach(i => {
+            itemsHtml += `
+                <tr>
+                    <td>${i.name.substring(0, 20)}</td>
+                    <td class="qty">${i.qty}</td>
+                    <td class="amt">₹${i.price.toFixed(2)}</td>
+                    <td class="amt">₹${(i.qty * i.price).toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        const html = `
+            <div class="rcpt-header">
+                <h2>${RetailX.Config.storeName}</h2>
+                <p>123 Main Street, Cityville</p>
+                <p>Tel: (555) 123-4567</p>
+            </div>
+            <div class="rcpt-meta">
+                <span>Date: ${transaction.date.toLocaleDateString()}</span>
+                <span>Time: ${transaction.date.toLocaleTimeString()}</span>
+            </div>
+            <div class="rcpt-meta">
+                <span>Reg: ${RetailX.Config.registerId}</span>
+                <span>Bill: ${transaction.id}</span>
+            </div>
+            <table class="rcpt-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            <div class="rcpt-totals">
+                <div class="rcpt-line"><span>Subtotal:</span><span>₹${transaction.totals.subtotal.toFixed(2)}</span></div>
+                ${transaction.totals.discountAmt > 0 ? `<div class="rcpt-line"><span>Discount:</span><span>-₹${transaction.totals.discountAmt.toFixed(2)}</span></div>` : ''}
+                <div class="rcpt-line"><span>Tax (8.5%):</span><span>₹${transaction.totals.tax.toFixed(2)}</span></div>
+                <div class="rcpt-line bold"><span>TOTAL:</span><span>₹${transaction.totals.grandTotal.toFixed(2)}</span></div>
+            </div>
+            <div class="rcpt-totals">
+                <div class="rcpt-line"><span>Paid by ${transaction.method.toUpperCase()}:</span><span>₹${transaction.tendered.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Change:</span><span>₹${transaction.change.toFixed(2)}</span></div>
+            </div>
+            <div class="rcpt-barcode">
+                *${transaction.id}*
+            </div>
+            <div class="rcpt-footer">
+                <p>Thank you for shopping with us!</p>
+                <p>Retain receipt for returns.</p>
+            </div>
+        `;
+
+        $('#receiptPrintArea').html(html);
+        $('#receiptModal').addClass('show');
+
+        // Automatically trigger print after a short delay
+        setTimeout(() => {
+            window.print();
+            // Close modal after printing (or after a short delay)
+            setTimeout(() => {
+                $('#receiptModal').removeClass('show');
+            }, 1000);
+        }, 300);
+    },
+
     // Generate Z-Report PDF
     generateZReport: function() {
         const { jsPDF } = window.jspdf;
@@ -642,13 +767,13 @@ RetailX.Utils = {
         
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text(`Gross Sales: $${s.totalSales.toFixed(2)}`, 20, 127);
-        doc.text(`Refunds: $${s.totalRefunds.toFixed(2)}`, 20, 134);
-        doc.text(`Net Sales: $${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
+        doc.text(`Gross Sales: ₹${s.totalSales.toFixed(2)}`, 20, 127);
+        doc.text(`Refunds: ₹${s.totalRefunds.toFixed(2)}`, 20, 134);
+        doc.text(`Net Sales: ₹${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
         
         // Tax Calculation (approximate)
         const taxAmount = s.totalSales - (s.totalSales / (1 + RetailX.Config.taxRate));
-        doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): $${taxAmount.toFixed(2)}`, 20, 148);
+        doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): ₹${taxAmount.toFixed(2)}`, 20, 148);
         
         // Tender Breakdown
         doc.setFontSize(14);
@@ -657,10 +782,10 @@ RetailX.Utils = {
         
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text(`Cash: $${s.cashTendered.toFixed(2)}`, 20, 173);
-        doc.text(`Card: $${s.cardTendered.toFixed(2)}`, 20, 180);
-        doc.text(`Digital: $${s.digitalTendered.toFixed(2)}`, 20, 187);
-        doc.text(`Total: $${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
+        doc.text(`Cash: ₹${s.cashTendered.toFixed(2)}`, 20, 173);
+        doc.text(`Card: ₹${s.cardTendered.toFixed(2)}`, 20, 180);
+        doc.text(`Digital: ₹${s.digitalTendered.toFixed(2)}`, 20, 187);
+        doc.text(`Total: ₹${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
         
         // Footer
         doc.setFontSize(10);
@@ -676,9 +801,9 @@ RetailX.Utils = {
 };
 
 // ============================================
-// QR SCANNER MODULE (UPDATED WITH DROIDCAM FIX & DEBUG LOGS)
+// UNIFIED CAMERA SCANNER MODULE (QR & Barcode)
 // ============================================
-RetailX.QRScanner = {
+RetailX.CameraScanner = {
     init: function() {
         this.bindEvents();
     },
@@ -690,7 +815,7 @@ RetailX.QRScanner = {
             self.openScanner();
         });
 
-        $('#qrScannerClose').off('click').on('click', function() {
+        $('#scannerClose').off('click').on('click', function() {
             self.closeScanner();
         });
 
@@ -708,8 +833,13 @@ RetailX.QRScanner = {
             self.enumerateCameras();
         });
 
-        $('#captureQRBtn').off('click').on('click', function() {
-            self.captureQR();
+        // Mode selection cards
+        $('#modeQR').off('click').on('click', function() {
+            self.setMode('qr');
+        });
+
+        $('#modeBarcode').off('click').on('click', function() {
+            self.setMode('barcode');
         });
 
         $(window).off('click').on('click', function(e) {
@@ -719,22 +849,33 @@ RetailX.QRScanner = {
         });
 
         $(document).off('keydown').on('keydown', function(e) {
-            if (e.key === 'Escape' && $('#qrScannerModal').hasClass('show')) {
+            if (e.key === 'Escape' && $('#scannerModal').hasClass('show')) {
                 self.closeScanner();
             }
         });
     },
 
-    // Helper to disable/enable apply/capture buttons during enumeration
+    setMode: function(mode) {
+        if (mode === RetailX.State.scanMode) return;
+        RetailX.State.scanMode = mode;
+        $('.mode-card').removeClass('active');
+        $(`#mode${mode === 'qr' ? 'QR' : 'Barcode'}`).addClass('active');
+        $('#scanner-status').html(`<i class="fas fa-info-circle"></i> Switched to ${mode === 'qr' ? 'QR' : 'Barcode'} mode.`);
+        
+        // Restart scanning if camera is active
+        if (RetailX.State.isCameraActive) {
+            this.stopContinuousScan();
+            this.startContinuousScan();
+        }
+    },
+
+    // Helper to disable/enable apply button during enumeration
     disableApplyButton: function(disabled) {
         $('#applyCameraBtn').prop('disabled', disabled);
-        $('#captureQRBtn').prop('disabled', disabled);
         if (disabled) {
             $('#applyCameraBtn').addClass('disabled');
-            $('#captureQRBtn').addClass('disabled');
         } else {
             $('#applyCameraBtn').removeClass('disabled');
-            $('#captureQRBtn').removeClass('disabled');
         }
     },
 
@@ -758,14 +899,13 @@ RetailX.QRScanner = {
                 if (RetailX.State.availableCameras.length > 0) {
                     RetailX.Utils.showToast('Cameras Detected', `Found ${RetailX.State.availableCameras.length} camera(s)`, 'success');
                 }
-                // Enable buttons after enumeration completes
                 self.disableApplyButton(false);
-                $('#qr-status').html('<i class="fas fa-info-circle"></i> Cameras detected. Select a camera and click "Capture QR".');
+                $('#scanner-status').html('<i class="fas fa-info-circle"></i> Cameras detected. Select a camera.');
             })
             .catch(err => {
                 console.error('Error enumerating cameras:', err);
                 self.disableApplyButton(false);
-                $('#qr-status').html('<i class="fas fa-exclamation-triangle"></i> Camera enumeration failed. Try default.');
+                $('#scanner-status').html('<i class="fas fa-exclamation-triangle"></i> Camera enumeration failed. Try default.');
             });
     },
 
@@ -812,9 +952,7 @@ RetailX.QRScanner = {
     },
 
     applyCameraSelection: function(selection) {
-        const self = this;
-        
-        // Special handling for DroidCam: try to find a device with "droidcam" in label
+        // Special handling for DroidCam
         if (selection === 'droidcam') {
             const droidCamDevice = RetailX.State.availableCameras.find(device => 
                 device.label && device.label.toLowerCase().includes('droidcam')
@@ -832,7 +970,6 @@ RetailX.QRScanner = {
         } else if (selection === 'environment' || selection === 'user') {
             RetailX.State.currentCamera = selection;
         } else {
-            // Assume it's a deviceId
             RetailX.State.currentCamera = selection;
         }
         this.startCamera();
@@ -853,27 +990,30 @@ RetailX.QRScanner = {
     },
 
     openScanner: function() {
-        $('#qrScannerModal').addClass('show');
-        $('#qr-result').removeClass('show').empty();
-        $('#qr-status').html('<i class="fas fa-info-circle"></i> Detecting cameras...');
+        $('#scannerModal').addClass('show');
+        $('#scanner-result').removeClass('show').empty();
+        $('#scanner-status').html('<i class="fas fa-info-circle"></i> Detecting cameras...');
         
-        // Disable buttons until enumeration completes
+        // Set default mode to QR (active)
+        RetailX.State.scanMode = 'qr';
+        $('.mode-card').removeClass('active');
+        $('#modeQR').addClass('active');
+        
         this.disableApplyButton(true);
-        
         this.enumerateCameras();
         
         setTimeout(() => {
-            // Start with default camera (environment) while enumeration runs
             RetailX.State.currentCamera = 'environment';
             this.startCamera();
         }, 500);
     },
 
     closeScanner: function() {
+        this.stopContinuousScan();
         this.stopCamera();
-        $('#qrScannerModal').removeClass('show');
-        $('#qr-result').removeClass('show').empty();
-        $('#qr-status').html('<i class="fas fa-info-circle"></i> Camera closed');
+        $('#scannerModal').removeClass('show');
+        $('#scanner-result').removeClass('show').empty();
+        $('#scanner-status').html('<i class="fas fa-info-circle"></i> Camera closed');
         
         setTimeout(() => {
             $('#posBarcodeScanner').focus();
@@ -882,11 +1022,12 @@ RetailX.QRScanner = {
 
     startCamera: function() {
         const self = this;
-        const video = document.getElementById('qr-video');
+        const video = document.getElementById('scanner-video');
         
         if (!video) return;
 
         this.stopCamera();
+        this.stopContinuousScan();
 
         const container = document.querySelector('.camera-container');
         if (container) {
@@ -920,7 +1061,8 @@ RetailX.QRScanner = {
                 return video.play();
             })
             .then(() => {
-                $('#qr-status').removeClass('error').addClass('success').html('<i class="fas fa-check-circle"></i> Camera ready - Click "Capture QR"');
+                $('#scanner-status').removeClass('error').addClass('success').html('<i class="fas fa-check-circle"></i> Camera ready. Scanning automatically...');
+                self.startContinuousScan();
             })
             .catch(function(err) {
                 console.error('Camera error:', err);
@@ -934,7 +1076,7 @@ RetailX.QRScanner = {
                 }
                 
                 RetailX.Utils.showToast('Camera Error', errorMessage, 'error');
-                $('#qr-status').removeClass('success').addClass('error').html(`<i class="fas fa-exclamation-triangle"></i> ${errorMessage}`);
+                $('#scanner-status').removeClass('success').addClass('error').html(`<i class="fas fa-exclamation-triangle"></i> ${errorMessage}`);
             });
     },
 
@@ -947,83 +1089,126 @@ RetailX.QRScanner = {
             RetailX.State.isCameraActive = false;
         }
         
-        const video = document.getElementById('qr-video');
+        const video = document.getElementById('scanner-video');
         if (video) {
             video.srcObject = null;
         }
     },
 
-    captureQR: function() {
-        const video = document.getElementById('qr-video');
-        const canvas = document.getElementById('qr-canvas');
-        
-        if (!video || !canvas) {
-            RetailX.Utils.showToast('Error', 'Camera not ready', 'error');
-            return;
-        }
+    startContinuousScan: function() {
+        if (!RetailX.State.isCameraActive) return;
+        this.stopContinuousScan();
+        RetailX.State.scanningEnabled = true;
 
-        if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-            RetailX.Utils.showToast('Error', 'Camera not initialized', 'error');
-            return;
-        }
-
-        if (typeof jsQR === 'undefined') {
-            RetailX.Utils.showToast('Error', 'QR decoder not loaded', 'error');
-            return;
-        }
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        if (canvas.width === 0 || canvas.height === 0) {
-            RetailX.Utils.showToast('Error', 'No video feed', 'error');
-            return;
-        }
-        
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert"
-        });
-
-        if (code) {
-            const qrData = code.data;
-            console.log('✅ QR Code detected:', qrData);
-            
-            RetailX.Utils.playBeep();
-            
-            $('#qr-result').html(`
-                <div class="success">
-                    <i class="fas fa-check-circle"></i> QR Code: ${qrData}
-                </div>
-            `).addClass('show');
-            
-            $('#qr-status').html('<i class="fas fa-info-circle"></i> Processing QR code...');
-            
-            this.processQRData(qrData);
-            
-            setTimeout(() => {
-                this.closeScanner();
-            }, 1500);
+        if (RetailX.State.scanMode === 'qr') {
+            this.startQRScan();
         } else {
-            RetailX.Utils.showToast('No QR Code', 'No QR code detected in the frame', 'warning');
-            $('#qr-status').removeClass('success').addClass('warning').html('<i class="fas fa-exclamation-triangle"></i> No QR code detected - Try again');
+            this.startBarcodeScan();
         }
     },
 
-    processQRData: function(qrData) {
-        console.log('QR Data received:', qrData); // Debug log
-        const product = RetailX.Database.getProductByQR(qrData);
+    stopContinuousScan: function() {
+        RetailX.State.scanningEnabled = false;
+        if (RetailX.State.scanLoopId) {
+            cancelAnimationFrame(RetailX.State.scanLoopId);
+            RetailX.State.scanLoopId = null;
+        }
+        if (RetailX.State.quaggaInitialized) {
+            Quagga.stop();
+            RetailX.State.quaggaInitialized = false;
+        }
+    },
+
+    startQRScan: function() {
+        const self = this;
+        const video = document.getElementById('scanner-video');
+        const canvas = document.getElementById('scanner-canvas');
+        
+        if (!video || !canvas || typeof jsQR === 'undefined') return;
+
+        const scanFrame = function() {
+            if (!RetailX.State.isCameraActive || RetailX.State.scanMode !== 'qr' || !RetailX.State.scanningEnabled) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                if (canvas.width > 0 && canvas.height > 0) {
+                    const context = canvas.getContext('2d', { willReadFrequently: true });
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert"
+                    });
+
+                    if (code) {
+                        self.handleDetection(code.data);
+                        return;
+                    }
+                }
+            }
+            if (RetailX.State.scanningEnabled) {
+                RetailX.State.scanLoopId = requestAnimationFrame(scanFrame);
+            }
+        };
+
+        RetailX.State.scanLoopId = requestAnimationFrame(scanFrame);
+    },
+
+    startBarcodeScan: function() {
+        const self = this;
+        if (typeof Quagga === 'undefined') {
+            $('#scanner-status').html('<i class="fas fa-exclamation-triangle"></i> Barcode library not loaded');
+            return;
+        }
+
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#scanner-video'),
+                constraints: {
+                    width: { min: 640 },
+                    height: { min: 480 },
+                    facingMode: RetailX.State.currentCamera === 'user' ? 'user' : 'environment',
+                    aspectRatio: { min: 1, max: 2 }
+                }
+            },
+            decoder: {
+                readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader", "code_39_reader"]
+            },
+            locate: true
+        }, function(err) {
+            if (err) {
+                console.error('Quagga init failed:', err);
+                $('#scanner-status').html('<i class="fas fa-exclamation-triangle"></i> Failed to start barcode scanner');
+                return;
+            }
+            Quagga.start();
+            RetailX.State.quaggaInitialized = true;
+        });
+
+        Quagga.onDetected(function(data) {
+            if (!RetailX.State.scanningEnabled) return;
+            const code = data.codeResult.code;
+            self.handleDetection(code);
+        });
+    },
+
+    handleDetection: function(code) {
+        this.stopContinuousScan();
+
+        RetailX.Utils.playBeep();
+        const product = RetailX.Database.getProductByCode(code);
         
         if (product) {
             RetailX.POS.addToCart(product);
             RetailX.Utils.showToast('Product Found', `${product.name} added to cart`, 'success');
         } else {
-            RetailX.Utils.showToast('Product Not Found', `No product matches QR: ${qrData.substring(0, 20)}`, 'error');
+            RetailX.Utils.showToast('Product Not Found', `No product matches code: ${code.substring(0, 20)}`, 'error');
         }
+        
+        this.closeScanner();
     }
 };
 
@@ -1091,6 +1276,8 @@ RetailX.Navigation = {
             const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
             const s = String(diff % 60).padStart(2, '0');
             $('#shiftTimer').text(`${h}:${m}:${s}`);
+        } else {
+            $('#shiftTimer').text('00:00:00');
         }
     }
 };
@@ -1406,7 +1593,7 @@ RetailX.POS = {
         
         if(!totals || totals.itemCount === 0) {
             btn.prop('disabled', true);
-            $('#changeDueAmount').text('$0.00').removeClass('text-success text-danger');
+            $('#changeDueAmount').text('₹0.00').removeClass('text-success text-danger');
             return;
         }
 
@@ -1466,7 +1653,6 @@ RetailX.POS = {
 
         RetailX.State.transactions.unshift(transaction);
         
-        // Save state after transaction
         RetailX.saveState();
         
         this.updateDashboardKPIs();
@@ -1489,8 +1675,8 @@ RetailX.POS = {
                 <tr>
                     <td>${i.name.substring(0, 20)}</td>
                     <td class="qty">${i.qty}</td>
-                    <td class="amt">$${i.price.toFixed(2)}</td>
-                    <td class="amt">$${(i.qty * i.price).toFixed(2)}</td>
+                    <td class="amt">₹${i.price.toFixed(2)}</td>
+                    <td class="amt">₹${(i.qty * i.price).toFixed(2)}</td>
                 </tr>
             `;
         });
@@ -1523,14 +1709,14 @@ RetailX.POS = {
                 </tbody>
             </table>
             <div class="rcpt-totals">
-                <div class="rcpt-line"><span>Subtotal:</span><span>$${tx.totals.subtotal.toFixed(2)}</span></div>
-                ${tx.totals.discountAmt > 0 ? `<div class="rcpt-line"><span>Discount:</span><span>-$${tx.totals.discountAmt.toFixed(2)}</span></div>` : ''}
-                <div class="rcpt-line"><span>Tax (8.5%):</span><span>$${tx.totals.tax.toFixed(2)}</span></div>
-                <div class="rcpt-line bold"><span>TOTAL:</span><span>$${tx.totals.grandTotal.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Subtotal:</span><span>₹${tx.totals.subtotal.toFixed(2)}</span></div>
+                ${tx.totals.discountAmt > 0 ? `<div class="rcpt-line"><span>Discount:</span><span>-₹${tx.totals.discountAmt.toFixed(2)}</span></div>` : ''}
+                <div class="rcpt-line"><span>Tax (8.5%):</span><span>₹${tx.totals.tax.toFixed(2)}</span></div>
+                <div class="rcpt-line bold"><span>TOTAL:</span><span>₹${tx.totals.grandTotal.toFixed(2)}</span></div>
             </div>
             <div class="rcpt-totals">
-                <div class="rcpt-line"><span>Paid by ${tx.method.toUpperCase()}:</span><span>$${tx.tendered.toFixed(2)}</span></div>
-                <div class="rcpt-line"><span>Change:</span><span>$${tx.change.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Paid by ${tx.method.toUpperCase()}:</span><span>₹${tx.tendered.toFixed(2)}</span></div>
+                <div class="rcpt-line"><span>Change:</span><span>₹${tx.change.toFixed(2)}</span></div>
             </div>
             <div class="rcpt-barcode">
                 *${tx.id}*
@@ -1639,10 +1825,17 @@ RetailX.Transactions = {
                     <td>${tx.totals.itemCount} items</td>
                     <td><strong>${RetailX.Utils.formatMoney(tx.totals.grandTotal)}</strong></td>
                     <td>
-                        <button class="btn-outline" onclick="RetailX.Utils.showToast('Printing', 'Receipt sent to printer', 'info')"><i class="fas fa-print"></i></button>
+                        <button class="btn-outline print-receipt" data-id="${tx.id}"><i class="fas fa-print"></i></button>
                     </td>
                 </tr>
             `);
+        });
+
+        // Attach print event to each button
+        $('.print-receipt').off('click').on('click', function() {
+            const id = $(this).data('id');
+            const transaction = RetailX.State.transactions.find(t => t.id === id);
+            RetailX.Utils.printReceipt(transaction);
         });
     }
 };
@@ -1712,7 +1905,7 @@ RetailX.Summary = {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Sales Vol ($)',
+                    label: 'Sales Vol (₹)',
                     data: dataPoints,
                     backgroundColor: 'rgba(67, 97, 238, 0.7)',
                     borderColor: '#4361ee',
@@ -1752,7 +1945,7 @@ $('#printZReportBtn, #endShiftBtn').on('click', function(e) {
             <p>This will close the current register session.</p>
             <p><strong>Shift Summary:</strong></p>
             <p>Bills: ${RetailX.State.shift.billsGenerated}</p>
-            <p>Total Sales: $${RetailX.State.shift.totalSales.toFixed(2)}</p>
+            <p>Total Sales: ₹${RetailX.State.shift.totalSales.toFixed(2)}</p>
             <p>Items Sold: ${RetailX.State.shift.itemsSold}</p>
         `,
         icon: 'warning',
@@ -1762,23 +1955,26 @@ $('#printZReportBtn, #endShiftBtn').on('click', function(e) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Generate and download Z-Report
             RetailX.Utils.generateZReport();
-            
-            // Mark shift as inactive
             RetailX.State.shift.isActive = false;
-            
-            // Clear localStorage
             RetailX.clearState();
-            
             RetailX.Utils.showToast('Shift Ended', 'Z-Report has been downloaded', 'success');
-            
-            // Redirect to login after short delay
             setTimeout(() => {
+                // Adjust this URL to match your login page
                 window.location.href = '/cashier_login';
             }, 2000);
         }
     });
+});
+
+// Dashboard reprint button
+$('#reprintLastBtn').on('click', function() {
+    const lastTx = RetailX.State.transactions[0];
+    if (!lastTx) {
+        RetailX.Utils.showToast('No Receipt', 'No transactions yet', 'error');
+        return;
+    }
+    RetailX.Utils.printReceipt(lastTx);
 });
 
 // ============================================
@@ -1787,15 +1983,12 @@ $('#printZReportBtn, #endShiftBtn').on('click', function(e) {
 $(document).ready(function() {
     console.log('📦 Document ready, initializing modules...');
     
-    // Load saved state from localStorage
     RetailX.loadSavedState();
     
-    // Initialize modules
     RetailX.Navigation.init();
     RetailX.POS.init();
-    RetailX.QRScanner.init();
+    RetailX.CameraScanner.init();
 
-    // Hide loader
     setTimeout(() => {
         RetailX.Utils.hideLoader();
         console.log('✅ All modules initialized, loader hidden');
@@ -1805,9 +1998,13 @@ $(document).ready(function() {
         } else {
             console.error('❌ jsQR library not loaded');
         }
+        if (typeof Quagga !== 'undefined') {
+            console.log('✅ Quagga library loaded successfully');
+        } else {
+            console.error('❌ Quagga library not loaded');
+        }
     }, 1000);
 
-    // Global Modal Closers
     $('.modal-close').on('click', function() {
         $(this).closest('.modal').removeClass('show');
     });
@@ -1825,12 +2022,10 @@ $(document).ready(function() {
         RetailX.Utils.showNotificationPopup();
     });
 
-    // Save state before page unload
     window.addEventListener('beforeunload', function() {
         RetailX.saveState();
     });
 
-    // Fallback loader hide
     window.addEventListener('load', function() {
         setTimeout(RetailX.Utils.hideLoader, 2000);
     });
