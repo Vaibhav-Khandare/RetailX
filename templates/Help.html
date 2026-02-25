@@ -2,31 +2,158 @@
 {% load static %}
 
 {% block content %}
-<section class="help-section">
-
 <style>
-    /* ===== HELP PAGE STYLES ===== */
+    /* ===== HELP PAGE STYLES WITH ANIMATIONS ===== */
 
-    :root {
-        --primary: #4f46e5;
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        cursor: none;
     }
 
-    /* ======= HERO HEADER ======= */
+    body {
+        font-family: "Inter", sans-serif;
+        background: #0a0a0a;
+        color: #ffffff;
+        line-height: 1.2;
+        overflow-x: hidden;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #6366f1;
+        border-radius: 50%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s;
+        mix-blend-mode: difference;
+        will-change: transform;
+    }
+
+    .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 50%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition: transform 0.15s;
+        backdrop-filter: blur(2px);
+        will-change: transform;
+    }
+
+    /* Animated background */
+    .gradient-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+        animation: moveGradient 20s ease infinite;
+    }
+
+    @keyframes moveGradient {
+        0% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(-2%, -1%) scale(1.02); }
+        66% { transform: translate(2%, 1%) scale(0.98); }
+        100% { transform: translate(0, 0) scale(1); }
+    }
+
+    /* Header */
+    .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 100;
+        padding: 2rem 3rem;
+        transition: background 0.3s, backdrop-filter 0.3s, padding 0.3s;
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    .site-header.scrolled {
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(12px);
+        padding: 1.2rem 3rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .header-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .logo {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(145deg, #fff, #a5b4fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-decoration: none;
+    }
+
+    .logo span {
+        color: white;
+        background: none;
+        -webkit-text-fill-color: white;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 3rem;
+    }
+
+    .nav-links a {
+        text-decoration: none;
+        color: #ffffff !important;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: color 0.2s;
+        letter-spacing: 0.02em;
+        mix-blend-mode: difference;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+        color: white;
+    }
+
+    /* Hero Header - Updated for dark theme */
     .hero-header {
-        background: #ffffff;
-        padding: 20px 0;   /* 🔧 reduced padding */
-        border-bottom: 1px solid #e5e7eb;
+        margin-top: 80px;
+        padding: 2rem 3rem;
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         animation: fadeDown 0.8s ease;
     }
 
     .hero-container {
-    width: 90%;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* ✅ KEY FIX */
-}
-
+        max-width: 1440px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
     .hero-left {
         display: flex;
@@ -35,39 +162,46 @@
     }
 
     .hero-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(145deg, #fff, #a5b4fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     .hero-title span {
-        color: var(--primary);
+        color: white;
+        background: none;
+        -webkit-text-fill-color: white;
     }
 
     .hero-subtitle {
-        font-size: 14px;
-        color: #6b7280;
+        font-size: 0.9rem;
+        color: #888;
     }
+
     .hero-right a {
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary);
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: 0.3s ease;
-}
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #ffffff;
+        padding: 0.5rem 1.2rem;
+        border-radius: 2rem;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-.hero-right a:hover {
-    background: var(--primary);
-    color: #fff;
-}
-
+    .hero-right a:hover {
+        background: #6366f1;
+        color: #fff;
+        border-color: #6366f1;
+        transform: translateY(-2px);
+    }
 
     @keyframes fadeDown {
         from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(-20px);
         }
         to {
             opacity: 1;
@@ -75,44 +209,86 @@
         }
     }
 
-    /* ======= HELP SECTION ======= */
+    /* Help Section */
     .help-section {
-        padding: 30px 20px 60px; /* 🔧 reduced top padding */
+        padding: 2rem 3rem 4rem;
         text-align: center;
+        position: relative;
+        z-index: 2;
     }
 
     .help-heading {
-        margin-top: 20px;   /* 🔧 controlled spacing */
+        margin-top: 2rem;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: slideUp 1s ease forwards;
     }
 
     .help-heading h1 {
-        font-size: 36px;
-        margin-bottom: 8px;
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+        margin-bottom: 1rem;
+        background: linear-gradient(145deg, #ffffff, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     .subtitle {
         max-width: 700px;
         margin: 0 auto;
-        color: #555;
-        font-size: 15px;
+        color: #aaa;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    @keyframes slideUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .help-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 20px;
-        max-width: 900px;
-        margin: 40px auto 0;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 3rem auto 0;
     }
 
     .help-box {
-        background-color: white;
-        padding: 40px 30px;
-        border-radius: 6px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(10px);
+        padding: 3rem 2rem;
+        border-radius: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
         animation: fadeInUp 0.8s forwards;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .help-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+        transition: left 0.5s;
+        pointer-events: none;
+    }
+
+    .help-box:hover::before {
+        left: 100%;
+    }
+
+    .help-box:hover {
+        transform: translateY(-5px);
+        border-color: #6366f1;
+        box-shadow: 0 20px 30px -15px rgba(99, 102, 241, 0.3);
     }
 
     .help-box:nth-child(1) { animation-delay: 0.2s; }
@@ -128,102 +304,232 @@
     }
 
     .help-box i {
-        font-size: 40px;
-        color: #5a4fcf;
-        margin-bottom: 20px;
+        font-size: 3rem;
+        color: #6366f1;
+        margin-bottom: 1.5rem;
     }
 
     .help-box h3 {
-        font-size: 18px;
-        margin-bottom: 15px;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
         letter-spacing: 1px;
+        color: #fff;
+        font-weight: 700;
     }
 
     .help-box p {
-        color: #555;
-        font-size: 15px;
+        color: #aaa;
+        font-size: 1rem;
         line-height: 1.8;
     }
 
-    @media (max-width: 850px) {
+    /* Scroll hint */
+    .scroll-hint {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        color: #888;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        writing-mode: vertical-rl;
+        z-index: 90;
+        mix-blend-mode: difference;
+    }
+
+    .scroll-hint i {
+        margin-bottom: 1rem;
+        animation: bounce 1.5s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(5px); }
+    }
+
+    @media (max-width: 900px) {
+        .site-header {
+            padding: 1.5rem 2rem;
+        }
+        .hero-header {
+            margin-top: 70px;
+            padding: 1.5rem 2rem;
+        }
+        .help-section {
+            padding: 1rem 1.5rem 3rem;
+        }
         .help-container {
             grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        .help-box {
+            padding: 2rem 1.5rem;
+        }
+        .cursor, .cursor-follower {
+            display: none;
+        }
+        .scroll-hint {
+            display: none;
         }
     }
 </style>
 
-<!-- ===== HEADER ===== -->
-<header class="hero-header">
-    <div class="hero-container">
+<!-- Custom Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follower" id="cursorFollower"></div>
 
-        <!-- LEFT -->
-        <div class="hero-left">
-            <div class="hero-title">Retail<span>X</span></div>
-            <div class="hero-subtitle">Smart Inventory Management System</div>
-        </div>
+<!-- Animated Background -->
+<div class="gradient-bg"></div>
 
-        <!-- RIGHT -->
-        <div class="hero-right">
+<!-- Scroll Hint -->
+<div class="scroll-hint">
+    <i class="fas fa-arrow-down"></i> SCROLL
+</div>
+
+<!-- Header -->
+<header class="site-header" id="mainHeader">
+    <div class="header-container">
+        <a href="/" class="logo">RETAIL<span>X</span></a>
+        <div class="nav-links">
             <a href="/">Home</a>
-
         </div>
-
     </div>
 </header>
 
 
+
 <!-- ===== HELP CONTENT ===== -->
-<div class="help-heading">
-    <h1>How can we help you?</h1>
-    <p class="subtitle">
-        If you have any questions related to billing, inventory, reports, or account issues,
-        feel free to contact us using the details below.
-    </p>
-</div>
-
-<div class="help-container">
-
-    <div class="help-box">
-        <i class="fa-solid fa-location-dot"></i>
-        <h3>OUR MAIN OFFICE</h3>
-        <p>
-            Government Polytechnic,<br>
-            Jalamb Road, Khamgaon,<br>
-            District Buldhana,<br>
-            Maharashtra, India,<br>
-            PIN - 444303
+<section class="help-section">
+    <div class="help-heading">
+        <h1>How can we help you?</h1>
+        <p class="subtitle">
+            If you have any questions related to billing, inventory, reports, or account issues,
+            feel free to contact us using the details below.
         </p>
     </div>
 
-    <div class="help-box">
-        <i class="fa-solid fa-phone"></i>
-        <h3>PHONE NUMBER</h3>
-        <p>
-            +91 93250 08419<br>
-            +91 96041 84377<br>
-            +91 76664 27976<br>
-            +91 82630 18924<br>
-            +91 78218 33342
-        </p>
-    </div>
+    <div class="help-container">
+        <div class="help-box">
+            <i class="fa-solid fa-location-dot"></i>
+            <h3>OUR MAIN OFFICE</h3>
+            <p>
+                Government Polytechnic,<br>
+                Jalamb Road, Khamgaon,<br>
+                District Buldhana,<br>
+                Maharashtra, India,<br>
+                PIN - 444303
+            </p>
+        </div>
 
-    <div class="help-box">
-        <i class="fa-solid fa-fax"></i>
-        <h3>FAQ</h3>
-        <p>
-            ➕ Add New Product<br>
-            📉 Check Low Stock Items<br>
-            📊 View Sales Report<br>
-            🎯 High-Demand Products (AI)
-        </p>
-    </div>
+        <div class="help-box">
+            <i class="fa-solid fa-phone"></i>
+            <h3>PHONE NUMBER</h3>
+            <p>
+                +91 93250 08419<br>
+                +91 96041 84377<br>
+                +91 76664 27976<br>
+                +91 82630 18924<br>
+                +91 78218 33342
+            </p>
+        </div>
 
-    <div class="help-box">
-        <i class="fa-solid fa-envelope"></i>
-        <h3>EMAIL</h3>
-        <p>support@inventorybilling.com</p>
-    </div>
+        <div class="help-box">
+            <i class="fa-solid fa-fax"></i>
+            <h3>FAQ</h3>
+            <p>
+                ➕ Add New Product<br>
+                📉 Check Low Stock Items<br>
+                📊 View Sales Report<br>
+                🎯 High-Demand Products (AI)
+            </p>
+        </div>
 
-</div>
+        <div class="help-box">
+            <i class="fa-solid fa-envelope"></i>
+            <h3>EMAIL</h3>
+            <p>support@inventorybilling.com</p>
+        </div>
+    </div>
 </section>
+
+<script>
+    (function() {
+        // Custom cursor
+        const cursor = document.getElementById('cursor');
+        const follower = document.getElementById('cursorFollower');
+
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { 
+                duration: 0.1, 
+                x: e.clientX, 
+                y: e.clientY,
+                overwrite: 'auto'
+            });
+            gsap.to(follower, { 
+                duration: 0.3, 
+                x: e.clientX, 
+                y: e.clientY,
+                overwrite: 'auto'
+            });
+        });
+
+        // Hover effects
+        const hoverElements = document.querySelectorAll('a, button, .help-box, .hero-right a');
+        hoverElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                gsap.to(cursor, { duration: 0.2, scale: 1.5, backgroundColor: 'rgba(99,102,241,0.2)' });
+                gsap.to(follower, { duration: 0.2, scale: 1.2, backgroundColor: 'rgba(99,102,241,0.1)' });
+            });
+            el.addEventListener('mouseleave', () => {
+                gsap.to(cursor, { duration: 0.2, scale: 1, backgroundColor: 'transparent' });
+                gsap.to(follower, { duration: 0.2, scale: 1, backgroundColor: 'rgba(99,102,241,0.2)' });
+            });
+        });
+
+        // Header scroll effect
+        const header = document.getElementById('mainHeader');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // GSAP animations
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // Parallax background
+        gsap.to('.gradient-bg', {
+            scrollTrigger: {
+                trigger: 'body',
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: 1
+            },
+            y: (i, target) => -ScrollTrigger.maxScroll * 0.2,
+            ease: 'none'
+        });
+
+        // Animate help boxes on scroll
+        gsap.utils.toArray('.help-box').forEach((box, i) => {
+            gsap.from(box, {
+                scrollTrigger: {
+                    trigger: box,
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                },
+                scale: 0.9,
+                opacity: 0,
+                duration: 0.8,
+                delay: i * 0.1
+            });
+        });
+    })();
+</script>
+
+<!-- Include GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
 {% endblock %}
