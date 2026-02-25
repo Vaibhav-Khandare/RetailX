@@ -122,14 +122,14 @@
     }
 
     .nav-links a {
-        text-decoration: none;
-        color: #aaa;
-        font-weight: 500;
-        font-size: 1rem;
-        transition: color 0.2s;
-        letter-spacing: 0.02em;
-        mix-blend-mode: difference;
-    }
+    text-decoration: none;
+    color: #ffffff !important;  /* Changed to white */
+    font-weight: 500;
+    font-size: 1rem;
+    transition: color 0.2s;
+    letter-spacing: 0.02em;
+    mix-blend-mode: difference;
+}
 
     .nav-links a:hover,
     .nav-links a.active {
@@ -151,18 +151,18 @@
     }
 
     .terms-hero h1 {
-        font-size: clamp(3rem, 8vw, 5rem);
-        font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 1.5rem;
-    }
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(145deg, #ffffff, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
-    .terms-hero h1 span {
-        background: linear-gradient(145deg, #ffffff, #818cf8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
+.terms-hero h1 span {
+    /* Remove or keep empty - not needed anymore */
+}
     .terms-hero .hero-sub {
         font-size: 1.2rem;
         color: #aaa;
@@ -393,10 +393,8 @@
     <div class="header-container">
         <a href="/" class="logo">RETAIL<span>X</span></a>
         <div class="nav-links">
-            <a href="/work/">Work</a>
-            <a href="/about/">About</a>
-            <a href="/contact/">Contact</a>
-        </div>
+            <a href="/">Home</a>
+            </div>
     </div>
 </header>
 
@@ -463,9 +461,9 @@
         <h2><i class="fas fa-envelope"></i> 7. Contact Us</h2>
         <p>If you have questions about these Terms, please contact us:</p>
         <ul>
-            <li><i class="fas fa-envelope" style="color: #6366f1; width: 20px;"></i> legal@retailx.com</li>
-            <li><i class="fas fa-phone" style="color: #6366f1; width: 20px;"></i> +91 (555) 123-4567</li>
-            <li><i class="fas fa-map-marker-alt" style="color: #6366f1; width: 20px;"></i> Shegaon, Maharashtra, India</li>
+            <li><i class="fas fa-envelope" style="color: #6366f1; width: 20px;"></i> retailx.connect@gmail.com</li>
+            <li><i class="fas fa-phone" style="color: #6366f1; width: 20px;"></i> +91 9325008419</li>
+            <li><i class="fas fa-map-marker-alt" style="color: #6366f1; width: 20px;"></i> Khamgaon, Maharashtra, India</li>
         </ul>
     </div>
 
@@ -474,13 +472,8 @@
 
 <!-- Footer -->
 <footer class="footer">
-    <div class="footer-links">
-        <a href="/terms/" class="active">Terms</a>
-        <a href="/privacy/">Privacy</a>
-        <a href="/cookies/">Cookies</a>
-    </div>
     <div class="copyright">
-        © 2025 RetailX. All rights reserved. Built with intelligence by five dedicated developers.
+        RetailX · Advanced Inventory Billing System with Future Trend Detection.
     </div>
 </footer>
 
