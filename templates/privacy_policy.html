@@ -1,170 +1,554 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Privacy Policy | RetailX</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | RetailX</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
     <style>
-        :root {
-            --primary: #2563eb;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
         }
 
         body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: #f4f7ff;
-            color: #333;
-        }
-
-        /* ======= HERO HEADER ======= */
-        .hero-header {
-            background: #ffffff;
-            padding: 40px 0;
-            border-bottom: 1px solid #e5e7eb;
-            animation: fadeDown 0.8s ease;
-        }
-
-        .hero-container {
-            width: 90%;
-            margin: auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* 🔥 MAIN FIX */
-        }
-
-        .hero-left {
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .hero-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        /* Blue X */
-        .hero-title span {
-            color: var(--primary);
-        }
-
-        .hero-subtitle {
-            font-size: 14px;
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        /* RIGHT SIDE */
-        .hero-right {
-            display: flex;
-            align-items: center;
-        }
-
-        .home-link {
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--primary);
-            padding: 8px 16px;
-            border-radius: 6px;
-            transition: 0.3s ease;
-        }
-
-        .home-link:hover {
-            background-color: var(--primary);
+            font-family: "Inter", sans-serif;
+            background: #0a0a0a;
             color: #ffffff;
+            line-height: 1.2;
+            overflow-x: hidden;
         }
 
-        /* ======= PRIVACY CONTENT ======= */
-        .privacy-container {
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6366f1;
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            mix-blend-mode: difference;
+            will-change: transform;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.15s;
+            backdrop-filter: blur(2px);
+            will-change: transform;
+        }
+
+        /* Animated background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: moveGradient 20s ease infinite;
+        }
+
+        @keyframes moveGradient {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-2%, -1%) scale(1.02); }
+            66% { transform: translate(2%, 1%) scale(0.98); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* Header */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 2rem 3rem;
+            transition: background 0.3s, backdrop-filter 0.3s, padding 0.3s;
+            background: transparent;
+            backdrop-filter: none;
+        }
+
+        .site-header.scrolled {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 1.2rem 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(145deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: white;
+            background: none;
+            -webkit-text-fill-color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.2s;
+            letter-spacing: 0.02em;
+            mix-blend-mode: difference;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: white;
+        }
+
+        /* Privacy Hero Section */
+        .privacy-hero {
+            min-height: 40vh;
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 3rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .privacy-hero h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(145deg, #ffffff, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .privacy-hero .hero-sub {
+            font-size: 1.2rem;
+            color: #aaa;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        /* Privacy Content */
+        .privacy-content {
             max-width: 900px;
-            margin: 80px auto;
-            padding: 40px;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin: 4rem auto;
+            padding: 4rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+            transform: translateY(50px);
+            opacity: 0;
+            animation: slideUp 1s ease forwards;
         }
 
-        .privacy-container h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            color: #2b4eff;
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        .privacy-container p {
-            font-size: 15px;
+        .privacy-section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .privacy-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .privacy-section h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .privacy-section h2 i {
+            color: #6366f1;
+            font-size: 2rem;
+        }
+
+        .privacy-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #6366f1;
+            margin: 1.5rem 0 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .privacy-section p {
+            font-size: 1.1rem;
             line-height: 1.7;
-            margin-bottom: 18px;
-            color: #555;
+            color: #aaa;
+            margin-bottom: 1.5rem;
         }
 
-        .privacy-container h3 {
-            margin-top: 25px;
-            margin-bottom: 8px;
-            font-size: 18px;
-            color: #222;
+        .privacy-section ul {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .privacy-section ul li {
+            font-size: 1.1rem;
+            color: #aaa;
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .privacy-section ul li::before {
+            content: "◆";
+            color: #6366f1;
+            font-size: 0.8rem;
+            position: absolute;
+            left: 0;
+            top: 0.3rem;
+        }
+
+        .highlight-box {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            font-size: 1.2rem;
+            color: #fff;
         }
 
         .privacy-note {
-            font-size: 14px;
-            color: #777;
-            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 2rem;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 4rem 3rem;
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #6366f1;
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Scroll hint */
+        .scroll-hint {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            writing-mode: vertical-rl;
+            z-index: 90;
+            mix-blend-mode: difference;
+        }
+
+        .scroll-hint i {
+            margin-bottom: 1rem;
+            animation: bounce 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        @media (max-width: 900px) {
+            .site-header {
+                padding: 1.5rem 2rem;
+            }
+            .privacy-hero {
+                min-height: 30vh;
+                margin-top: 70px;
+                padding: 2rem 1.5rem;
+            }
+            .privacy-content {
+                padding: 2rem;
+                margin: 2rem 1.5rem;
+            }
+            .privacy-section h2 {
+                font-size: 1.5rem;
+            }
+            .nav-links {
+                gap: 1.5rem;
+            }
+            .cursor, .cursor-follower {
+                display: none;
+            }
+            .scroll-hint {
+                display: none;
+            }
         }
     </style>
 </head>
-
 <body>
 
-<header class="hero-header">
-    <div class="hero-container">
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
 
-        <!-- LEFT -->
-        <div class="hero-left">
-            <div>
-                <div class="hero-title">Retail<span>X</span></div>
-                <div class="hero-subtitle">Smart Inventory Management System</div>
+    <!-- Animated Background -->
+    <div class="gradient-bg"></div>
+
+    <!-- Scroll Hint -->
+    <div class="scroll-hint">
+        <i class="fas fa-arrow-down"></i> SCROLL
+    </div>
+
+    <!-- Header -->
+    <header class="site-header" id="mainHeader">
+        <div class="header-container">
+            <a href="/" class="logo">RETAIL<span>X</span></a>
+            <div class="nav-links">
+                <a href="/work/">Work</a>
+                <a href="/about/" class="active">About</a>
+                <a href="/contact/">Contact</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Privacy Hero Section -->
+    <section class="privacy-hero">
+        <h1>PRIVACY POLICY</h1>
+        <div class="hero-sub">
+            Your data security and privacy are our top priorities at RetailX
+        </div>
+    </section>
+
+    <!-- Privacy Content -->
+    <section class="privacy-content">
+        <div class="privacy-section">
+            <h2><i class="fas fa-shield-alt"></i> Our Commitment</h2>
+            <p>RetailX is a smart inventory and billing system developed to help retailers manage inventory, billing, and business operations efficiently. We are committed to protecting your privacy and ensuring the security of your business data.</p>
+        </div>
+
+        <div class="privacy-section">
+            <h2><i class="fas fa-database"></i> Information Usage</h2>
+            <p>RetailX only uses system-related data such as:</p>
+            <ul>
+                <li>Product details and inventory records</li>
+                <li>Billing information and transaction history</li>
+                <li>User roles and access permissions</li>
+                <li>Business operational data</li>
+            </ul>
+            <div class="highlight-box">
+                <p><i class="fas fa-check-circle" style="color: #6366f1; margin-right: 0.5rem;"></i> We only collect data necessary for the core functionality of the inventory management system.</p>
             </div>
         </div>
 
-        <!-- RIGHT -->
-        <div class="hero-right">
-            <a href="/" class="home-link">Home</a>
+        <div class="privacy-section">
+            <h2><i class="fas fa-lock"></i> Data Security</h2>
+            <p>All data is securely stored and accessed only by authorized users. We implement industry-standard security measures including:</p>
+            <ul>
+                <li>Encryption of sensitive data</li>
+                <li>Secure user authentication</li>
+                <li>Regular security audits</li>
+                <li>Role-based access control</li>
+            </ul>
         </div>
 
-    </div>
-</header>
+        <div class="privacy-section">
+            <h2><i class="fas fa-share-alt"></i> Data Sharing</h2>
+            <p>RetailX does not share user or business data with third parties. Your data remains confidential and is used solely for providing you with our inventory management services.</p>
+        </div>
 
-<div class="privacy-container">
-    <h1>Privacy Policy</h1>
+        <div class="privacy-section">
+            <h2><i class="fas fa-clock"></i> Data Retention</h2>
+            <p>We retain your business data for as long as your account is active or as needed to provide you services. You can request deletion of your data at any time by contacting our team.</p>
+        </div>
 
-    <p>
-        RetailX is a smart inventory and billing system developed to help retailers manage
-        inventory, billing, and business operations efficiently.
-    </p>
+        <div class="privacy-section">
+            <h2><i class="fas fa-envelope"></i> Contact Us</h2>
+            <p>If you have any questions regarding this policy or your data privacy, please contact the RetailX team:</p>
+            <ul>
+                <li><i class="fas fa-envelope" style="color: #6366f1; width: 20px;"></i> privacy@retailx.com</li>
+                <li><i class="fas fa-phone" style="color: #6366f1; width: 20px;"></i> +91 (555) 123-4567</li>
+                <li><i class="fas fa-map-marker-alt" style="color: #6366f1; width: 20px;"></i> Shegaon, Maharashtra, India</li>
+            </ul>
+        </div>
 
-    <h3>Information Usage</h3>
-    <p>
-        RetailX only uses system-related data such as product details, inventory records,
-        billing information, and user roles.
-    </p>
+        <p class="privacy-note">Last updated: February 2025 • This policy is effective immediately for all RetailX users.</p>
+    </section>
 
-    <h3>Data Security</h3>
-    <p>
-        All data is securely stored and accessed only by authorized users.
-    </p>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/terms/">Terms</a>
+            <a href="/privacy/" class="active">Privacy</a>
+            <a href="/cookies/">Cookies</a>
+        </div>
+        <div class="copyright">
+            © 2025 RetailX. All rights reserved. Built with intelligence by five dedicated developers.
+        </div>
+    </footer>
 
-    <h3>Data Sharing</h3>
-    <p>
-        RetailX does not share user or business data with third parties.
-    </p>
+    <script>
+        (function() {
+            // Custom cursor
+            const cursor = document.getElementById('cursor');
+            const follower = document.getElementById('cursorFollower');
 
-    <p class="privacy-note">
-        If you have any questions regarding this policy, please contact the RetailX team.
-    </p>
-</div>
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, { 
+                    duration: 0.1, 
+                    x: e.clientX, 
+                    y: e.clientY,
+                    overwrite: 'auto'
+                });
+                gsap.to(follower, { 
+                    duration: 0.3, 
+                    x: e.clientX, 
+                    y: e.clientY,
+                    overwrite: 'auto'
+                });
+            });
 
+            // Hover effects
+            const hoverElements = document.querySelectorAll('a, button, .privacy-section, .highlight-box');
+            hoverElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    gsap.to(cursor, { duration: 0.2, scale: 1.5, backgroundColor: 'rgba(99,102,241,0.2)' });
+                    gsap.to(follower, { duration: 0.2, scale: 1.2, backgroundColor: 'rgba(99,102,241,0.1)' });
+                });
+                el.addEventListener('mouseleave', () => {
+                    gsap.to(cursor, { duration: 0.2, scale: 1, backgroundColor: 'transparent' });
+                    gsap.to(follower, { duration: 0.2, scale: 1, backgroundColor: 'rgba(99,102,241,0.2)' });
+                });
+            });
+
+            // Header scroll effect
+            const header = document.getElementById('mainHeader');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // Parallax background
+            gsap.registerPlugin(ScrollTrigger);
+            
+            gsap.to('.gradient-bg', {
+                scrollTrigger: {
+                    trigger: 'body',
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 1
+                },
+                y: (i, target) => -ScrollTrigger.maxScroll * 0.2,
+                ease: 'none'
+            });
+
+            // Animate sections on scroll
+            gsap.utils.toArray('.privacy-section').forEach((section, i) => {
+                gsap.from(section, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    },
+                    y: 50,
+                    opacity: 0,
+                    duration: 0.8,
+                    delay: i * 0.1
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
