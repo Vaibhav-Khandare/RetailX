@@ -2115,6 +2115,7 @@ button {
     .page-container { 
         padding: 15px; 
     }
+    
     .kpi-container { 
         grid-template-columns: 1fr 1fr; 
     }
