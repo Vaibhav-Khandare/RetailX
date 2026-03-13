@@ -1655,6 +1655,7 @@ RetailX.POS = {
             const changeEl = $('#changeDueAmount');
             changeEl.text(RetailX.Utils.formatMoney(Math.abs(change)));
 
+            // Add a small epsilon to handle floating point precision
             if (change >= -0.001) {  // Allow tiny floating point errors
                 changeEl.addClass('text-success').removeClass('text-danger');
                 btn.prop('disabled', false);
