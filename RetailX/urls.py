@@ -5,10 +5,9 @@ from django.contrib import admin
 from django.urls import path
 from RetailX import views
 from . import views_api
-<<<<<<< Updated upstream
-=======
+
 from .views import chatbot_api
->>>>>>> Stashed changes
+
 
 urlpatterns = [
 
@@ -92,7 +91,7 @@ urlpatterns = [
     path('api/products-for-festival/', views.get_products_for_festival_api, name='products_for_festival'),
     path('api/predict/', views.predict_sales_api, name='predict_sales'),
     path('api/inventory/random/', views.get_random_inventory, name='random_inventory'),
-<<<<<<< Updated upstream
+
     path('logout/', views.logout_view, name='logout'),  # duplicate, but kept as is
 
     # ================== USER MANAGEMENT ENDPOINTS ==================
@@ -102,9 +101,8 @@ urlpatterns = [
     path('reset-password/<str:user_type>/<int:user_id>/', views.reset_password, name='reset_password'),
     path('export-users/', views.export_users, name='export_users'),
     path('bulk-reset-passwords/', views.bulk_reset_passwords, name='bulk_reset_passwords'),
-=======
 
     # Product list for reports (NEW)
     path('api/products/', views.product_list, name='product-list'),
->>>>>>> Stashed changes
+
 ]
