@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core import serializers
 from django.db import IntegrityError
 from django.db.models import Q
+from django.views.decorators.http import require_POST, require_GET
 
 from AccountsDB.models import Admin, Cashier, Manager
 from productsDB.models import Product
@@ -374,6 +375,32 @@ RetailX Team"""
         print("Error sending email:", e)
         return False
 
+def send_password_reset_email(email, temp_password, user_type):
+    """Helper to send password reset email."""
+    sender_email = "retailx.connect@gmail.com"
+    sender_password = "kalk fnar rmnz imwj"
+    subject = "Your RetailX Password Has Been Reset"
+    body = f"""Dear {user_type.capitalize()},
+
+Your password has been reset by an administrator.
+
+Your temporary password is: {temp_password}
+
+Please log in and change your password immediately.
+
+Thank you,
+RetailX Team"""
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = email
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, msg.as_string())
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 # -------------------------------------------------------------------
 # Public Pages
 # -------------------------------------------------------------------
@@ -538,7 +565,7 @@ def admin_registration(request):
 def manager_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '')
-        password = request.POST.get('password')
+        password = request.POST.get('password', '')
 
         try:
             manager = Manager.objects.get(username=username)
@@ -1614,3 +1641,172 @@ def get_random_inventory(request):
         p['id'] = idx + 1
 
     return JsonResponse({'products': selected})
+
+# ================== USER MANAGEMENT API VIEWS =====================
+
+@require_GET
+def get_user(request, user_type, user_id):
+    """Return user data as JSON for editing."""
+    if not request.session.get('username'):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
+    
+    model_map = {'admin': Admin, 'manager': Manager, 'cashier': Cashier}
+    model = model_map.get(user_type.lower())
+    if not model:
+        return JsonResponse({'success': False, 'error': 'Invalid user type'}, status=400)
+    
+    try:
+        user = model.objects.get(id=user_id)
+        data = {
+            'id': user.id,
+            'fullname': user.fullname,
+            'email': user.email,
+            'username': user.username,
+        }
+        return JsonResponse({'success': True, 'user': data})
+    except model.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+@require_POST
+def edit_user(request, user_type, user_id):
+    """Update user details."""
+    if not request.session.get('username'):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
+    
+    model_map = {'admin': Admin, 'manager': Manager, 'cashier': Cashier}
+    model = model_map.get(user_type.lower())
+    if not model:
+        return JsonResponse({'success': False, 'error': 'Invalid user type'}, status=400)
+    
+    try:
+        user = model.objects.get(id=user_id)
+        fullname = request.POST.get('fullname')
+        email = request.POST.get('email')
+        username = request.POST.get('username')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
+        
+        # Check uniqueness if changed
+        if username != user.username and model.objects.filter(username=username).exists():
+            return JsonResponse({'success': False, 'error': 'Username already taken'})
+        if email != user.email and model.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'error': 'Email already registered'})
+        
+        user.fullname = fullname
+        user.email = email
+        user.username = username
+        if password:
+            user.password = make_password(password)
+            user.confirm_password = user.password
+        user.save()
+        
+        return JsonResponse({'success': True, 'message': 'User updated successfully'})
+    except model.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+import logging
+logger = logging.getLogger(__name__)
+
+@require_POST
+def delete_user(request, user_type, user_id):
+    if not request.session.get('username'):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
+    
+    logger.info(f"Delete attempt: user_type={user_type}, user_id={user_id}")
+    model_map = {'admin': Admin, 'manager': Manager, 'cashier': Cashier}
+    model = model_map.get(user_type.lower())
+    if not model:
+        return JsonResponse({'success': False, 'error': 'Invalid user type'}, status=400)
+    
+    try:
+        user = model.objects.get(id=user_id)
+        name = user.fullname
+        user.delete()
+        logger.info(f"User {name} deleted")
+        return JsonResponse({'success': True, 'message': f'User {name} deleted successfully'})
+    except model.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+    except Exception as e:
+        logger.exception("Delete user error")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_POST
+def reset_password(request, user_type, user_id):
+    """Reset password for a user and email a temporary one."""
+    if not request.session.get('username'):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
+    
+    model_map = {'admin': Admin, 'manager': Manager, 'cashier': Cashier}
+    model = model_map.get(user_type.lower())
+    if not model:
+        return JsonResponse({'success': False, 'error': 'Invalid user type'}, status=400)
+    
+    try:
+        user = model.objects.get(id=user_id)
+        # Generate random password
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        user.password = make_password(temp_password)
+        user.confirm_password = user.password
+        user.save()
+        
+        # Send email
+        send_password_reset_email(user.email, temp_password, user_type)
+        
+        return JsonResponse({'success': True, 'message': f'Temporary password sent to {user.email}'})
+    except model.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_GET
+def export_users(request):
+    """Export all users to CSV."""
+    if not request.session.get('username'):
+        return redirect('/admin_login')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="users_export.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Type', 'Full Name', 'Email', 'Username'])
+    
+    for admin in Admin.objects.all():
+        writer.writerow(['Admin', admin.fullname, admin.email, admin.username])
+    for manager in Manager.objects.all():
+        writer.writerow(['Manager', manager.fullname, manager.email, manager.username])
+    for cashier in Cashier.objects.all():
+        writer.writerow(['Cashier', cashier.fullname, cashier.email, cashier.username])
+    
+    return response
+
+@require_POST
+def bulk_reset_passwords(request):
+    """Reset passwords for multiple users."""
+    if not request.session.get('username'):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        users = data.get('users', [])
+        model_map = {'admin': Admin, 'manager': Manager, 'cashier': Cashier}
+        results = []
+        
+        for u in users:
+            model = model_map.get(u['type'].lower())
+            if model:
+                try:
+                    user = model.objects.get(id=u['id'])
+                    temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+                    user.password = make_password(temp_password)
+                    user.confirm_password = user.password
+                    user.save()
+                    send_password_reset_email(user.email, temp_password, u['type'])
+                    results.append(f"{user.fullname} (OK)")
+                except Exception as e:
+                    results.append(f"ID {u['id']} failed: {str(e)}")
+        
+        return JsonResponse({'success': True, 'message': f'Processed {len(results)} users.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

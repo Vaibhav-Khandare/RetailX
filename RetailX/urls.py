@@ -1,34 +1,10 @@
 """
 URL configuration for RetailX project.
-
-
-
-
-
-
-
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from RetailX import views
 from . import views_api
-from .views import chatbot_api
-
-
-
 
 urlpatterns = [
 
@@ -40,7 +16,6 @@ urlpatterns = [
     path('api/cashiers/<int:cashier_id>/', views.get_cashier_details, name='get_cashier_details'),
     path('api/cashiers/<int:cashier_id>/edit/', views.edit_cashier, name='edit_cashier'),
     path('api/cashiers/<int:cashier_id>/delete/', views.delete_cashier, name='delete_cashier'),
-
 
     # Public Pages
     path('', views.index, name='home'),
@@ -112,9 +87,13 @@ urlpatterns = [
     path('api/products-for-festival/', views.get_products_for_festival_api),
     path('api/predict/', views.predict_sales_api),
     path('api/inventory/random/', views.get_random_inventory, name='random_inventory'),
-    path('logout/', views.logout_view, name='logout'),
-    
+    path('logout/', views.logout_view, name='logout'),  # duplicate, but kept as is
 
+    # ================== USER MANAGEMENT ENDPOINTS ==================
+    path('delete-user/<str:user_type>/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('get-user/<str:user_type>/<int:user_id>/', views.get_user, name='get_user'),
+    path('edit-user/<str:user_type>/<int:user_id>/', views.edit_user, name='edit_user'),
+    path('reset-password/<str:user_type>/<int:user_id>/', views.reset_password, name='reset_password'),
+    path('export-users/', views.export_users, name='export_users'),
+    path('bulk-reset-passwords/', views.bulk_reset_passwords, name='bulk_reset_passwords'),
 ]
-
-

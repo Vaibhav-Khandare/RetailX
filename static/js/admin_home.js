@@ -429,6 +429,42 @@ function setupFormHandlers() {
             });
         });
     }
+    
+    // Edit User Form - AJAX submission
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(editUserForm);
+            const userId = formData.get('user_id');
+            const userType = formData.get('user_type');
+            
+            fetch(`/edit-user/${userType}/${userId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('User updated successfully', 'success');
+                    closeEditUserModal();
+                    // Reload users table or refresh page
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Update failed', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Server error', 'error');
+            });
+        });
+    }
 }
 
 /* =========================
@@ -1676,46 +1712,61 @@ function loadRecentActivity() {
 ========================= */
 
 /**
- * Exports users data
+ * Exports users data (CSV download)
  */
 function exportUsers() {
-    showLoading();
-    setTimeout(() => {
-        showToast('Users exported successfully!', 'success');
-        hideLoading();
-    }, 1000);
+    window.location.href = '/export-users/';
 }
 
 /**
  * Bulk reset passwords for selected users
  */
 function bulkResetPassword() {
-    const selected = document.querySelectorAll('.user-checkbox:checked');
+    const selected = [];
+    document.querySelectorAll('.user-checkbox:checked').forEach(cb => {
+        selected.push({
+            id: cb.value,
+            type: cb.closest('tr').querySelector('.status-badge').textContent.trim().toLowerCase()
+        });
+    });
+    
     if (selected.length === 0) {
         showToast('Please select users first', 'warning');
         return;
     }
     
-    if (confirm(`Reset passwords for ${selected.length} selected users?`)) {
-        showLoading();
-        
-        // Get selected user IDs and types
-        const usersToReset = [];
-        selected.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            const roleBadge = row.querySelector('.status-badge');
-            const role = roleBadge ? roleBadge.textContent.toLowerCase() : 'user';
-            usersToReset.push({
-                id: checkbox.value,
-                type: role
+    Swal.fire({
+        title: `Reset passwords for ${selected.length} user(s)?`,
+        text: "Temporary passwords will be generated and emailed.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4361ee',
+        confirmButtonText: 'Yes, reset'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/bulk-reset-passwords/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ users: selected })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success');
+                } else {
+                    Swal.fire('Error!', data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error!', 'Server error', 'error');
             });
-        });
-        
-        setTimeout(() => {
-            showToast('Passwords reset emails sent!', 'success');
-            hideLoading();
-        }, 1500);
-    }
+        }
+    });
 }
 
 /**
@@ -1904,86 +1955,119 @@ function performGlobalSearch(term) {
 }
 
 /* =========================
-   EDIT FUNCTIONS (Stubs)
+   EDIT FUNCTIONS
 ========================= */
 
-/**
- * Edits a user
- * @param {string} id - User ID
- * @param {string} type - User type
- */
-function editUser(id, type) {
-    showToast(`Edit user ${id} (${type}) - Feature coming soon!`, 'info');
-}
-
-/**
- * Deletes a user
- * @param {string} id - User ID
- * @param {string} type - User type
- */
-function deleteUser(id, type) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        showLoading();
-        
-        // Create a form to submit the delete request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/delete-user/${type}/${id}/`;
-        
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
-        if (csrfToken) {
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrfmiddlewaretoken';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
+// Edit User Modal functions
+function openEditUserModal(userId, userType) {
+    fetch(`/get-user/${userType}/${userId}/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-        
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-/**
- * Resets user password
- * @param {string} id - User ID
- * @param {string} type - User type
- */
-function resetUserPassword(id, type) {
-    if (confirm('Reset password for this user? A temporary password will be generated.')) {
-        showLoading();
-        
-        // Create a form to submit the password reset request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/reset-password/${type}/${id}/`;
-        
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
-        if (csrfToken) {
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrfmiddlewaretoken';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('edit_user_id').value = data.user.id;
+            document.getElementById('edit_user_type').value = userType;
+            document.getElementById('edit_fullname').value = data.user.fullname;
+            document.getElementById('edit_email').value = data.user.email;
+            document.getElementById('edit_username').value = data.user.username;
+            document.getElementById('edit_role').value = userType.toLowerCase();
+            document.getElementById('edit_password').value = '';
+            document.getElementById('editUserModal').style.display = 'flex';
+        } else {
+            showToast('Error loading user data', 'error');
         }
-        
-        document.body.appendChild(form);
-        form.submit();
-    }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to load user', 'error');
+    });
 }
 
-/**
- * Edits a product
- * @param {string} id - Product ID
- */
+function closeEditUserModal() {
+    document.getElementById('editUserModal').style.display = 'none';
+}
+
+// Enhanced delete user with SweetAlert2
+function deleteUser(userId, userType) {
+    // Convert userType to lowercase for URL matching
+    const type = userType.toLowerCase();
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/delete-user/${type}/${userId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    Swal.fire('Error!', data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error!', 'Server error', 'error');
+            });
+        }
+    });
+}
+
+// Reset password with SweetAlert2
+function resetUserPassword(userId, userType) {
+    Swal.fire({
+        title: 'Reset Password?',
+        text: "A temporary password will be generated and sent to the user's email.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#4361ee',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Yes, reset it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/reset-password/${userType}/${userId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success');
+                } else {
+                    Swal.fire('Error!', data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error!', 'Server error', 'error');
+            });
+        }
+    });
+}
+
+// Placeholder edit product etc.
 function editProduct(id) {
     showToast(`Edit product ${id} - Feature coming soon!`, 'info');
 }
 
-/**
- * Deletes a product
- * @param {string} id - Product ID
- */
 function deleteProduct(id) {
     if (confirm('Are you sure you want to delete this product?')) {
         showLoading();
@@ -1993,7 +2077,7 @@ function deleteProduct(id) {
         form.method = 'POST';
         form.action = `/delete-product/${id}/`;
         
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : null;
+        const csrfToken = getCSRFToken();
         if (csrfToken) {
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
@@ -2007,47 +2091,27 @@ function deleteProduct(id) {
     }
 }
 
-/**
- * Views product details
- * @param {string} id - Product ID
- */
 function viewProductDetails(id) {
     showToast(`Viewing product ${id} details - Feature coming soon!`, 'info');
 }
 
-/**
- * Adjusts stock for a product
- * @param {string} id - Product ID
- */
 function adjustStock(id) {
     openInventoryModal();
     showToast(`Adjusting stock for product ${id}`, 'info');
 }
 
-/**
- * Views inventory history for a product
- * @param {string} id - Product ID
- */
 function viewInventoryHistory(id) {
     showToast(`Viewing inventory history for product ${id} - Feature coming soon!`, 'info');
 }
 
-/**
- * Toggles all user checkboxes
- */
 function toggleAllUsers() {
     const selectAll = document.getElementById('selectAllUsers');
-    if (!selectAll) return;
-    
     const isChecked = selectAll.checked;
     document.querySelectorAll('.user-checkbox').forEach(checkbox => {
         checkbox.checked = isChecked;
     });
 }
 
-/**
- * Updates sales chart based on selected period
- */
 function updateSalesChart() {
     const periodEl = document.getElementById('salesPeriod');
     const period = periodEl ? periodEl.value : null;
@@ -2059,9 +2123,6 @@ function updateSalesChart() {
     }, 500);
 }
 
-/**
- * Updates analytics based on selected period
- */
 function updateAnalytics() {
     const periodEl = document.getElementById('reportPeriod');
     const period = periodEl ? periodEl.value : null;
@@ -2074,9 +2135,6 @@ function updateAnalytics() {
     }, 500);
 }
 
-/**
- * Saves settings to localStorage
- */
 function saveSettings() {
     const emailCheck = document.getElementById('emailNotifications');
     const lowStockCheck = document.getElementById('lowStockAlerts');
@@ -2095,11 +2153,8 @@ function saveSettings() {
    CSRF TOKEN HELPER
 ========================= */
 
-/**
- * Gets CSRF token from cookies
- * @returns {string} CSRF token
- */
 function getCSRFToken() {
+    // Try to get from cookie first (Django default)
     let cookieValue = null;
     const name = "csrftoken";
     
@@ -2113,6 +2168,15 @@ function getCSRFToken() {
             }
         }
     }
+    
+    // If not found in cookie, try to get from hidden input
+    if (!cookieValue) {
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            cookieValue = csrfInput.value;
+        }
+    }
+    
     return cookieValue;
 }
 
@@ -2120,9 +2184,6 @@ function getCSRFToken() {
    CHATBOT FUNCTIONS
 ========================= */
 
-/**
- * Sends message to chatbot
- */
 function sendMessage() {
     const input = document.getElementById("chatbot-input");
     const messages = document.getElementById("chatbot-messages");
@@ -2196,20 +2257,12 @@ function sendMessage() {
     });
 }
 
-/**
- * Escapes HTML special characters
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
 }
 
-/**
- * Toggles chatbot visibility
- */
 function toggleChatbot() {
     const box = document.getElementById("chatbot-box");
 

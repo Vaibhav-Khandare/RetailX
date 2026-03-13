@@ -2077,3 +2077,215 @@ tbody tr:hover {
         display: block !important;
     }
 }
+
+/* ========== USER MANAGEMENT TABLE ENHANCEMENTS ========== */
+
+/* Improve table readability */
+#usersTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+#usersTable thead th {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--primary);
+}
+
+#usersTable tbody tr {
+    transition: all 0.2s ease;
+}
+
+#usersTable tbody tr:hover {
+    background: rgba(67, 97, 238, 0.03);
+    transform: scale(1.002);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#usersTable td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--text-main);
+    font-size: 14px;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+.status-badge.status-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(16,185,129,0.3);
+}
+
+.status-badge.status-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Action buttons container */
+td .action-btn.small {
+    margin: 0 3px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+td .action-btn.small i {
+    font-size: 14px;
+}
+
+td .action-btn.small:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+td .action-btn.small:nth-child(1):hover { /* Edit */
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+td .action-btn.small:nth-child(2):hover { /* Delete */
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+td .action-btn.small:nth-child(3):hover { /* Reset Password */
+    background: var(--warning);
+    border-color: var(--warning);
+    color: white;
+}
+
+/* Checkbox styling */
+#usersTable input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+    border-radius: 4px;
+}
+
+/* Action bar */
+.action-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-select, .search-input {
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    min-width: 180px;
+    transition: all 0.2s;
+}
+
+.filter-select:focus, .search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    outline: none;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.action-btn i {
+    font-size: 14px;
+}
+
+/* Export and reset buttons specific */
+.action-btn:nth-child(1) { /* Export */
+    border-color: #10b981;
+    color: #10b981;
+}
+.action-btn:nth-child(1):hover {
+    background: #10b981;
+    color: white;
+}
+.action-btn:nth-child(2) { /* Reset Passwords */
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+.action-btn:nth-child(2):hover {
+    background: #f59e0b;
+    color: white;
+}
+
+/* User count summary */
+.user-summary {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: var(--radius-md);
+    text-align: right;
+    color: var(--text-muted);
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+}
+
+/* Empty state styling */
+#usersTable tbody tr td[colspan] {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+#usersTable tbody tr td[colspan] i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: var(--text-light);
+}
