@@ -28,6 +28,180 @@ from productsDB.models import Product
 from .gemini_chat import ask_gemini
 
 from django.contrib.auth.decorators import login_required
+import os
+import joblib
+import numpy as np
+from django.conf import settings
+from functools import lru_cache
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+# Add these imports at the top of views.py if not already present
+import os
+import joblib
+import numpy as np
+import traceback
+from django.conf import settings
+from functools import lru_cache
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+# Correct path to your model files
+AGE_MODEL_PATH = os.path.join(settings.BASE_DIR, 'RetailX', 'trained_models', 'age_prediction')
+AGE_MODEL_FILE = os.path.join(AGE_MODEL_PATH, 'customer_age_prediction_model.pkl')
+ENCODERS_FILE = os.path.join(AGE_MODEL_PATH, 'encoders.pkl')
+
+print(f"=== Age Prediction Model Path ===")
+print(f"BASE_DIR: {settings.BASE_DIR}")
+print(f"AGE_MODEL_PATH: {AGE_MODEL_PATH}")
+print(f"Model file exists: {os.path.exists(AGE_MODEL_FILE)}")
+print(f"Encoders file exists: {os.path.exists(ENCODERS_FILE)}")
+print(f"================================")
+
+@csrf_exempt
+@require_POST
+def predict_age_api(request):
+    """
+    API endpoint for age group prediction.
+    Expects JSON: {
+        "product_category": str,
+        "brand": str,
+        "income": float,
+        "purchase_frequency": float,
+        "purchase_amount": float
+    }
+    Returns: { "age_group": str }
+    """
+    try:
+        print("=" * 50)
+        print("Age prediction API called")
+        
+        # Check if model files exist
+        if not os.path.exists(AGE_MODEL_FILE):
+            return JsonResponse({
+                'error': f'Model file not found at {AGE_MODEL_FILE}'
+            }, status=500)
+            
+        if not os.path.exists(ENCODERS_FILE):
+            return JsonResponse({
+                'error': f'Encoders file not found at {ENCODERS_FILE}'
+            }, status=500)
+        
+        # Load model and encoders
+        print(f"Loading model from: {AGE_MODEL_FILE}")
+        model = joblib.load(AGE_MODEL_FILE)
+        
+        print(f"Loading encoders from: {ENCODERS_FILE}")
+        encoders = joblib.load(ENCODERS_FILE)
+        
+        print(f"Encoders loaded. Keys: {encoders.keys()}")
+
+        # Parse request body
+        data = json.loads(request.body)
+        print(f"Received data: {data}")
+        
+        product_category = data.get('product_category', '').strip()
+        brand = data.get('brand', '').strip()
+        income = float(data.get('income', 0))
+        purchase_frequency = float(data.get('purchase_frequency', 0))
+        purchase_amount = float(data.get('purchase_amount', 0))
+
+        # Get the encoders with the correct keys
+        le_category = encoders["category"]
+        le_brand = encoders["brand"]
+        le_agegroup = encoders["agegroup"]
+
+        # Print all classes for debugging
+        print(f"\nAvailable categories ({len(le_category.classes_)}):")
+        print(list(le_category.classes_)[:10])  # Show first 10
+        
+        print(f"\nAvailable brands ({len(le_brand.classes_)}):")
+        print(list(le_brand.classes_)[:10])  # Show first 10
+        
+        print(f"\nAge groups: {list(le_agegroup.classes_)}")
+        
+        print(f"\nInput category: '{product_category}'")
+        print(f"Input brand: '{brand}'")
+
+        # Encode categorical features with error handling
+        try:
+            cat_encoded = le_category.transform([product_category])[0]
+            print(f"Encoded category: {cat_encoded}")
+        except ValueError as e:
+            # Get sample of valid categories
+            valid_cats = list(le_category.classes_)[:20]  # First 20 categories
+            error_msg = f"Unknown category '{product_category}'. Examples of valid categories: {valid_cats}"
+            print(error_msg)
+            return JsonResponse({'error': error_msg}, status=400)
+
+        try:
+            brand_encoded = le_brand.transform([brand])[0]
+            print(f"Encoded brand: {brand_encoded}")
+        except ValueError as e:
+            # Get sample of valid brands
+            valid_brands = list(le_brand.classes_)[:20]  # First 20 brands
+            error_msg = f"Unknown brand '{brand}'. Examples of valid brands: {valid_brands}"
+            print(error_msg)
+            return JsonResponse({'error': error_msg}, status=400)
+
+        # Prepare features in the exact order used during training
+        # Order: product_category, brand, income, purchase_frequency, purchase_amount
+        features = np.array([[cat_encoded, brand_encoded, income, purchase_frequency, purchase_amount]])
+        print(f"Feature array: {features[0]}")
+
+        # Predict
+        pred_encoded = model.predict(features)[0]
+        print(f"Predicted encoded: {pred_encoded}")
+
+        # Decode the predicted age group
+        age_group = le_agegroup.inverse_transform([pred_encoded])[0]
+        print(f"Predicted age group: {age_group}")
+
+        return JsonResponse({'age_group': age_group})
+
+    except json.JSONDecodeError as e:
+        print(f"JSONDecodeError: {str(e)}")
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Exception as e:
+        print("Exception in predict_age_api:")
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_valid_categories_brands(request):
+    """Return all valid categories and brands from the encoders"""
+    try:
+        print("=" * 50)
+        print("get_valid_categories_brands called")
+        
+        # Check if files exist
+        if not os.path.exists(ENCODERS_FILE):
+            return JsonResponse({
+                'error': f'Encoders file not found at {ENCODERS_FILE}'
+            }, status=500)
+        
+        # Load only the encoders (not the model)
+        encoders = joblib.load(ENCODERS_FILE)
+        
+        categories = list(encoders["category"].classes_)
+        brands = list(encoders["brand"].classes_)
+        
+        print(f"Returning {len(categories)} categories and {len(brands)} brands")
+        
+        return JsonResponse({
+            'categories': categories,
+            'brands': brands
+        })
+    except Exception as e:
+        print("Exception in get_valid_categories_brands:")
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
 #from .models import Product  # adjust import to your actual model
 
 # ============================================
@@ -310,6 +484,7 @@ def get_festival_sales(festival_name):
             'least_products': [],
             'festival': festival_name
         }
+
 
     print(f"Found {len(festival_models)} models for festival {festival_name}")
     predictions = []

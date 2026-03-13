@@ -1897,6 +1897,7 @@ RetailX.Reports = {
                     a.click();
                     window.URL.revokeObjectURL(url);
 
+
                     RetailX.showToast('Report generated successfully', 'success');
                 } else {
                     RetailX.showToast('No products found', 'warning');
@@ -1978,4 +1979,112 @@ $(document).ready(function() {
     RetailX.Logout.init();
 
     console.log('✅ All modules initialized successfully');
+});
+
+// Age Prediction Module - Clean Version
+RetailX.AgePrediction = {
+    init: function() {
+        console.log('👥 Initializing Age Prediction...');
+        this.bindEvents();
+        this.loadValidOptions();
+    },
+
+    bindEvents: function() {
+        // Remove any existing handlers first
+        $('#agePredictionForm').off('submit');
+        
+        // Simple submit handler
+        $('#agePredictionForm').on('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submitted');
+            RetailX.AgePrediction.predictAge();
+            return false;
+        });
+
+        // Reset button
+        $('#resetPredictionForm').off('click').on('click', function(e) {
+            e.preventDefault();
+            RetailX.AgePrediction.resetForm();
+        });
+    },
+
+    loadValidOptions: function() {
+        $.ajax({
+            url: '/api/valid-categories-brands/',
+            method: 'GET',
+            success: function(response) {
+                console.log('Options loaded:', response);
+            },
+            error: function(xhr) {
+                console.error('Failed to load options:', xhr);
+            }
+        });
+    },
+
+    predictAge: function() {
+        // Get values
+        const category = $('#productCategory').val().trim();
+        const brand = $('#brand').val().trim();
+        const income = $('#income').val().trim();
+        const frequency = $('#purchaseFrequency').val().trim();
+        const amount = $('#purchaseAmount').val().trim();
+
+        if (!category || !brand || !income || !frequency || !amount) {
+            RetailX.showToast('Please fill all fields', 'warning');
+            return;
+        }
+
+        // Show loading
+        const btn = $('#predictAgeBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
+
+        // Make request
+        $.ajax({
+            url: '/api/predict-age/',
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                product_category: category,
+                brand: brand,
+                income: parseFloat(income),
+                purchase_frequency: parseFloat(frequency),
+                purchase_amount: parseFloat(amount)
+            }),
+            success: function(response) {
+                console.log('Success:', response);
+                
+                // SIMPLE DISPLAY - just set text and show
+                $('#ageGroupResult').text(response.age_group);
+                $('#predictionResult').show();
+                
+                RetailX.showToast('Prediction complete!', 'success');
+            },
+            error: function(xhr) {
+                console.error('Error:', xhr);
+                let msg = 'Prediction failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    msg = xhr.responseJSON.error;
+                }
+                RetailX.showToast(msg, 'error');
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-magic"></i> Predict Age Group');
+            }
+        });
+    },
+
+    resetForm: function() {
+        $('#productCategory, #brand, #income, #purchaseFrequency, #purchaseAmount').val('');
+        $('#predictionResult').hide();
+    }
+};
+
+// Simple initialization
+$(document).on('click', '.menu-item[data-page="analysis"]', function() {
+    setTimeout(function() {
+        if (typeof RetailX.AgePrediction !== 'undefined') {
+            RetailX.AgePrediction.init();
+        }
+    }, 200);
 });

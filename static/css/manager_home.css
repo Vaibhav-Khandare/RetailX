@@ -2766,6 +2766,7 @@ body {
         align-items: stretch;
         text-align: center;
     }
+
     
     .pagination-controls {
         justify-content: center;
@@ -2924,5 +2925,162 @@ body {
         right: 10px;
         left: 10px;
         width: auto;
+    }
+}
+
+.analysis-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.prediction-card {
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.form-row .form-group {
+    flex: 1 1 200px;
+}
+
+.form-actions {
+    margin-top: 20px;
+}
+
+.prediction-result {
+    margin-top: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary);
+    text-align: center;
+}
+
+.prediction-result h4 {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+#ageGroupResult {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Analysis Page Styles */
+.analysis-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.prediction-card {
+    transition: all 0.3s ease;
+}
+
+.prediction-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.form-group input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    outline: none;
+}
+
+#predictionResult {
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.help-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Datalist styling (works in some browsers) */
+datalist {
+    display: none;
+}
+
+/* Add this to your manager_home.css or in a <style> tag */
+#predictionResult {
+    display: none !important; /* This might be the issue - it's hidden by default */
+    margin-top: 30px !important;
+    padding: 24px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+    color: white !important;
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+#predictionResult.show {
+    display: block !important;
+}
+
+#ageGroupResult {
+    font-size: 48px !important;
+    font-weight: 800 !important;
+    color: white !important;
+    margin: 10px 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Analysis Page Specific Styles */
+#analysis-page .form-control:focus {
+    outline: none;
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+#predictionResult {
+    transition: all 0.3s ease;
+}
+
+#predictionResult h3 {
+    color: white !important;
+}
+
+#predictionResult p {
+    color: white !important;
+}
+
+/* Ensure result is visible when displayed */
+#predictionResult[style*="display: block"] {
+    display: block !important;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
