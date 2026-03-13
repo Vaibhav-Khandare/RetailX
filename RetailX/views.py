@@ -27,6 +27,106 @@ from productsDB.models import Product
 
 from .gemini_chat import ask_gemini
 
+from django.contrib.auth.decorators import login_required
+#from .models import Product  # adjust import to your actual model
+
+# ============================================
+# Product list (for reports)
+# ============================================
+@login_required
+def product_list(request):
+    """
+    Returns a JSON list of all products.
+    Required fields: serial_no, product_name, price, quantity, category, subcategory.
+    """
+    products = Product.objects.all().values(
+        'serial_no',
+        'product_name',
+        'price',
+        'quantity',
+        'category',
+        'subcategory'
+    )
+    return JsonResponse({'products': list(products)})
+
+# ============================================
+# Random inventory (already exists, but ensure it returns the correct format)
+# ============================================
+@login_required
+def get_random_inventory(request):
+    """
+    Returns a random sample of products for the inventory table.
+    """
+    products = list(Product.objects.all().values(
+        'id', 'serial_no', 'product_name', 'price', 'quantity', 'category', 'subcategory'
+    ))
+    random.shuffle(products)
+    return JsonResponse({'products': products})
+
+# ============================================
+# Prediction helpers (if not already present)
+# ============================================
+@login_required
+def get_products_for_festival_api(request):
+    """
+    Returns a list of product names for a given festival (mock).
+    """
+    festival = request.GET.get('festival', '')
+    mock_products = {
+        'Diwali': ['Fireworks', 'Sweets', 'Lights'],
+        'Christmas': ['Tree', 'Gifts', 'Candles'],
+        'Eid': ['Sweets', 'Clothes', 'Dates'],
+    }
+    products = mock_products.get(festival, [])
+    return JsonResponse({'products': products})
+
+@login_required
+def predict_sales_api(request):
+    """
+    Returns mock prediction data.
+    """
+    product_name = request.GET.get('product')
+    predicted_units = random.randint(50, 200)
+    product = Product.objects.filter(product_name=product_name).first()
+    price = product.price if product else 100
+    predicted_revenue = predicted_units * price
+    return JsonResponse({
+        'predicted_units': predicted_units,
+        'predicted_revenue': predicted_revenue,
+        'date': request.GET.get('date')
+    })
+
+
+
+
+
+
+
+
+
+
+def product_list(request):
+    """
+    Returns a JSON list of all products.
+    Each product object contains: serial_no, product_name, price, quantity, category, subcategory.
+    """
+    products = Product.objects.all().values(
+        'serial_no',
+        'product_name',
+        'price',
+        'quantity',
+        'category',
+        'subcategory'
+    )
+    return JsonResponse({'products': list(products)})
+
+
+
+
+
+
+
+
 # ------------------------------
 # Path to trained models folders
 # ------------------------------

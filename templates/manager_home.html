@@ -144,9 +144,9 @@
                     <div class="kpi-card">
                         <div class="kpi-header">
                             <h3>Total Revenue</h3>
-                            <i class="fas fa-rupee-sign"></i>   <!-- Rupee icon -->
+                            <i class="fas fa-rupee-sign"></i>
                         </div>
-                        <div class="kpi-value" id="totalRevenue">₹156,780</div>   <!-- Rupee symbol in text -->
+                        <div class="kpi-value" id="totalRevenue">₹156,780</div>
                         <div class="kpi-trend positive">
                             <i class="fas fa-arrow-up"></i> 12.5% from last month
                         </div>
@@ -285,7 +285,7 @@
                 </div>
             </div>
 
-            <!-- INVENTORY PAGE (CORRECTED COLUMN ORDER) -->
+            <!-- INVENTORY PAGE -->
             <div class="page" id="inventory-page">
                 <div class="inventory-container">
                     <!-- Page Header -->
@@ -400,7 +400,7 @@
                         </div>
                     </div>
 
-                    <!-- Inventory Table (Corrected Column Order) -->
+                    <!-- Inventory Table -->
                     <div class="inventory-table-container">
                         <table class="inventory-table">
                             <thead>
@@ -461,25 +461,17 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div class="inventory-quick-actions">
-                        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-                        <div class="action-grid">
-                            <div class="quick-action-card" onclick="RetailX.Inventory.printLabels()">
+                    <!-- Inventory Reports Actions (two cards at bottom) -->
+                    <div class="inventory-reports-actions">
+                        <h3><i class="fas fa-file-export"></i> Generate Reports</h3>
+                        <div class="action-grid two-col">
+                            <div class="quick-action-card" onclick="RetailX.Reports.printPriceLabels()">
                                 <i class="fas fa-print"></i>
                                 <span>Print Price Labels</span>
                             </div>
-                            <div class="quick-action-card" onclick="RetailX.Inventory.showBulkEdit()">
-                                <i class="fas fa-edit"></i>
-                                <span>Bulk Edit</span>
-                            </div>
-                            <div class="quick-action-card" onclick="RetailX.Inventory.generateReport()">
+                            <div class="quick-action-card" onclick="RetailX.Reports.stockReport()">
                                 <i class="fas fa-chart-bar"></i>
                                 <span>Stock Report</span>
-                            </div>
-                            <div class="quick-action-card" onclick="RetailX.Inventory.scanBarcode()">
-                                <i class="fas fa-qrcode"></i>
-                                <span>Scan Barcode</span>
                             </div>
                         </div>
                     </div>
@@ -665,16 +657,45 @@
             <!-- REPORTS PAGE -->
             <div class="page" id="reports-page">
                 <div class="reports-container">
-                    <h2>Reports</h2>
-                    <p class="coming-soon">Coming soon...</p>
+                    <!-- Page Header -->
+                    <div class="reports-header">
+                        <h2><i class="fas fa-file-alt"></i> Reports</h2>
+                        <p class="header-subtitle">Generate and download reports</p>
+                    </div>
+
+                    <!-- Quick Actions Cards (two cards) -->
+                    <div class="reports-quick-actions">
+                        <div class="action-grid two-col">
+                            <div class="quick-action-card" onclick="RetailX.Reports.printPriceLabels()">
+                                <i class="fas fa-print"></i>
+                                <span>Print Price Labels</span>
+                            </div>
+                            <div class="quick-action-card" onclick="RetailX.Reports.stockReport()">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Stock Report</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- SETTINGS PAGE -->
             <div class="page" id="settings-page">
                 <div class="settings-container">
-                    <h2>Settings</h2>
-                    <p class="coming-soon">Coming soon...</p>
+                    <div class="settings-header">
+                        <h2><i class="fas fa-sliders-h"></i> Settings</h2>
+                        <p class="header-subtitle">Configure your preferences</p>
+                    </div>
+
+                    <!-- Placeholder card -->
+                    <div class="settings-quick-actions">
+                        <div class="action-grid one-col">
+                            <div class="quick-action-card" onclick="RetailX.Settings.showComingSoon()">
+                                <i class="fas fa-tools"></i>
+                                <span>Settings (Coming Soon)</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

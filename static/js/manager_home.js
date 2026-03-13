@@ -1551,11 +1551,6 @@ RetailX.Inventory = {
             this.exportToCSV(lowStock, 'low_stock_products');
             RetailX.showToast(`Exported ${lowStock.length} low stock items`, 'success');
         });
-
-        $('.quick-action-card').on('click', function() {
-            const action = $(this).find('span').text();
-            RetailX.showToast(`${action} feature coming soon!`, 'info');
-        });
     },
 
     loadInventory: function(showLoader = true) {
@@ -1837,24 +1832,95 @@ RetailX.Inventory = {
         a.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
-    },
-
-    printLabels: function() {
-        RetailX.showToast('Print labels feature coming soon!', 'info');
-    },
-    showBulkEdit: function() {
-        RetailX.showToast('Bulk edit feature coming soon!', 'info');
-    },
-    generateReport: function() {
-        RetailX.showToast('Stock report feature coming soon!', 'info');
-    },
-    scanBarcode: function() {
-        RetailX.showToast('Barcode scanning feature coming soon!', 'info');
     }
 };
 
 // ============================================
-// LOGOUT HANDLER (UPDATED)
+// REPORTS MODULE (Print Price Labels & Stock Report)
+// ============================================
+RetailX.Reports = {
+    /**
+     * Generate a price label CSV (Serial No, Product Name, Price)
+     */
+    printPriceLabels: function() {
+        this._generateReport(
+            'price_labels',
+            ['Serial No', 'Product Name', 'Price'],
+            (product) => [product.serial_no || '', product.product_name, product.price]
+        );
+    },
+
+    /**
+     * Generate a stock report CSV (Product Name, Quantity)
+     */
+    stockReport: function() {
+        this._generateReport(
+            'stock_report',
+            ['Product Name', 'Quantity'],
+            (product) => [product.product_name, product.quantity]
+        );
+    },
+
+    /**
+     * Internal method: fetch products from /api/products/ and create CSV
+     */
+    _generateReport: function(filenamePrefix, headers, rowMapper) {
+        RetailX.showToast('Generating report...', 'info');
+
+        $.ajax({
+            url: '/api/products/',
+            method: 'GET',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            success: (response) => {
+                if (response.products && response.products.length > 0) {
+                    const products = response.products;
+                    const csvRows = [];
+
+                    csvRows.push(headers.join(','));
+
+                    products.forEach(p => {
+                        const row = rowMapper(p).map(cell => {
+                            if (typeof cell === 'string') {
+                                return `"${cell.replace(/"/g, '""')}"`;
+                            }
+                            return cell;
+                        }).join(',');
+                        csvRows.push(row);
+                    });
+
+                    const csvString = csvRows.join('\n');
+                    const blob = new Blob([csvString], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    RetailX.showToast('Report generated successfully', 'success');
+                } else {
+                    RetailX.showToast('No products found', 'warning');
+                }
+            },
+            error: (xhr) => {
+                console.error('Failed to fetch products:', xhr);
+                RetailX.showToast('Failed to fetch products. Check console.', 'error');
+            }
+        });
+    }
+};
+
+// ============================================
+// SETTINGS MODULE (simple placeholder)
+// ============================================
+RetailX.Settings = {
+    showComingSoon: function() {
+        RetailX.showToast('Settings feature coming soon!', 'info');
+    }
+};
+
+// ============================================
+// LOGOUT HANDLER
 // ============================================
 RetailX.Logout = {
     init: function() {
@@ -1882,11 +1948,9 @@ RetailX.Logout = {
             method: 'POST',
             headers: { 'X-CSRFToken': getCSRFToken() },
             success: function() {
-                // ✅ Redirect to the correct manager login page
                 window.location.href = '/manager_login/';
             },
             error: function() {
-                // Fallback: direct GET logout or redirect to login
                 window.location.href = '/manager_login/';
             }
         });
@@ -1911,7 +1975,7 @@ $(document).ready(function() {
     RetailX.NotificationManager.init();
     RetailX.Chatbot.init();
     RetailX.Inventory.init();
-    RetailX.Logout.init();  // Initialize logout handler
+    RetailX.Logout.init();
 
     console.log('✅ All modules initialized successfully');
 });

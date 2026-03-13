@@ -2585,7 +2585,8 @@ body {
     vertical-align: middle;
 }
 
-.inventory-quick-actions {
+/* Inventory Reports Actions (new section) */
+.inventory-reports-actions {
     background: white;
     border-radius: var(--radius-xl);
     padding: 20px;
@@ -2594,7 +2595,7 @@ body {
     border: 1px solid #f1f5f9;
 }
 
-.inventory-quick-actions h3 {
+.inventory-reports-actions h3 {
     font-size: 16px;
     color: var(--text-main);
     margin-bottom: 16px;
@@ -2603,40 +2604,116 @@ body {
     gap: 8px;
 }
 
-.action-grid {
+.inventory-reports-actions h3 i {
+    color: var(--primary);
+}
+
+.inventory-reports-actions .action-grid.two-col {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
-.quick-action-card {
-    background: #f8fafc;
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
+/* ============================================
+   REPORTS PAGE (NEW)
+   ============================================ */
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: var(--gradient-blue);
+    padding: 20px 24px;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 20px rgba(67, 97, 238, 0.25);
 }
 
-.quick-action-card:hover {
-    background: white;
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.reports-header h2 {
+    color: white;
+    font-size: 24px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.quick-action-card i {
+.reports-header h2 i {
     font-size: 28px;
-    color: var(--primary);
-    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 10px;
 }
 
-.quick-action-card span {
-    display: block;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--text-main);
+.reports-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin: 0;
+}
+
+.reports-quick-actions {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 24px;
+    border: 1px solid #f1f5f9;
+}
+
+.reports-quick-actions .action-grid.two-col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+/* ============================================
+   SETTINGS PAGE (NEW)
+   ============================================ */
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: var(--gradient-blue);
+    padding: 20px 24px;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 20px rgba(67, 97, 238, 0.25);
+}
+
+.settings-header h2 {
+    color: white;
+    font-size: 24px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-header h2 i {
+    font-size: 28px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.settings-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin: 0;
+}
+
+.settings-quick-actions {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 24px;
+    border: 1px solid #f1f5f9;
+}
+
+.settings-quick-actions .action-grid.one-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
 }
 
 /* ============================================
@@ -2653,7 +2730,8 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .action-grid {
+    .inventory-reports-actions .action-grid.two-col,
+    .reports-quick-actions .action-grid.two-col {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -2776,7 +2854,8 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .action-grid {
+    .inventory-reports-actions .action-grid.two-col,
+    .reports-quick-actions .action-grid.two-col {
         grid-template-columns: 1fr;
     }
 }
