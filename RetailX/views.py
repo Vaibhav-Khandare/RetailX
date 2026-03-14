@@ -1958,8 +1958,6 @@ def edit_user(request, user_type, user_id):
         fullname = request.POST.get('fullname')
         email = request.POST.get('email')
         username = request.POST.get('username')
-        role = request.POST.get('role')
-        password = request.POST.get('password')
         
         # Check uniqueness if changed
         if username != user.username and model.objects.filter(username=username).exists():
@@ -1970,9 +1968,6 @@ def edit_user(request, user_type, user_id):
         user.fullname = fullname
         user.email = email
         user.username = username
-        if password:
-            user.password = make_password(password)
-            user.confirm_password = user.password
         user.save()
         
         return JsonResponse({'success': True, 'message': 'User updated successfully'})

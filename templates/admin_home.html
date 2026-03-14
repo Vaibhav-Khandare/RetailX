@@ -108,10 +108,10 @@
 
             <div class="topbar-right">
                 <!-- Search Box -->
-                <div class="search-box">
+                <!-- <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
-                </div>
+                </div> -->
 
                 <!-- KPI Pills -->
                 <div class="kpi-pills">
@@ -260,7 +260,7 @@
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn" onclick="exportUsers()"><i class="fas fa-file-export"></i> Export</button>
-                        <button class="action-btn" onclick="bulkResetPassword()"><i class="fas fa-key"></i> Reset Passwords</button>
+                        <!-- <button class="action-btn" onclick="bulkResetPassword()"><i class="fas fa-key"></i> Reset Passwords</button> -->
                     </div>
                 </div>
 
@@ -273,7 +273,6 @@
                                 <th>Email</th>
                                 <th>Username</th>
                                 <th>Role</th>
-                                <th>Status</th>
                                 <th>Last Login</th>
                                 <th>Actions</th>
                             </tr>
@@ -287,19 +286,16 @@
                                     <td>{{ user.email }}</td>
                                     <td>{{ user.username }}</td>
                                     <td><span class="status-badge">{{ user.role|capfirst }}</span></td>
-                                    <td><span class="status-badge status-active">{{ user.status }}</span></td>
                                     <td>{{ user.last_login }}</td>
                                     <td>
-                                        <!-- Changed edit button to use openEditUserModal -->
                                         <button class="action-btn small" onclick="openEditUserModal('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-edit"></i></button>
                                         <button class="action-btn small" onclick="deleteUser('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-trash"></i></button>
-                                        <button class="action-btn small" onclick="resetUserPassword('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-key"></i></button>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <td colspan="7" style="text-align: center; padding: 40px;">
                                         <i class="fas fa-users-slash" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
                                         <p>No users found. Add your first user using the "Add New User" button above.</p>
                                     </td>
@@ -665,7 +661,7 @@
         </div>
     </div>
 
-    <!-- Edit User Modal (NEW) -->
+    <!-- Edit User Modal (updated – no password, no role) -->
     <div id="editUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -688,18 +684,6 @@
                     <div class="form-group">
                         <label>Username</label>
                         <input type="text" name="username" id="edit_username" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select name="role" id="edit_role" required>
-                            <option value="admin">Admin</option>
-                            <option value="manager">Manager</option>
-                            <option value="cashier">Cashier</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>New Password (leave blank to keep current)</label>
-                        <input type="password" name="password" id="edit_password">
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
@@ -866,7 +850,7 @@
         </div>
     </div>
 
-    <!-- CSRF Token for AJAX (already present in forms, but also add a meta or hidden element for easy access) -->
+    <!-- CSRF Token for AJAX (already present in forms) -->
     {% csrf_token %}
 
     <!-- ========== SCRIPTS ========== -->

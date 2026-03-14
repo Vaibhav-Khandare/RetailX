@@ -430,7 +430,7 @@ function setupFormHandlers() {
         });
     }
     
-    // Edit User Form - AJAX submission
+    // Edit User Form - AJAX submission (updated – no role or password sent)
     const editUserForm = document.getElementById('editUserForm');
     if (editUserForm) {
         editUserForm.addEventListener('submit', function(e) {
@@ -1973,8 +1973,6 @@ function openEditUserModal(userId, userType) {
             document.getElementById('edit_fullname').value = data.user.fullname;
             document.getElementById('edit_email').value = data.user.email;
             document.getElementById('edit_username').value = data.user.username;
-            document.getElementById('edit_role').value = userType.toLowerCase();
-            document.getElementById('edit_password').value = '';
             document.getElementById('editUserModal').style.display = 'flex';
         } else {
             showToast('Error loading user data', 'error');
@@ -2028,7 +2026,7 @@ function deleteUser(userId, userType) {
     });
 }
 
-// Reset password with SweetAlert2
+// Reset password with SweetAlert2 (kept but button removed)
 function resetUserPassword(userId, userType) {
     Swal.fire({
         title: 'Reset Password?',
@@ -2045,7 +2043,8 @@ function resetUserPassword(userId, userType) {
                 headers: {
                     'X-CSRFToken': getCSRFToken(),
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                body: new URLSearchParams({ user_id: userId }) // not needed but safe
             })
             .then(response => response.json())
             .then(data => {
