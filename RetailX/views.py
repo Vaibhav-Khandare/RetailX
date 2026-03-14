@@ -5,6 +5,7 @@ import smtplib
 import csv
 from email.mime.text import MIMEText
 from datetime import datetime, date as date_type
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np
@@ -28,32 +29,21 @@ from productsDB.models import Product
 from .gemini_chat import ask_gemini
 
 from django.contrib.auth.decorators import login_required
-import os
-import joblib
-import numpy as np
-from django.conf import settings
-from functools import lru_cache
-
-
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-
-# Add these imports at the top of views.py if not already present
-import os
-import joblib
-import numpy as np
 import traceback
-from django.conf import settings
 from functools import lru_cache
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 
-# Correct path to your model files
+# ============================================
+# AGE PREDICTION MODEL SETUP
+# ============================================
+
+# Path to your model files
 AGE_MODEL_PATH = os.path.join(settings.BASE_DIR, 'RetailX', 'trained_models', 'age_prediction')
 AGE_MODEL_FILE = os.path.join(AGE_MODEL_PATH, 'customer_age_prediction_model.pkl')
 ENCODERS_FILE = os.path.join(AGE_MODEL_PATH, 'encoders.pkl')
+
+# Path to customer data CSV for category-brand mapping
+CUSTOMER_DATA_CSV = os.path.join(settings.BASE_DIR, 'static', 'Dataset_CSV', 'customer_data.csv')
+_category_brands = None
 
 print(f"=== Age Prediction Model Path ===")
 print(f"BASE_DIR: {settings.BASE_DIR}")
@@ -62,19 +52,59 @@ print(f"Model file exists: {os.path.exists(AGE_MODEL_FILE)}")
 print(f"Encoders file exists: {os.path.exists(ENCODERS_FILE)}")
 print(f"================================")
 
+def get_category_brands_mapping():
+    """Load category to brands mapping from customer_data.csv"""
+    global _category_brands
+    if _category_brands is not None:
+        return _category_brands
+    
+    mapping = defaultdict(set)
+    try:
+        if not os.path.exists(CUSTOMER_DATA_CSV):
+            print(f"Warning: Customer data CSV not found at {CUSTOMER_DATA_CSV}")
+            _category_brands = {}
+            return _category_brands
+            
+        with open(CUSTOMER_DATA_CSV, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                cat = row.get('product_category', '').strip()
+                brand = row.get('brand', '').strip()
+                if cat and brand:
+                    mapping[cat].add(brand)
+        
+        # Convert sets to sorted lists
+        for cat in mapping:
+            mapping[cat] = sorted(list(mapping[cat]))
+        
+        _category_brands = dict(mapping)
+        print(f"Loaded {len(_category_brands)} categories with brands from CSV")
+        
+    except Exception as e:
+        print(f"Error loading customer_data.csv: {e}")
+        _category_brands = {}
+    
+    return _category_brands
+
+@lru_cache(maxsize=1)
+def load_age_prediction_model():
+    """Load and cache the KNN model and encoders."""
+    if not os.path.exists(AGE_MODEL_FILE):
+        raise FileNotFoundError(f"Model file not found at {AGE_MODEL_FILE}")
+    if not os.path.exists(ENCODERS_FILE):
+        raise FileNotFoundError(f"Encoders file not found at {ENCODERS_FILE}")
+    
+    model = joblib.load(AGE_MODEL_FILE)
+    encoders = joblib.load(ENCODERS_FILE)
+    
+    return model, encoders
+
 @csrf_exempt
 @require_POST
 def predict_age_api(request):
     """
     API endpoint for age group prediction.
-    Expects JSON: {
-        "product_category": str,
-        "brand": str,
-        "income": float,
-        "purchase_frequency": float,
-        "purchase_amount": float
-    }
-    Returns: { "age_group": str }
+    UPDATED: Model now expects only 2 features (product_category and brand)
     """
     try:
         print("=" * 50)
@@ -99,6 +129,9 @@ def predict_age_api(request):
         encoders = joblib.load(ENCODERS_FILE)
         
         print(f"Encoders loaded. Keys: {encoders.keys()}")
+        
+        # DEBUG: Check what features the model expects
+        print(f"✅ Model expects {model.n_features_in_} features (should be 2)")
 
         # Parse request body
         data = json.loads(request.body)
@@ -106,35 +139,22 @@ def predict_age_api(request):
         
         product_category = data.get('product_category', '').strip()
         brand = data.get('brand', '').strip()
-        income = float(data.get('income', 0))
-        purchase_frequency = float(data.get('purchase_frequency', 0))
-        purchase_amount = float(data.get('purchase_amount', 0))
 
-        # Get the encoders with the correct keys
+        # Get the encoders
         le_category = encoders["category"]
         le_brand = encoders["brand"]
         le_agegroup = encoders["agegroup"]
 
-        # Print all classes for debugging
-        print(f"\nAvailable categories ({len(le_category.classes_)}):")
-        print(list(le_category.classes_)[:10])  # Show first 10
-        
-        print(f"\nAvailable brands ({len(le_brand.classes_)}):")
-        print(list(le_brand.classes_)[:10])  # Show first 10
-        
-        print(f"\nAge groups: {list(le_agegroup.classes_)}")
-        
         print(f"\nInput category: '{product_category}'")
         print(f"Input brand: '{brand}'")
 
-        # Encode categorical features with error handling
+        # Encode categorical features
         try:
             cat_encoded = le_category.transform([product_category])[0]
             print(f"Encoded category: {cat_encoded}")
         except ValueError as e:
-            # Get sample of valid categories
-            valid_cats = list(le_category.classes_)[:20]  # First 20 categories
-            error_msg = f"Unknown category '{product_category}'. Examples of valid categories: {valid_cats}"
+            valid_cats = list(le_category.classes_)
+            error_msg = f"Unknown category '{product_category}'. Valid categories: {valid_cats}"
             print(error_msg)
             return JsonResponse({'error': error_msg}, status=400)
 
@@ -142,15 +162,16 @@ def predict_age_api(request):
             brand_encoded = le_brand.transform([brand])[0]
             print(f"Encoded brand: {brand_encoded}")
         except ValueError as e:
-            # Get sample of valid brands
-            valid_brands = list(le_brand.classes_)[:20]  # First 20 brands
-            error_msg = f"Unknown brand '{brand}'. Examples of valid brands: {valid_brands}"
+            valid_brands = list(le_brand.classes_)[:20]
+            error_msg = f"Unknown brand '{brand}'. Valid brands: {valid_brands}..."
             print(error_msg)
             return JsonResponse({'error': error_msg}, status=400)
 
-        # Prepare features in the exact order used during training
-        # Order: product_category, brand, income, purchase_frequency, purchase_amount
-        features = np.array([[cat_encoded, brand_encoded, income, purchase_frequency, purchase_amount]])
+        # ===== IMPORTANT FIX =====
+        # Prepare features with ONLY 2 features (matching the retrained model)
+        # Order: [product_category, brand]
+        features = np.array([[cat_encoded, brand_encoded]])
+        print(f"✅ Feature array shape: {features.shape} - should be (1, 2)")
         print(f"Feature array: {features[0]}")
 
         # Predict
@@ -159,7 +180,7 @@ def predict_age_api(request):
 
         # Decode the predicted age group
         age_group = le_agegroup.inverse_transform([pred_encoded])[0]
-        print(f"Predicted age group: {age_group}")
+        print(f"✅ Predicted age group: {age_group}")
 
         return JsonResponse({'age_group': age_group})
 
@@ -170,7 +191,6 @@ def predict_age_api(request):
         print("Exception in predict_age_api:")
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
-
 
 @require_GET
 def get_valid_categories_brands(request):
@@ -202,7 +222,44 @@ def get_valid_categories_brands(request):
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
-#from .models import Product  # adjust import to your actual model
+
+@require_GET
+def get_brands_for_category(request):
+    """
+    Return brands for a specific category.
+    First tries to load from CSV, falls back to all brands from encoder.
+    """
+    category = request.GET.get('category', '').strip()
+    print(f"="*50)
+    print(f"🔍 get_brands_for_category called with category: '{category}'")
+    
+    if not category:
+        print("⚠️ No category provided")
+        return JsonResponse({'brands': []})
+    
+    brands = []
+    
+    # Try to get from CSV mapping first
+    try:
+        mapping = get_category_brands_mapping()
+        brands = mapping.get(category, [])
+        print(f"📊 Found {len(brands)} brands from CSV for '{category}'")
+    except Exception as e:
+        print(f"⚠️ Error getting brands from CSV: {e}")
+    
+    # If no brands found from CSV, fall back to all brands from encoder
+    if not brands:
+        print(f"⚠️ No brands found from CSV, falling back to encoder...")
+        try:
+            encoders = joblib.load(ENCODERS_FILE)
+            brands = list(encoders["brand"].classes_)
+            print(f"✅ Loaded {len(brands)} brands from encoder")
+        except Exception as e:
+            print(f"❌ Error loading brands from encoder: {e}")
+            return JsonResponse({'error': 'Could not load brands'}, status=500)
+    
+    return JsonResponse({'brands': brands})
+
 
 # ============================================
 # Product list (for reports)
@@ -223,8 +280,9 @@ def product_list(request):
     )
     return JsonResponse({'products': list(products)})
 
+
 # ============================================
-# Random inventory (already exists, but ensure it returns the correct format)
+# Random inventory
 # ============================================
 @login_required
 def get_random_inventory(request):
@@ -237,8 +295,9 @@ def get_random_inventory(request):
     random.shuffle(products)
     return JsonResponse({'products': products})
 
+
 # ============================================
-# Prediction helpers (if not already present)
+# Prediction helpers (festival predictions)
 # ============================================
 @login_required
 def get_products_for_festival_api(request):
@@ -253,6 +312,7 @@ def get_products_for_festival_api(request):
     }
     products = mock_products.get(festival, [])
     return JsonResponse({'products': products})
+
 
 @login_required
 def predict_sales_api(request):
@@ -269,36 +329,6 @@ def predict_sales_api(request):
         'predicted_revenue': predicted_revenue,
         'date': request.GET.get('date')
     })
-
-
-
-
-
-
-
-
-
-
-def product_list(request):
-    """
-    Returns a JSON list of all products.
-    Each product object contains: serial_no, product_name, price, quantity, category, subcategory.
-    """
-    products = Product.objects.all().values(
-        'serial_no',
-        'product_name',
-        'price',
-        'quantity',
-        'category',
-        'subcategory'
-    )
-    return JsonResponse({'products': list(products)})
-
-
-
-
-
-
 
 
 # ------------------------------
@@ -407,8 +437,9 @@ def get_festival_from_date(date_obj):
     
     return month_mapping.get(month)
 
+
 # ------------------------------
-# Helper: get festival sales predictions (USES OLD MODEL FOLDER)
+# Helper: get festival sales predictions
 # ------------------------------
 def get_festival_sales(festival_name):
     """
@@ -457,13 +488,11 @@ def get_festival_sales(festival_name):
     
     # Find all model files that match any of the possible formats
     festival_models = []
-    all_models = []
     
     for fname in os.listdir(MODEL_FOLDER):
         if not fname.endswith('.pkl'):
             continue
             
-        all_models.append(fname)
         fname_lower = fname.lower()
         
         for format_name in possible_formats:
@@ -484,7 +513,6 @@ def get_festival_sales(festival_name):
             'least_products': [],
             'festival': festival_name
         }
-
 
     print(f"Found {len(festival_models)} models for festival {festival_name}")
     predictions = []
@@ -578,6 +606,7 @@ def get_festival_sales(festival_name):
         'least_products': least_products,
         'error': None
     }
+
 
 # -------------------------------------------------------------------
 # OTP Storage and Email Functions
@@ -676,6 +705,7 @@ RetailX Team"""
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+
 # -------------------------------------------------------------------
 # Public Pages
 # -------------------------------------------------------------------
@@ -705,6 +735,7 @@ def privacy_policy(request):
 
 def terms(request):
     return render(request, 'terms.html')
+
 
 # -------------------------------------------------------------------
 # Authentication Views
@@ -1094,6 +1125,7 @@ def cashier_registration(request):
     
     return render(request, 'cashier_register.html')
 
+
 # -------------------------------------------------------------------
 # Dashboard Views
 # -------------------------------------------------------------------
@@ -1284,6 +1316,7 @@ def admin_home(request):
 
     return render(request, 'admin_home.html', context)
 
+
 @never_cache
 def cashier_home(request):
     if not request.session.get('cashier_username'):
@@ -1296,13 +1329,10 @@ def cashier_home(request):
         # =========================================================
         # FETCH REAL PRODUCTS FROM DJANGO DATABASE
         # =========================================================
-        # We query the Product model for all available items
         products_queryset = Product.objects.filter(is_available=True).values(
             'id', 'name', 'sku', 'category', 'brand', 'price', 'in_stock'
         )
         
-        # Convert the queryset into a standard Python list of dictionaries
-        # Crucial: Convert Decimal prices to float so JSON can serialize them
         products_list = []
         for p in products_queryset:
             products_list.append({
@@ -1311,19 +1341,14 @@ def cashier_home(request):
                 'sku': p['sku'],
                 'category': p['category'] or 'General',
                 'brand': p['brand'] or 'N/A',
-                'price': float(p['price']),       # Converted for JS
-                'in_stock': p['in_stock']         # Used for stock validation
+                'price': float(p['price']),
+                'in_stock': p['in_stock']
             })
-            
-        # Do NOT use json.dumps() here. Pass the raw Python list.
-        # The Django {{ products_data|json_script:"products-data" }} tag in HTML 
-        # handles the secure JSON stringification automatically.
-        # =========================================================
 
         context = {
             'cashier_name': cashier.fullname,
             'cashier_username': cashier.username,
-            'products_data': products_list  # Passing actual DB data
+            'products_data': products_list
         }
     except Cashier.DoesNotExist:
         context = {
@@ -1333,6 +1358,7 @@ def cashier_home(request):
         }
         
     return render(request, 'cashier_home.html', context)
+
 
 # ====================================================================
 # ENHANCED MANAGER HOME WITH COMPLETE CASHIER CRUD OPERATIONS
@@ -1402,7 +1428,6 @@ def manager_home(request):
         top_products_json = json.dumps(list(top_products)) if top_products else '[]'
         least_products_json = json.dumps(list(least_products)) if least_products else '[]'
         
-        # NEW: add today's date for default prediction date input
         today_date = date_type.today().isoformat()
         
         context = {
@@ -1415,12 +1440,12 @@ def manager_home(request):
             'festival_choices': FESTIVAL_CHOICES,
             'cashiers': json.dumps(cashiers_list),
             'total_cashiers': len(cashiers_list),
-            'today_date': today_date,  # NEW
+            'today_date': today_date,
         }
         # ============================================================
         
     except Manager.DoesNotExist:
-        today_date = date_type.today().isoformat()  # NEW
+        today_date = date_type.today().isoformat()
         context = {
             'manager_name': 'Manager',
             'manager_username': 'Unknown',
@@ -1431,10 +1456,11 @@ def manager_home(request):
             'festival_choices': FESTIVAL_CHOICES,
             'cashiers': '[]',
             'total_cashiers': 0,
-            'today_date': today_date,  # NEW
+            'today_date': today_date,
         }
     
     return render(request, 'manager_home.html', context)
+
 
 # ====================================================================
 # CASHIER MANAGEMENT API ENDPOINTS (AJAX)
@@ -1479,37 +1505,31 @@ def add_cashier(request):
         try:
             data = json.loads(request.body)
             
-            # Extract data
             fullname = data.get('fullname', '')
             email = data.get('email', '')
             username = data.get('username', '').lower()
             password = data.get('password', '')
             
-            # Validation
             if not fullname or not email or not username or not password:
                 return JsonResponse({
                     'success': False,
                     'error': 'All required fields must be filled'
                 }, status=400)
             
-            # Check if username already exists
             if Cashier.objects.filter(username=username).exists():
                 return JsonResponse({
                     'success': False,
                     'error': 'Username already exists'
                 }, status=400)
             
-            # Check if email already exists
             if Cashier.objects.filter(email=email).exists():
                 return JsonResponse({
                     'success': False,
                     'error': 'Email already registered'
                 }, status=400)
             
-            # Hash password
             hashed_password = make_password(password)
             
-            # Create cashier
             cashier = Cashier(
                 fullname=fullname,
                 email=email,
@@ -1556,42 +1576,35 @@ def edit_cashier(request, cashier_id):
         try:
             data = json.loads(request.body)
             
-            # Get cashier
             cashier = get_object_or_404(Cashier, id=cashier_id)
             
-            # Extract data
             fullname = data.get('fullname', '')
             email = data.get('email', '')
             username = data.get('username', '').lower()
             password = data.get('password', '')
             
-            # Validation
             if not fullname or not email or not username:
                 return JsonResponse({
                     'success': False,
                     'error': 'Required fields cannot be empty'
                 }, status=400)
             
-            # Check if username already exists (excluding current cashier)
             if Cashier.objects.filter(username=username).exclude(id=cashier_id).exists():
                 return JsonResponse({
                     'success': False,
                     'error': 'Username already taken by another cashier'
                 }, status=400)
             
-            # Check if email already exists (excluding current cashier)
             if Cashier.objects.filter(email=email).exclude(id=cashier_id).exists():
                 return JsonResponse({
                     'success': False,
                     'error': 'Email already registered to another cashier'
                 }, status=400)
             
-            # Update fields
             cashier.fullname = fullname
             cashier.email = email
             cashier.username = username
             
-            # Update password if provided
             if password and password.strip():
                 cashier.password = make_password(password)
                 cashier.confirm_password = cashier.password
@@ -1673,7 +1686,7 @@ def get_cashier_details(request, cashier_id):
 
 
 # -------------------------------------------------------------------
-# Logout View (single, correct version)
+# Logout View
 # -------------------------------------------------------------------
 def logout_view(request):
     request.session.flush()
@@ -1683,13 +1696,13 @@ def logout_view(request):
     response['Expires'] = '0'
     return response
 
+
 @csrf_exempt
 def chatbot_api(request):
     if request.method == "POST":
         try:
             print("✅ CHATBOT REQUEST RECEIVED")
             
-            # Parse JSON data
             data = json.loads(request.body)
             message = data.get("message", "")
             
@@ -1698,7 +1711,6 @@ def chatbot_api(request):
             if not message:
                 return JsonResponse({"reply": "Please send a message."}, status=400)
             
-            # Get response from Gemini
             reply = ask_gemini(message)
             
             print(f"🤖 BOT REPLY: {reply[:100]}...")
@@ -1715,7 +1727,7 @@ def chatbot_api(request):
     return JsonResponse({"reply": "Only POST requests are allowed."}, status=405)
 
 
-# ================== NEW PREDICTION API ENDPOINTS (USES FESTIVAL_MODEL_FOLDER) =================
+# ================== NEW PREDICTION API ENDPOINTS (FESTIVAL) =================
 
 @csrf_exempt
 def get_products_for_festival_api(request):
@@ -1737,7 +1749,6 @@ def get_products_for_festival_api(request):
         if not fname.endswith('.pkl'):
             continue
         if fname.lower().startswith(festival_clean):
-            # Extract product name from filename
             prod = fname[len(festival_clean):].replace('.pkl', '').replace('_', ' ').strip()
             if prod:
                 products.add(prod)
@@ -1762,8 +1773,7 @@ def predict_sales_api(request):
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         predicted_units = predict_single_product(festival, product, target_date)
         
-        # Optionally fetch product price from database (if product exists)
-        price = 100  # default price; you may enhance by querying Product model
+        price = 100
         try:
             product_obj = Product.objects.filter(name__icontains=product).first()
             if product_obj:
@@ -1795,19 +1805,16 @@ def predict_single_product(festival_name, product_name, target_date):
     festival_clean = festival_name.strip().lower().replace(' ', '_')
     product_clean = product_name.strip().replace(' ', '_')
     
-    # Find matching model file
     model_filename = None
     for fname in os.listdir(FESTIVAL_MODEL_FOLDER):
         if not fname.endswith('.pkl'):
             continue
         fname_lower = fname.lower()
-        # Check if filename starts with festival name and contains product name
         if fname_lower.startswith(festival_clean) and product_clean.lower() in fname_lower:
             model_filename = fname
             break
     
     if not model_filename:
-        # Try alternative: just product name anywhere after festival prefix
         for fname in os.listdir(FESTIVAL_MODEL_FOLDER):
             if not fname.endswith('.pkl'):
                 continue
@@ -1824,7 +1831,6 @@ def predict_single_product(festival_name, product_name, target_date):
     except Exception as e:
         raise RuntimeError(f"Error loading model: {e}")
     
-    # Ensure target_date is a Timestamp
     future = pd.DataFrame({'ds': [pd.Timestamp(target_date)]})
     forecast = model.predict(future)
     predicted_sales = forecast['yhat'].iloc[0]
@@ -1833,8 +1839,7 @@ def predict_single_product(festival_name, product_name, target_date):
     return predicted_sales
 
 
-# ================== INVENTORY CSV ENDPOINT (IMPROVED) =================
-# Use BASE_DIR to construct a portable path
+# ================== INVENTORY CSV ENDPOINT =================
 INVENTORY_CSV_PATH = os.path.join(BASE_DIR, 'static', 'Dataset_CSV', 'updated_product_dataset.csv')
 
 def _normalize_column_name(col):
@@ -1851,11 +1856,9 @@ def get_random_inventory(request):
     try:
         with open(INVENTORY_CSV_PATH, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
-            # Build a mapping from normalized column names to actual CSV headers
             field_mapping = {}
             for col in reader.fieldnames:
                 norm = _normalize_column_name(col)
-                # Map expected keys to actual column names
                 if norm in ('serialno', 'serial', 'sno', 'serial_no'):
                     field_mapping['serial_no'] = col
                 elif norm in ('productname', 'product', 'name', 'product_name'):
@@ -1870,25 +1873,21 @@ def get_random_inventory(request):
                     field_mapping['subcategory'] = col
 
             for idx, row in enumerate(reader, start=1):
-                # Helper to get value with fallback
                 def get_val(key, default=''):
                     actual_col = field_mapping.get(key)
                     return row.get(actual_col, '').strip() if actual_col else default
 
-                # Extract values
                 serial_no = get_val('serial_no', str(idx))
                 product_name = get_val('product_name', 'Unknown')
                 category = get_val('category', 'General')
                 subcategory = get_val('subcategory', '')
 
-                # Price conversion
                 price_str = get_val('price', '0').replace('$', '').replace(',', '').strip()
                 try:
                     price = float(price_str) if price_str else 0.0
                 except ValueError:
                     price = 0.0
 
-                # Quantity conversion
                 qty_str = get_val('quantity', '0').replace(',', '').strip()
                 try:
                     quantity = int(float(qty_str)) if qty_str else 0
@@ -1907,15 +1906,14 @@ def get_random_inventory(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-    # Select 50 random products (or fewer if CSV has less)
     random.shuffle(products)
     selected = products[:50]
 
-    # Add a unique ID for frontend actions
     for idx, p in enumerate(selected):
         p['id'] = idx + 1
 
     return JsonResponse({'products': selected})
+
 
 # ================== USER MANAGEMENT API VIEWS =====================
 
@@ -1959,7 +1957,6 @@ def edit_user(request, user_type, user_id):
         email = request.POST.get('email')
         username = request.POST.get('username')
         
-        # Check uniqueness if changed
         if username != user.username and model.objects.filter(username=username).exists():
             return JsonResponse({'success': False, 'error': 'Username already taken'})
         if email != user.email and model.objects.filter(email=email).exists():
@@ -2015,13 +2012,11 @@ def reset_password(request, user_type, user_id):
     
     try:
         user = model.objects.get(id=user_id)
-        # Generate random password
         temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
         user.password = make_password(temp_password)
         user.confirm_password = user.password
         user.save()
         
-        # Send email
         send_password_reset_email(user.email, temp_password, user_type)
         
         return JsonResponse({'success': True, 'message': f'Temporary password sent to {user.email}'})

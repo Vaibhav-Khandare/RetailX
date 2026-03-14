@@ -1981,110 +1981,397 @@ $(document).ready(function() {
     console.log('✅ All modules initialized successfully');
 });
 
-// Age Prediction Module - Clean Version
+// ============================================
+// AGE PREDICTION MODULE
+// ============================================
+// This module handles the age group prediction feature in the Analysis page.
+// It provides:
+// 1. Dynamic loading of product categories from the API
+// 2. Dynamic loading of brands based on selected category
+// 3. AJAX prediction request to the backend
+// 4. Animated display of the predicted age group
+//
+// Dependencies: jQuery, RetailX.showToast(), getCSRFToken()
+// API Endpoints:
+//   - GET  /api/valid-categories-brands/    - Returns all categories and brands
+//   - GET  /api/brands-for-category/        - Returns brands for a specific category
+//   - POST /api/predict-age/                 - Returns predicted age group
+// ============================================
+
 RetailX.AgePrediction = {
+    
+    /**
+     * Initialize the Age Prediction module
+     * Called when Analysis page is opened
+     * @returns {void}
+     */
     init: function() {
-        console.log('👥 Initializing Age Prediction...');
-        this.bindEvents();
-        this.loadValidOptions();
+        console.log('👥 Initializing Age Prediction Module...');
+        this.loadCategories();  // Load categories from API
+        this.bindEvents();      // Bind event listeners
     },
 
+    /**
+     * Bind all event listeners for the prediction form
+     * Uses .off() to prevent duplicate event binding
+     * @returns {void}
+     */
     bindEvents: function() {
-        // Remove any existing handlers first
-        $('#agePredictionForm').off('submit');
+        console.log('🔗 Binding Age Prediction events...');
         
-        // Simple submit handler
+        // Remove any existing event handlers to prevent duplicates
+        $('#productCategory').off('change');
+        $('#agePredictionForm').off('submit');
+        $('#resetPredictionForm').off('click');
+
+        /**
+         * Category change event handler
+         * When user selects a category, load its brands
+         */
+        $('#productCategory').on('change', function() {
+            const category = $(this).val();
+            console.log('📌 Category selected:', category);
+            
+            if (category) {
+                // If category selected, load its brands
+                RetailX.AgePrediction.loadBrands(category);
+            } else {
+                // If category deselected, reset brand dropdown
+                $('#brand').empty()
+                    .append('<option value="" selected>-- First select a category --</option>')
+                    .prop('disabled', true);
+            }
+        });
+
+        /**
+         * Form submit event handler
+         * Prevents default form submission and triggers prediction
+         */
         $('#agePredictionForm').on('submit', function(e) {
             e.preventDefault();
-            console.log('Form submitted');
+            e.stopPropagation();
+            console.log('📝 Form submitted - starting prediction');
             RetailX.AgePrediction.predictAge();
             return false;
         });
 
-        // Reset button
-        $('#resetPredictionForm').off('click').on('click', function(e) {
+        /**
+         * Reset button click handler
+         * Clears form and hides result
+         */
+        $('#resetPredictionForm').on('click', function(e) {
             e.preventDefault();
+            console.log('🔄 Reset button clicked');
             RetailX.AgePrediction.resetForm();
         });
+
+        console.log('✅ Age Prediction events bound successfully');
     },
 
-    loadValidOptions: function() {
+    /**
+     * Load all available categories from the API
+     * Populates the category dropdown with options
+     * Shows loading state while fetching
+     * @returns {void}
+     */
+    loadCategories: function() {
+        console.log('📡 Loading categories from API...');
+        
+        const $categorySelect = $('#productCategory');
+        
+        // Show loading state
+        $categorySelect.html('<option value="" selected disabled>Loading categories...</option>');
+
         $.ajax({
             url: '/api/valid-categories-brands/',
             method: 'GET',
+            timeout: 10000, // 10 second timeout
             success: function(response) {
-                console.log('Options loaded:', response);
+                console.log('✅ Categories loaded successfully:', response);
+                
+                // Clear and populate category dropdown
+                $categorySelect.empty();
+                $categorySelect.append('<option value="" selected disabled>-- Select a Category --</option>');
+                
+                // Add each category as an option
+                if (response.categories && response.categories.length > 0) {
+                    response.categories.forEach(function(category) {
+                        $categorySelect.append(`<option value="${category}">${category}</option>`);
+                    });
+                    console.log(`📋 Populated ${response.categories.length} categories`);
+                } else {
+                    console.warn('⚠️ No categories found in response');
+                    $categorySelect.append('<option value="" disabled>No categories available</option>');
+                }
             },
-            error: function(xhr) {
-                console.error('Failed to load options:', xhr);
+            error: function(xhr, status, error) {
+                console.error('❌ Failed to load categories:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                
+                // Show error state
+                $categorySelect.html('<option value="" selected disabled>Error loading categories</option>');
+                
+                // Show user-friendly error message
+                RetailX.showToast('Failed to load categories. Please refresh the page.', 'error');
             }
         });
     },
 
-    predictAge: function() {
-        // Get values
-        const category = $('#productCategory').val().trim();
-        const brand = $('#brand').val().trim();
-        const income = $('#income').val().trim();
-        const frequency = $('#purchaseFrequency').val().trim();
-        const amount = $('#purchaseAmount').val().trim();
+    /**
+     * Load brands for a specific category from the API
+     * @param {string} category - The selected category (e.g., 'Electronics')
+     * @returns {void}
+     */
+    loadBrands: function(category) {
+        console.log(`📡 Loading brands for category: "${category}"...`);
+        
+        const $brandSelect = $('#brand');
+        
+        // Show loading state
+        $brandSelect.prop('disabled', true)
+            .html('<option value="" selected>Loading brands...</option>');
 
-        if (!category || !brand || !income || !frequency || !amount) {
-            RetailX.showToast('Please fill all fields', 'warning');
+        $.ajax({
+            url: '/api/brands-for-category/',
+            data: { category: category },
+            method: 'GET',
+            timeout: 10000, // 10 second timeout
+            success: function(response) {
+                console.log(`✅ Brands loaded for ${category}:`, response);
+                
+                // Clear and populate brand dropdown
+                $brandSelect.empty();
+                $brandSelect.append('<option value="" selected disabled>-- Select a Brand --</option>');
+                
+                // Add each brand as an option
+                if (response.brands && response.brands.length > 0) {
+                    response.brands.forEach(function(brand) {
+                        $brandSelect.append(`<option value="${brand}">${brand}</option>`);
+                    });
+                    
+                    // Enable the dropdown
+                    $brandSelect.prop('disabled', false);
+                    console.log(`📋 Populated ${response.brands.length} brands for ${category}`);
+                    
+                } else {
+                    console.warn(`⚠️ No brands found for category: ${category}`);
+                    $brandSelect.html('<option value="" selected disabled>No brands available</option>')
+                        .prop('disabled', true);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(`❌ Failed to load brands for ${category}:`, error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                
+                // Show error state
+                $brandSelect.html('<option value="" selected disabled>Error loading brands</option>')
+                    .prop('disabled', false);
+                
+                // Show user-friendly error message
+                RetailX.showToast('Failed to load brands. Please try again.', 'error');
+            }
+        });
+    },
+
+    /**
+     * Send prediction request to the API
+     * Uses only category and brand (backend has defaults for other features)
+     * Shows loading state on button while waiting
+     * @returns {void}
+     */
+    predictAge: function() {
+        // Get selected values
+        const category = $('#productCategory').val();
+        const brand = $('#brand').val();
+        
+        console.log('🔮 Predicting age group with:', { category, brand });
+        
+        // Validate selections
+        if (!category) {
+            RetailX.showToast('Please select a product category', 'warning');
+            $('#productCategory').focus();
+            return;
+        }
+        
+        if (!brand) {
+            RetailX.showToast('Please select a brand', 'warning');
+            $('#brand').focus();
             return;
         }
 
-        // Show loading
-        const btn = $('#predictAgeBtn');
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
+        // Update button state - show loading spinner
+        const $btn = $('#predictAgeBtn');
+        const originalText = $btn.html();
+        $btn.prop('disabled', true)
+            .html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
 
-        // Make request
+        // Prepare request data
+        const requestData = {
+            product_category: category,
+            brand: brand
+            // Note: income, frequency, amount use backend defaults
+        };
+
+        console.log('📤 Sending prediction request:', requestData);
+
+        // Send AJAX request
         $.ajax({
             url: '/api/predict-age/',
             method: 'POST',
-            headers: { 'X-CSRFToken': getCSRFToken() },
-            contentType: 'application/json',
-            data: JSON.stringify({
-                product_category: category,
-                brand: brand,
-                income: parseFloat(income),
-                purchase_frequency: parseFloat(frequency),
-                purchase_amount: parseFloat(amount)
-            }),
-            success: function(response) {
-                console.log('Success:', response);
-                
-                // SIMPLE DISPLAY - just set text and show
-                $('#ageGroupResult').text(response.age_group);
-                $('#predictionResult').show();
-                
-                RetailX.showToast('Prediction complete!', 'success');
+            headers: { 
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
             },
-            error: function(xhr) {
-                console.error('Error:', xhr);
-                let msg = 'Prediction failed';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    msg = xhr.responseJSON.error;
+            data: JSON.stringify(requestData),
+            timeout: 15000, // 15 second timeout
+            success: function(response) {
+                console.log('✅ Prediction successful:', response);
+                
+                // Update and show result
+                if (response && response.age_group) {
+                    $('#ageGroupResult').text(response.age_group);
+                    // IMPORTANT: Using 'agePredictionResult' ID to avoid conflict with dashboard
+                    $('#agePredictionResult').fadeIn(500);
+                    
+                    // Smooth scroll to result
+                    $('html, body').animate({
+                        scrollTop: $('#agePredictionResult').offset().top - 50
+                    }, 500);
+                    
+                    // Show success toast
+                    RetailX.showToast(`Predicted age group: ${response.age_group}`, 'success');
+                } else {
+                    console.error('❌ Invalid response format:', response);
+                    RetailX.showToast('Invalid response from server', 'error');
                 }
-                RetailX.showToast(msg, 'error');
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Prediction failed:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                
+                // Extract error message
+                let errorMsg = 'Prediction failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.responseText) {
+                    try {
+                        const jsonResponse = JSON.parse(xhr.responseText);
+                        errorMsg = jsonResponse.error || errorMsg;
+                    } catch(e) {
+                        errorMsg = xhr.responseText || errorMsg;
+                    }
+                }
+                
+                // Show error message
+                RetailX.showToast(errorMsg, 'error');
+                
+                // Hide result if visible
+                $('#agePredictionResult').fadeOut(300);
             },
             complete: function() {
-                btn.prop('disabled', false).html('<i class="fas fa-magic"></i> Predict Age Group');
+                // Restore button state
+                $btn.prop('disabled', false).html(originalText);
+                console.log('🏁 Prediction request completed');
             }
         });
     },
 
+    /**
+     * Reset the form to its initial state
+     * Clears selections, resets dropdowns, and hides the result
+     * @returns {void}
+     */
     resetForm: function() {
-        $('#productCategory, #brand, #income, #purchaseFrequency, #purchaseAmount').val('');
-        $('#predictionResult').hide();
+        console.log('🔄 Resetting prediction form...');
+        
+        // Reset category dropdown to default
+        $('#productCategory').val('');
+        
+        // Reset brand dropdown to disabled state with placeholder
+        $('#brand').empty()
+            .append('<option value="" selected>-- First select a category --</option>')
+            .prop('disabled', true);
+        
+        // Hide result with fade out animation
+        $('#agePredictionResult').fadeOut(300, function() {
+            // Reset result text after fade out completes
+            $('#ageGroupResult').text('-');
+        });
+        
+        // Show success message
+        RetailX.showToast('Form reset successfully', 'info');
+        
+        console.log('✅ Form reset complete');
     }
 };
 
-// Simple initialization
+// ============================================
+// PAGE NAVIGATION INTEGRATION
+// ============================================
+
+/**
+ * Initialize Age Prediction when Analysis page is opened
+ * This ensures the module loads fresh data each time the user navigates to the page
+ */
 $(document).on('click', '.menu-item[data-page="analysis"]', function() {
-    setTimeout(function() {
+    console.log('📱 Analysis page opened - initializing Age Prediction');
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(function() { 
         if (typeof RetailX.AgePrediction !== 'undefined') {
             RetailX.AgePrediction.init();
+        } else {
+            console.error('❌ AgePrediction module not found');
         }
     }, 200);
 });
+
+/**
+ * Also initialize if Analysis page is active on initial load
+ * Handles case when page loads directly on Analysis tab
+ */
+$(document).ready(function() {
+    if ($('#analysis-page').hasClass('active')) {
+        console.log('📱 Analysis page active on load');
+        setTimeout(function() {
+            if (typeof RetailX.AgePrediction !== 'undefined') {
+                RetailX.AgePrediction.init();
+            }
+        }, 500);
+    }
+});
+
+// ============================================
+// HELPER FUNCTION FOR DEBUGGING
+// ============================================
+
+/**
+ * Manual test function to verify API is working
+ * Can be run from browser console: testPredictionAPI()
+ * @returns {void}
+ */
+window.testPredictionAPI = function() {
+    console.log('🧪 Testing Prediction API...');
+    
+    $.ajax({
+        url: '/api/predict-age/',
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() },
+        contentType: 'application/json',
+        data: JSON.stringify({
+            product_category: 'Electronics',
+            brand: 'Sony'
+        }),
+        success: function(response) {
+            console.log('✅ API Test Success:', response);
+            alert(`API Working! Predicted: ${response.age_group}`);
+        },
+        error: function(xhr) {
+            console.error('❌ API Test Failed:', xhr);
+            alert('API Test Failed. Check console for details.');
+        }
+    });
+};

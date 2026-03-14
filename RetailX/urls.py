@@ -109,5 +109,8 @@ urlpatterns = [
     # In your RetailX/urls.py, add these lines
     path('api/predict-age/', views.predict_age_api, name='predict_age_api'),
     path('api/valid-categories-brands/', views.get_valid_categories_brands, name='valid_categories_brands'),
+    # Add this line to your urlpatterns in urls.py
+    path('api/brands-for-category/', views.get_brands_for_category, name='brands_for_category'),
+    path('api/brands-for-category/', views.get_brands_for_category, name='brands_for_category'),
 
 ]
