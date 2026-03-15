@@ -101,4 +101,6 @@ urlpatterns = [
 
     path('admin_logout/', views.admin_logout, name='admin_logout'),
     path('cashier_logout/', views.cashier_logout, name='cashier_logout'),
+
+    path('supplier_logout/', views.supplier_logout, name='supplier_logout'),
 ]

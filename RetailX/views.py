@@ -1532,6 +1532,29 @@ def cashier_logout(request):
     return response
 
 
+
+
+def supplier_logout(request):
+    """Supplier-specific logout: clears session and redirects to supplier login with cache prevention."""
+    # Clear all session data
+    request.session.flush()
+    
+    # Create response that redirects to supplier login
+    response = redirect('/supplier_login/')
+    
+    # Add headers to prevent caching of the dashboard page
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    # Add headers to prevent browser from storing the page
+    response['X-Frame-Options'] = 'DENY'
+    
+    return response
+
+
+
+
 # ================== CHATBOT API ==================
 @csrf_exempt
 def chatbot_api(request):
