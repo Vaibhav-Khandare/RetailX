@@ -1522,6 +1522,15 @@ def admin_logout(request):
     response['Expires'] = '0'
     return response
 
+def cashier_logout(request):
+    """Cashier-specific logout: clears session and redirects to cashier login."""
+    request.session.flush()
+    response = redirect('/cashier_login')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
 
 # ================== CHATBOT API ==================
 @csrf_exempt

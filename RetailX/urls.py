@@ -100,4 +100,5 @@ urlpatterns = [
     path('api/brands-for-category/', views.get_brands_for_category, name='brands_for_category'),
 
     path('admin_logout/', views.admin_logout, name='admin_logout'),
+    path('cashier_logout/', views.cashier_logout, name='cashier_logout'),
 ]
