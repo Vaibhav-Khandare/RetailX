@@ -9,6 +9,11 @@
 
 console.log("✅ ADMIN JS LOADED - Version 2.0");
 
+// Dummy function for noBack() called from body onload
+function noBack() {
+    // Does nothing, only prevents JS error
+}
+
 /* =========================
    GLOBAL VARIABLES
 ========================= */

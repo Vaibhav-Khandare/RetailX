@@ -1513,6 +1513,16 @@ def logout_view(request):
     return response
 
 
+def admin_logout(request):
+    """Admin-specific logout: clears session and redirects to admin login."""
+    request.session.flush()
+    response = redirect('/admin_login')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
+
 # ================== CHATBOT API ==================
 @csrf_exempt
 def chatbot_api(request):

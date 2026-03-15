@@ -8,6 +8,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
     <title>RetailX - Advanced Admin Dashboard</title>
     
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <!-- CSS Files -->
     <link rel="stylesheet" href="{% static 'css/admin_home.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -59,9 +64,9 @@
                 <a href="#" class="nav-item" data-section="users">
                     <i class="fas fa-users"></i> <span>User Management</span>
                 </a>
-                <a href="#" class="nav-item" data-section="products">
+                <!-- <a href="#" class="nav-item" data-section="products">
                     <i class="fas fa-box"></i> <span>Product Management</span>
-                </a>
+                </a> -->
                 <a href="#" class="nav-item" data-section="inventory">
                     <i class="fas fa-warehouse"></i> <span>Inventory</span>
                 </a>
@@ -82,7 +87,7 @@
 
         <!-- Logout Section -->
         <div class="logout-section">
-            <a href="/admin_login" class="logout-btn">
+            <a href="/admin_logout/" class="logout-btn">
                 <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </a>
             <div class="system-status">

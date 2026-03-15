@@ -98,4 +98,6 @@ urlpatterns = [
     path('api/predict-age/', views.predict_age_api, name='predict_age_api'),
     path('api/valid-categories-brands/', views.get_valid_categories_brands, name='valid_categories_brands'),
     path('api/brands-for-category/', views.get_brands_for_category, name='brands_for_category'),
+
+    path('admin_logout/', views.admin_logout, name='admin_logout'),
 ]
