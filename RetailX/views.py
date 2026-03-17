@@ -2303,3 +2303,10 @@ print_header("RETAILX STARTUP COMPLETE")
 print_success("All modules loaded successfully")
 print_info("Ready to accept connections")
 print(f"{Colors.CYAN}══════════════════════════════════════════════════════════════{Colors.END}\n")
+
+
+@never_cache
+def supplier_check_session(request):
+    if request.session.get('supplier_username'):
+        return JsonResponse({'authenticated': True})
+    return JsonResponse({'authenticated': False}, status=401)

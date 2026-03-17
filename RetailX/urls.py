@@ -37,6 +37,7 @@ urlpatterns = [
     path('supplier_login/', views.supplier_login, name='supplier_login'),
     path('supplier_registration/', views.supplier_registration, name='supplier_registration'),
     path('supplier_home/', views.supplier_home, name='supplier_home'),
+    path('api/supplier/check-session/', views.supplier_check_session, name='supplier_check_session'),
 
     path('logout/', views.logout_view, name='logout'),
 

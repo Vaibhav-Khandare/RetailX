@@ -10,6 +10,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
+
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="/static/images/RetailX logo with fruits in trolly.png" type="image/png">
 
@@ -25,1089 +27,8 @@
     <!-- SweetAlert2 for beautiful alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --primary-light: #6b8aff;
-            --secondary: #06b6d4;
-            --accent: #8b5cf6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --danger-dark: #dc2626;
-            --dark: #0f172a;
-            --darker: #020617;
-            --light: #f8fafc;
-            --gray: #64748b;
-            --gray-light: #e2e8f0;
-            --glass: rgba(255, 255, 255, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.18);
-        }
-
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #4f46e5 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Animated background particles */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 30%),
-                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
-            animation: gradientShift 15s ease infinite;
-            pointer-events: none;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.1); }
-        }
-
-        /* Dark theme */
-        body.dark-theme {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%);
-        }
-
-        body.dark-theme::before {
-            opacity: 0.2;
-        }
-
-        /* Custom Cursor */
-        .cursor {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--primary);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s;
-            mix-blend-mode: difference;
-            will-change: transform;
-        }
-
-        .cursor-follower {
-            width: 40px;
-            height: 40px;
-            background: rgba(67, 97, 238, 0.2);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 9998;
-            transform: translate(-50%, -50%);
-            transition: transform 0.15s;
-            backdrop-filter: blur(2px);
-            will-change: transform;
-        }
-
-        /* Theme toggle - moved inside container area but fixed position */
-        .theme-toggle-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .theme-toggle {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50px;
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-toggle:hover {
-            transform: scale(1.1) rotate(15deg);
-            background: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 6px 25px rgba(67, 97, 238, 0.3);
-        }
-
-        body.dark-theme .theme-toggle {
-            background: rgba(0, 0, 0, 0.3);
-            color: #fbbf24;
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Main Container */
-        .dashboard-container {
-            max-width: 1300px;
-            width: 100%;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border-radius: 48px;
-            padding: 40px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
-            border: 1px solid var(--glass-border);
-            animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        body.dark-theme .dashboard-container {
-            background: rgba(15, 23, 42, 0.85);
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Header Section */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 20px 25px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: fadeIn 0.8s ease 0.2s both;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .logo-wrapper {
-            width: 70px;
-            height: 70px;
-            border-radius: 22px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.3);
-            animation: float 4s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .logo-wrapper img {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            filter: brightness(0) invert(1);
-        }
-
-        .header-title h1 {
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 5px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .header-title p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-title p i {
-            color: var(--secondary);
-        }
-
-        body.dark-theme .header-title h1 {
-            color: #f8fafc;
-        }
-
-        body.dark-theme .header-title p {
-            color: #94a3b8;
-        }
-
-        /* Settings Button */
-        .settings-btn {
-            width: 48px;
-            height: 48px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .settings-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg) scale(1.1);
-        }
-
-        body.dark-theme .settings-btn {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Welcome Banner */
-        .welcome-banner {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-            backdrop-filter: blur(10px);
-            border-radius: 36px;
-            padding: 40px;
-            margin-bottom: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: fadeIn 0.8s ease 0.3s both;
-        }
-
-        .welcome-banner::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 400px;
-            height: 400px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 50%;
-            opacity: 0.2;
-            animation: blobMove 10s ease-in-out infinite;
-        }
-
-        .welcome-banner::after {
-            content: '';
-            position: absolute;
-            bottom: -50%;
-            left: -20%;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            border-radius: 50%;
-            opacity: 0.15;
-            animation: blobMove 15s ease-in-out infinite reverse;
-        }
-
-        @keyframes blobMove {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.1); }
-            66% { transform: translate(-30px, 30px) scale(0.9); }
-        }
-
-        .banner-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .banner-content h2 {
-            font-size: 42px;
-            font-weight: 800;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .banner-content p {
-            font-size: 16px;
-            opacity: 0.9;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .banner-stats {
-            display: flex;
-            gap: 30px;
-        }
-
-        .banner-stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            padding: 15px 25px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .banner-stat-item:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .banner-stat-item .value {
-            font-size: 32px;
-            font-weight: 800;
-            display: block;
-            margin-bottom: 5px;
-            background: linear-gradient(135deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .banner-stat-item .label {
-            font-size: 13px;
-            opacity: 0.8;
-        }
-
-        .banner-icon {
-            position: relative;
-            z-index: 2;
-            font-size: 140px;
-            opacity: 0.15;
-            margin-right: 20px;
-            animation: floatIcon 6s ease-in-out infinite;
-        }
-
-        @keyframes floatIcon {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            33% { transform: translateY(-15px) rotate(5deg); }
-            66% { transform: translateY(-5px) rotate(-5deg); }
-        }
-
-        /* Tabs Navigation - Simplified */
-        .dashboard-tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-            animation: fadeIn 0.8s ease 0.4s both;
-        }
-
-        .tab-btn {
-            padding: 14px 32px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tab-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .tab-btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .tab-btn i {
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-
-        .tab-btn:hover i {
-            transform: scale(1.2);
-        }
-
-        .tab-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-color: transparent;
-            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.4);
-        }
-
-        body.dark-theme .tab-btn {
-            background: rgba(0, 0, 0, 0.3);
-            color: #f8fafc;
-        }
-
-        body.dark-theme .tab-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-        }
-
-        /* Tab Content */
-        .tab-pane {
-            display: none;
-            animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .tab-pane.active {
-            display: block;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 30px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-            animation: cardPop 0.5s ease;
-        }
-
-        @keyframes cardPop {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.6s;
-            pointer-events: none;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .stat-card:hover::after {
-            opacity: 1;
-        }
-
-        body.dark-theme .stat-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .stat-icon {
-            width: 55px;
-            height: 55px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            color: white;
-            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
-        }
-
-        .stat-badge-trend {
-            padding: 6px 12px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 600;
-            background: rgba(16, 185, 129, 0.2);
-            backdrop-filter: blur(5px);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .stat-badge-trend.negative {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .stat-value {
-            font-size: 36px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 5px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .stat-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        body.dark-theme .stat-value {
-            color: #f8fafc;
-        }
-
-        body.dark-theme .stat-label {
-            color: #94a3b8;
-        }
-
-        /* Charts Grid */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .chart-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .chart-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        body.dark-theme .chart-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .chart-header h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: white;
-        }
-
-        body.dark-theme .chart-header h3 {
-            color: #f8fafc;
-        }
-
-        .chart-period {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            font-size: 12px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chart-period:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .chart-container {
-            height: 250px;
-            position: relative;
-        }
-
-        /* Tables */
-        .table-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        body.dark-theme .table-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .table-header h3 {
-            font-size: 20px;
-            font-weight: 600;
-            color: white;
-        }
-
-        body.dark-theme .table-header h3 {
-            color: #f8fafc;
-        }
-
-        .view-all-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            color: white;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .view-all-btn:hover {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            transform: translateX(5px);
-            border-color: transparent;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table th {
-            text-align: left;
-            padding: 15px 12px;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .data-table td {
-            padding: 15px 12px;
-            font-size: 14px;
-            color: white;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        body.dark-theme .data-table td {
-            color: #f8fafc;
-        }
-
-        .data-table tr {
-            transition: all 0.3s ease;
-        }
-
-        .data-table tr:hover td {
-            background: rgba(255, 255, 255, 0.05);
-            transform: scale(1.02);
-        }
-
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            backdrop-filter: blur(5px);
-        }
-
-        .status-badge.completed {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-badge.pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .status-badge.processing {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .action-btn {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0 4px;
-            backdrop-filter: blur(5px);
-        }
-
-        .action-btn.view {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .action-btn.view:hover {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            transform: scale(1.1);
-            border-color: transparent;
-        }
-
-        /* Profile Section */
-        .profile-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 60px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 48px;
-            color: white;
-            box-shadow: 0 20px 40px rgba(67, 97, 238, 0.3);
-            animation: pulse 3s ease infinite;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .profile-info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            margin: 30px 0;
-        }
-
-        .info-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .info-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-
-        .info-item label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .info-item p {
-            color: white;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        /* Settings Toggle */
-        .settings-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .settings-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-
-        .settings-item h4 {
-            color: white;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .settings-item p {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 13px;
-        }
-
-        /* Toggle Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 52px;
-            height: 26px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.2);
-            transition: .4s;
-            border-radius: 34px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 2px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Enhanced Logout Button */
-        .logout-section {
-            margin-top: 40px;
-            text-align: center;
-            position: relative;
-            animation: fadeIn 0.8s ease 0.6s both;
-        }
-
-        .logout-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 16px 60px;
-            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 30px rgba(239, 68, 68, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .logout-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .logout-btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 30px 40px rgba(239, 68, 68, 0.4);
-        }
-
-        .logout-btn i {
-            font-size: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        .logout-btn:hover i {
-            transform: translateX(5px) rotate(180deg);
-        }
-
-        .logout-btn:active {
-            transform: translateY(0) scale(0.95);
-        }
-
-        .footer-note {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.5);
-            animation: fadeIn 0.8s ease 0.7s both;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .dashboard-container {
-                padding: 25px;
-            }
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-            .header-left {
-                flex-direction: column;
-            }
-            .welcome-banner {
-                flex-direction: column;
-                text-align: center;
-            }
-            .banner-stats {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .banner-icon {
-                display: none;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .profile-info-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .cursor, .cursor-follower {
-                display: none;
-            }
-            body {
-                cursor: auto;
-            }
-        }
-
-        /* Prevent back navigation - hidden element */
-        .prevent-back {
-            display: none;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/supplier_home.css">
 </head>
 <body>
 
@@ -1115,7 +36,7 @@
     <div class="cursor" id="cursor"></div>
     <div class="cursor-follower" id="cursorFollower"></div>
 
-    <!-- Theme Toggle moved inside container area but fixed position -->
+    <!-- Theme Toggle (fixed) -->
     <div class="theme-toggle-container">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
             <i class="fas fa-sun"></i>
@@ -1134,10 +55,28 @@
                     <p><i class="fas fa-store"></i> {{ supplier_name }} • <i class="fas fa-tag"></i> {{ supplier_category }}</p>
                 </div>
             </div>
-            <!-- Settings Button -->
-            <button class="settings-btn" onclick="openSettings()" title="Settings">
-                <i class="fas fa-cog"></i>
-            </button>
+            <div class="header-right">
+                <!-- Notification Bell -->
+                <div class="notification-wrapper">
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h4>Notifications</h4>
+                            <button class="mark-all-read" id="markAllRead">Mark all as read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="notification-empty">No notifications</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Settings Button -->
+                <button class="settings-btn" onclick="openSettings()" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Welcome Banner -->
@@ -1145,17 +84,17 @@
             <div class="banner-content">
                 <h2>Welcome back, {{ supplier_name }}! 👋</h2>
                 <p><i class="fas fa-chart-line"></i> Your dashboard has been updated with new insights</p>
-                <div class="banner-stats">
+                <div class="banner-stats" id="bannerStats">
                     <div class="banner-stat-item">
-                        <span class="value" id="totalOrders">156</span>
+                        <span class="value" id="totalOrders">0</span>
                         <span class="label">Total Orders</span>
                     </div>
                     <div class="banner-stat-item">
-                        <span class="value" id="totalRevenue">₹ 45.2k</span>
+                        <span class="value" id="totalRevenue">₹ 0</span>
                         <span class="label">Revenue</span>
                     </div>
                     <div class="banner-stat-item">
-                        <span class="value" id="activeProducts">48</span>
+                        <span class="value" id="activeProducts">0</span>
                         <span class="label">Products</span>
                     </div>
                 </div>
@@ -1165,13 +104,22 @@
             </div>
         </div>
 
-        <!-- Tabs Navigation - Products and Analytics removed -->
+        <!-- Tabs Navigation -->
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="overview">
                 <i class="fas fa-chart-pie"></i> Overview
             </button>
+            <button class="tab-btn" data-tab="products">
+                <i class="fas fa-boxes"></i> Products
+            </button>
             <button class="tab-btn" data-tab="orders">
                 <i class="fas fa-shopping-cart"></i> Orders
+            </button>
+            <button class="tab-btn" data-tab="payments">
+                <i class="fas fa-credit-card"></i> Payments
+            </button>
+            <button class="tab-btn" data-tab="analytics">
+                <i class="fas fa-chart-line"></i> Analytics
             </button>
             <button class="tab-btn" data-tab="profile">
                 <i class="fas fa-user-cog"></i> Profile
@@ -1180,51 +128,9 @@
 
         <!-- Overview Tab -->
         <div class="tab-pane active" id="overview">
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <span class="stat-badge-trend">+12%</span>
-                    </div>
-                    <div class="stat-value">156</div>
-                    <div class="stat-label">Total Orders</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <span class="stat-badge-trend">+8%</span>
-                    </div>
-                    <div class="stat-value">₹ 45.2k</div>
-                    <div class="stat-label">Total Revenue</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-boxes"></i>
-                        </div>
-                        <span class="stat-badge-trend">+5</span>
-                    </div>
-                    <div class="stat-value">48</div>
-                    <div class="stat-label">Active Products</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <span class="stat-badge-trend">4.8</span>
-                    </div>
-                    <div class="stat-value">92%</div>
-                    <div class="stat-label">Satisfaction Rate</div>
-                </div>
+            <!-- Stats Cards (dynamic) -->
+            <div class="stats-grid" id="overviewStats">
+                <!-- Will be populated by JS -->
             </div>
 
             <!-- Charts -->
@@ -1232,10 +138,10 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3>Revenue Overview</h3>
-                        <select class="chart-period">
-                            <option>Last 7 days</option>
-                            <option>Last 30 days</option>
-                            <option>Last 3 months</option>
+                        <select class="chart-period" id="revenuePeriod">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 3 months</option>
                         </select>
                     </div>
                     <div class="chart-container">
@@ -1246,10 +152,6 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3>Order Statistics</h3>
-                        <select class="chart-period">
-                            <option>By category</option>
-                            <option>By status</option>
-                        </select>
                     </div>
                     <div class="chart-container">
                         <canvas id="ordersChart"></canvas>
@@ -1265,7 +167,7 @@
                         View All <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
-                <table class="data-table">
+                <table class="data-table" id="recentOrdersTable">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -1278,41 +180,51 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>#ORD-001</td>
-                            <td>Wireless Headphones</td>
-                            <td>50</td>
-                            <td>₹ 75,000</td>
-                            <td><span class="status-badge completed">Completed</span></td>
-                            <td>2024-03-15</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-002</td>
-                            <td>Smart Watch</td>
-                            <td>30</td>
-                            <td>₹ 90,000</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>2024-03-14</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-003</td>
-                            <td>Bluetooth Speaker</td>
-                            <td>100</td>
-                            <td>₹ 1,50,000</td>
-                            <td><span class="status-badge pending">Pending</span></td>
-                            <td>2024-03-13</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
+                        <!-- Populated by JS -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Products Tab -->
+        <div class="tab-pane" id="products">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>My Products</h3>
+                    <button class="view-all-btn" id="addProductBtn">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <div class="table-filters">
+                    <input type="text" id="productSearch" placeholder="Search products..." class="search-input">
+                    <select id="productCategoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="productStatusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+                <table class="data-table" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div class="table-footer">
+                    <div class="low-stock-alert" id="lowStockAlert"></div>
+                </div>
             </div>
         </div>
 
@@ -1322,71 +234,88 @@
                 <div class="table-header">
                     <h3>All Orders</h3>
                     <div style="display: flex; gap: 10px;">
-                        <select class="chart-period">
-                            <option>All Status</option>
-                            <option>Completed</option>
-                            <option>Processing</option>
-                            <option>Pending</option>
+                        <select id="orderStatusFilter" class="filter-select">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
-                        <input type="text" placeholder="Search orders..." style="padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; color: white;">
+                        <input type="text" id="orderSearch" placeholder="Search orders..." class="search-input">
                     </div>
                 </div>
-                <table class="data-table">
+                <table class="data-table" id="ordersTable">
                     <thead>
                         <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Products</th>
+                            <th>Order #</th>
+                            <th>Product</th>
                             <th>Quantity</th>
-                            <th>Total Amount</th>
-                            <th>Status</th>
+                            <th>Total</th>
                             <th>Order Date</th>
-                            <th>Action</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>#ORD-001</td>
-                            <td>Rajesh Kumar</td>
-                            <td>Wireless Headphones</td>
-                            <td>50</td>
-                            <td>₹ 75,000</td>
-                            <td><span class="status-badge completed">Completed</span></td>
-                            <td>2024-03-15</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-002</td>
-                            <td>Priya Sharma</td>
-                            <td>Smart Watch Pro</td>
-                            <td>30</td>
-                            <td>₹ 90,000</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>2024-03-14</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-003</td>
-                            <td>Amit Singh</td>
-                            <td>Bluetooth Speaker</td>
-                            <td>100</td>
-                            <td>₹ 1,50,000</td>
-                            <td><span class="status-badge pending">Pending</span></td>
-                            <td>2024-03-13</td>
-                            <td>
-                                <button class="action-btn view"><i class="fas fa-eye"></i></button>
-                            </td>
-                        </tr>
+                        <!-- Populated by JS -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Profile Tab -->
+        <!-- Payments Tab -->
+        <div class="tab-pane" id="payments">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>Payment History</h3>
+                </div>
+                <table class="data-table" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>Payment #</th>
+                            <th>Order #</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div class="tab-pane" id="analytics">
+            <div class="stats-grid" id="analyticsStats">
+                <!-- Will be populated by JS -->
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Sales Trend</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top Products</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab (existing, enhanced) -->
         <div class="tab-pane" id="profile">
             <div class="profile-card">
                 <div class="profile-avatar">
@@ -1395,26 +324,11 @@
                 <h3 style="text-align: center; color: white; font-size: 24px; margin-bottom: 10px;">{{ supplier_name }}</h3>
                 <p style="text-align: center; color: rgba(255,255,255,0.6); margin-bottom: 30px;">{{ supplier_category }} Supplier</p>
 
-                <div class="profile-info-grid">
-                    <div class="info-item">
-                        <label><i class="fas fa-user"></i> Username</label>
-                        <p>{{ supplier_username }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label><i class="fas fa-envelope"></i> Email</label>
-                        <p>{{ supplier_email }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label><i class="fas fa-map-marker-alt"></i> Location</label>
-                        <p>{{ supplier_location|default:"Not provided" }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label><i class="fas fa-phone"></i> Contact</label>
-                        <p>{{ supplier_contact|default:"Not provided" }}</p>
-                    </div>
+                <div class="profile-info-grid" id="profileInfo">
+                    <!-- Populated by JS -->
                 </div>
 
-                <!-- Settings moved here -->
+                <!-- Settings -->
                 <div style="margin-top: 40px;">
                     <h4 style="color: white; margin-bottom: 20px; font-size: 18px;">Account Settings</h4>
                     
@@ -1424,17 +338,9 @@
                             <p>Receive updates about orders and promotions</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="emailNotifications" checked>
                             <span class="slider"></span>
                         </label>
-                    </div>
-
-                    <div class="settings-item">
-                        <div>
-                            <h4>Two-Factor Authentication</h4>
-                            <p>Add extra security to your account</p>
-                        </div>
-                        <button class="view-all-btn" style="padding: 8px 20px;">Enable</button>
                     </div>
 
                     <div class="settings-item">
@@ -1442,13 +348,13 @@
                             <h4>Change Password</h4>
                             <p>Update your password regularly</p>
                         </div>
-                        <button class="view-all-btn" style="padding: 8px 20px;">Update</button>
+                        <button class="view-all-btn" id="changePasswordBtn">Update</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Enhanced Logout Button Section with supplier_logout URL -->
+        <!-- Logout Button -->
         <div class="logout-section">
             <button class="logout-btn" id="logoutBtn" data-url="{% url 'supplier_logout' %}">
                 <i class="fas fa-sign-out-alt"></i>
@@ -1461,339 +367,155 @@
         </div>
     </div>
 
-    <script>
-        // ========== PREVENT BACK NAVIGATION ==========
-        // This prevents user from going back to dashboard after logout
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            // Check if still logged in by checking session cookie
-            if (!document.cookie.includes('sessionid') && !document.cookie.includes('supplier_session')) {
-                // If not logged in, redirect to login
-                window.location.href = '/supplier_login/';
-            } else {
-                // If still logged in, allow back but push state again
-                history.pushState(null, null, location.href);
-            }
-        };
+    <!-- Modals -->
+    <!-- Add/Edit Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Add Product</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="productForm" enctype="multipart/form-data">
+                <input type="hidden" id="productId" name="productId">
+                <div class="form-group">
+                    <label for="productName">Product Name *</label>
+                    <input type="text" id="productName" name="name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productSKU">SKU *</label>
+                        <input type="text" id="productSKU" name="sku" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category *</label>
+                        <input type="text" id="productCategory" name="category" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productSubcategory">Subcategory</label>
+                        <input type="text" id="productSubcategory" name="subcategory">
+                    </div>
+                    <div class="form-group">
+                        <label for="productBrand">Brand</label>
+                        <input type="text" id="productBrand" name="brand">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description</label>
+                    <textarea id="productDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Price (₹) *</label>
+                        <input type="number" step="0.01" id="productPrice" name="price" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCostPrice">Cost Price (₹)</label>
+                        <input type="number" step="0.01" id="productCostPrice" name="cost_price">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productStock">Stock Quantity *</label>
+                        <input type="number" id="productStock" name="stock_quantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productMinStock">Min Stock Level</label>
+                        <input type="number" id="productMinStock" name="min_stock_level" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="productMaxStock">Max Stock Level</label>
+                        <input type="number" id="productMaxStock" name="max_stock_level" value="100">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productUnit">Unit</label>
+                        <input type="text" id="productUnit" name="unit" value="pcs">
+                    </div>
+                    <div class="form-group">
+                        <label for="productActive">Active</label>
+                        <select id="productActive" name="is_active">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">Product Image</label>
+                    <input type="file" id="productImage" name="image" accept="image/*">
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-modal">Cancel</button>
+                    <button type="submit" class="save-modal">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // ========== SESSION CHECK ==========
-        function checkSession() {
-            // This is a simple check - you can enhance this with an AJAX call
-            // to verify if the session is still active on the server
-            if (!document.cookie.includes('sessionid') && !document.cookie.includes('supplier_session')) {
-                // If no session cookie, redirect to login
-                window.location.href = '/supplier_login/';
-            }
-        }
+    <!-- Update Order Status Modal -->
+    <div class="modal" id="orderStatusModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Order Status</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="orderStatusForm">
+                <input type="hidden" id="orderId" name="orderId">
+                <div class="form-group">
+                    <label for="orderStatus">Status</label>
+                    <select id="orderStatus" name="status" required>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deliveryDate">Actual Delivery Date (if delivered)</label>
+                    <input type="date" id="deliveryDate" name="delivery_date">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-modal">Cancel</button>
+                    <button type="submit" class="save-modal">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // Check session every 30 seconds
-        setInterval(checkSession, 30000);
+    <!-- Change Password Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Password</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirm_password" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-modal">Cancel</button>
+                    <button type="submit" class="save-modal">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // ========== LOGOUT FUNCTIONALITY WITH CONFIRMATION ==========
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const logoutUrl = this.getAttribute('data-url');
-            
-            Swal.fire({
-                title: 'Ready to leave?',
-                text: 'You are about to logout from your supplier dashboard',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, logout',
-                cancelButtonText: 'Stay',
-                background: 'rgba(15, 23, 42, 0.95)',
-                backdrop: 'rgba(0,0,0,0.5)',
-                color: '#fff',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                },
-                customClass: {
-                    popup: 'glass-modal'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show loading state
-                    Swal.fire({
-                        title: 'Logging out...',
-                        html: 'Please wait while we securely log you out',
-                        timer: 1500,
-                        timerProgressBar: true,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        },
-                        background: 'rgba(15, 23, 42, 0.95)',
-                        color: '#fff',
-                    }).then(() => {
-                        // Redirect to supplier logout URL
-                        window.location.href = logoutUrl;
-                    });
-                }
-            });
-        });
-
-        // ========== SETTINGS BUTTON FUNCTION ==========
-        function openSettings() {
-            switchTab('profile');
-            // Highlight settings in profile tab
-            const settingsItems = document.querySelectorAll('.settings-item');
-            settingsItems[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            settingsItems[0].style.animation = 'pulse 1s';
-            setTimeout(() => {
-                settingsItems[0].style.animation = '';
-            }, 1000);
-        }
-
-        // ========== TAB SWITCHING FUNCTIONALITY ==========
-        const tabs = document.querySelectorAll('.tab-btn');
-        const panes = document.querySelectorAll('.tab-pane');
-
-        function switchTab(tabId) {
-            tabs.forEach(t => t.classList.remove('active'));
-            panes.forEach(p => p.classList.remove('active'));
-
-            const activeTab = document.querySelector(`[data-tab="${tabId}"]`);
-            const activePane = document.getElementById(tabId);
-
-            if (activeTab && activePane) {
-                activeTab.classList.add('active');
-                activePane.classList.add('active');
-            }
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.getAttribute('data-tab');
-                switchTab(tabId);
-            });
-        });
-
-        // Make switchTab function globally available
-        window.switchTab = switchTab;
-
-        // ========== THEME TOGGLE ==========
-        const themeToggle = document.getElementById('themeToggle');
-        const icon = themeToggle.querySelector('i');
-        const body = document.body;
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            body.classList.add('dark-theme');
-            icon.classList.remove('fa-sun');
-            icon.classList.add('fa-moon');
-        }
-
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-theme');
-            
-            if (body.classList.contains('dark-theme')) {
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
-                localStorage.setItem('theme', 'dark');
-                
-                // Show theme toast
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Dark mode activated',
-                    text: 'Your eyes will thank you!',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    background: '#1f2937',
-                    color: '#fff'
-                });
-            } else {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-                localStorage.setItem('theme', 'light');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Light mode activated',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    background: '#fff',
-                    color: '#333'
-                });
-            }
-        });
-
-        // ========== CUSTOM CURSOR ==========
-        const cursor = document.getElementById('cursor');
-        const follower = document.getElementById('cursorFollower');
-
-        if (cursor && follower) {
-            let mouseX = 0, mouseY = 0;
-            let cursorX = 0, cursorY = 0;
-            let followerX = 0, followerY = 0;
-
-            document.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            });
-
-            function animate() {
-                cursorX += (mouseX - cursorX) * 0.3;
-                cursorY += (mouseY - cursorY) * 0.3;
-                cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
-
-                followerX += (mouseX - followerX) * 0.15;
-                followerY += (mouseY - followerY) * 0.15;
-                follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%)`;
-
-                requestAnimationFrame(animate);
-            }
-            animate();
-
-            const hoverElements = document.querySelectorAll('a, button, .tab-btn, .view-all-btn, .action-btn, .logout-btn, .theme-toggle, .stat-card, .settings-btn, .info-item');
-            hoverElements.forEach(el => {
-                el.addEventListener('mouseenter', () => {
-                    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1.5)`;
-                    cursor.style.backgroundColor = 'rgba(67, 97, 238, 0.2)';
-                    follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1.2)`;
-                    follower.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
-                });
-                el.addEventListener('mouseleave', () => {
-                    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(1)`;
-                    cursor.style.backgroundColor = 'transparent';
-                    follower.style.transform = `translate(${followerX}px, ${followerY}px) translate(-50%, -50%) scale(1)`;
-                    follower.style.backgroundColor = 'rgba(67, 97, 238, 0.2)';
-                });
-            });
-        }
-
-        // ========== INITIALIZE CHARTS ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart')?.getContext('2d');
-            if (revenueCtx) {
-                new Chart(revenueCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Revenue',
-                            data: [12000, 19000, 15000, 25000, 22000, 30000, 28000],
-                            borderColor: '#8b5cf6',
-                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#8b5cf6',
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                },
-                                ticks: {
-                                    color: 'rgba(255, 255, 255, 0.7)'
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: 'rgba(255, 255, 255, 0.7)'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Orders Chart
-            const ordersCtx = document.getElementById('ordersChart')?.getContext('2d');
-            if (ordersCtx) {
-                new Chart(ordersCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Completed', 'Processing', 'Pending'],
-                        datasets: [{
-                            data: [65, 25, 10],
-                            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
-                            borderWidth: 0,
-                            hoverOffset: 10
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: 'rgba(255, 255, 255, 0.7)',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '70%'
-                    }
-                });
-            }
-        });
-
-        // ========== ADD GLASS MODAL STYLES ==========
-        const style = document.createElement('style');
-        style.textContent = `
-            .glass-modal {
-                background: rgba(15, 23, 42, 0.95) !important;
-                backdrop-filter: blur(10px) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                border-radius: 30px !important;
-                box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3) !important;
-            }
-            .swal2-popup {
-                font-family: 'Poppins', sans-serif !important;
-            }
-            .swal2-title {
-                color: #fff !important;
-            }
-            .swal2-html-container {
-                color: rgba(255, 255, 255, 0.7) !important;
-            }
-            .swal2-confirm {
-                border-radius: 50px !important;
-                padding: 12px 30px !important;
-                font-weight: 600 !important;
-            }
-            .swal2-cancel {
-                border-radius: 50px !important;
-                padding: 12px 30px !important;
-                font-weight: 600 !important;
-            }
-            .swal2-timer-progress-bar {
-                background: linear-gradient(90deg, #4361ee, #8b5cf6) !important;
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
+    <!-- Custom JS -->
+    <script src="/static/js/supplier_home.js"></script>
 </body>
 </html>
