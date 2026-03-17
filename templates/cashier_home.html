@@ -40,6 +40,7 @@
         /* Make product search modal body scrollable */
         #posSearchModal .modal-body {
             max-height: 60vh;
+
             overflow-y: auto;
         }
         /* Optional: improve product card grid */
@@ -1182,6 +1183,7 @@
             // FIXED SEARCH FUNCTION – case‑insensitive and trimmed
             searchProducts: function (query) {
                 // If query is empty or just whitespace, return all products
+
                 if (!query || query.trim() === '') {
                     return this.products;
                 }
@@ -1191,6 +1193,7 @@
                     (p.sku && p.sku.toLowerCase().includes(q)) ||
                     (p.barcode && p.barcode.toLowerCase().includes(q)) ||
                     (p.category && p.category.toLowerCase().includes(q))
+
                 );
             },
 
@@ -1199,6 +1202,7 @@
             },
 
             getProductByQR: function (qrCode) {
+                
                 const cleanCode = qrCode.trim();
 
                 if (cleanCode.includes('product/')) {

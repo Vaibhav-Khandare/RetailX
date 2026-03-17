@@ -2334,6 +2334,7 @@ def update_stock(request):
             return JsonResponse({'status': 'error', 'message': 'No items provided'}, status=400)
 
         updated = []
+
         errors = []
 
         for item in items:
@@ -2350,7 +2351,9 @@ def update_stock(request):
                 # Stock subtract karo (negative nahi hone denge)
                 product.stock = max(0, product.stock - qty)
                 product.save()
+                # append them using sku
                 updated.append(sku)
+
                 logger.info(f"Updated stock for {sku}: new stock = {product.stock}")
             except Cashier_Product.DoesNotExist:
                 errors.append(f"SKU not found: {sku}")
@@ -2363,9 +2366,11 @@ def update_stock(request):
             'errors': errors
         }
         return JsonResponse(response_data)
+    # exception handling
 
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {e}")
+
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     except Exception as e:
         logger.exception("Unexpected error in update_stock")
