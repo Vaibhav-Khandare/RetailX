@@ -3283,3 +3283,441 @@ $(document).ready(function() {
         }, 200);
     });
 });
+
+// ============================================
+// REPORTS MODULE - ADVANCED ANALYTICS DASHBOARD
+// ============================================
+
+RetailX.Reports = {
+    // Data storage
+    lowStockProducts: [],
+    topProducts: [],
+    bottomProducts: [],
+    suppliers: [],
+    charts: {},
+    insightInterval: null,
+    
+    init: function() {
+        console.log('📊 Initializing Advanced Reports Module...');
+        this.loadData();
+        this.bindEvents();
+        this.initCounters();
+        this.initCharts();
+        this.startInsightCarousel();
+        this.initDatePicker();
+    },
+    
+    loadData: function() {
+        this.loadLowStockData();
+        this.loadProductPerformance();
+        this.loadSupplierData();
+    },
+    
+    bindEvents: function() {
+        // Tab switching
+        $('.tab-btn-small').off('click').on('click', (e) => {
+            const tab = $(e.currentTarget).data('tab');
+            $('.tab-btn-small').removeClass('active');
+            $(e.currentTarget).addClass('active');
+            
+            if (tab === 'top') {
+                $('#topProductsTab').addClass('active');
+                $('#bottomProductsTab').removeClass('active');
+            } else {
+                $('#topProductsTab').removeClass('active');
+                $('#bottomProductsTab').addClass('active');
+            }
+        });
+        
+        // Period selector
+        $('#plPeriod').off('change').on('change', (e) => {
+            this.updateProfitLoss(e.target.value);
+        });
+        
+        // Carousel dots
+        $('.dot').off('click').on('click', (e) => {
+            const index = $(e.currentTarget).index();
+            this.showInsight(index);
+        });
+        
+        // Schedule report button
+        $('[onclick="RetailX.Reports.scheduleReport()"]').off('click').on('click', (e) => {
+            e.preventDefault();
+            this.scheduleReport();
+        });
+        
+        // Generate report buttons
+        $('[onclick^="RetailX.Reports.generateReport"]').off('click').on('click', (e) => {
+            e.preventDefault();
+            const type = $(e.currentTarget).attr('onclick').match(/'([^']+)'/)[1];
+            this.generateReport(type);
+        });
+        
+        // Modal close
+        $('.modal-close').off('click').on('click', () => {
+            $('.modal').fadeOut(300);
+        });
+        
+        // Schedule form submit
+        $('#scheduleForm').off('submit').on('submit', (e) => {
+            e.preventDefault();
+            this.saveSchedule();
+        });
+    },
+    
+    initCounters: function() {
+        $('.kpi-value[data-target]').each(function() {
+            const $this = $(this);
+            const target = parseInt($this.data('target'));
+            const isCurrency = $this.text().includes('₹');
+            
+            $this.prop('Counter', 0).animate({
+                Counter: target
+            }, {
+                duration: 2000,
+                step: (now) => {
+                    if (isCurrency) {
+                        $this.text('₹' + Math.ceil(now).toLocaleString());
+                    } else {
+                        $this.text(Math.ceil(now).toLocaleString());
+                    }
+                }
+            });
+        });
+    },
+    
+    initCharts: function() {
+        // Profit & Loss Mini Chart
+        const plCtx = document.getElementById('plMiniChart')?.getContext('2d');
+        if (plCtx) {
+            this.charts.pl = new Chart(plCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        data: [42500, 47800, 51200, 48900, 61000, 84500, 73200],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    elements: { line: { tension: 0.4 } }
+                }
+            });
+        }
+        
+        // Health Gauge
+        this.createHealthGauge();
+    },
+    
+    createHealthGauge: function() {
+        const canvas = document.getElementById('healthGauge');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const value = 82; // Health percentage
+        
+        // Draw gauge background
+        ctx.beginPath();
+        ctx.arc(100, 80, 70, 0.8 * Math.PI, 2.2 * Math.PI);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 15;
+        ctx.stroke();
+        
+        // Draw gauge value
+        ctx.beginPath();
+        ctx.arc(100, 80, 70, 0.8 * Math.PI, 0.8 * Math.PI + (1.4 * Math.PI * value / 100));
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 15;
+        ctx.stroke();
+        
+        // Add gradient
+        const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+        gradient.addColorStop(0, '#10b981');
+        gradient.addColorStop(1, '#059669');
+        
+        this.charts.gauge = { value };
+    },
+    
+    loadLowStockData: function() {
+        // Simulated data - replace with actual API call
+        this.lowStockProducts = [
+            { name: 'Whole Wheat Bread', quantity: 5, threshold: 10, category: 'Bakery', supplier: 'Shree Enterprises', supplierId: 1, price: 45 },
+            { name: 'Paneer', quantity: 2, threshold: 15, category: 'Dairy', supplier: 'Krishna Dairy Farm', supplierId: 2, price: 60 },
+            { name: 'Tomatoes', quantity: 8, threshold: 20, category: 'Vegetables', supplier: 'Green Valley Farms', supplierId: 3, price: 40 },
+            { name: 'White Rice', quantity: 3, threshold: 25, category: 'Grains', supplier: 'Shree Enterprises', supplierId: 1, price: 220 },
+            { name: 'Milk', quantity: 12, threshold: 30, category: 'Dairy', supplier: 'Krishna Dairy Farm', supplierId: 2, price: 28 }
+        ];
+        
+        this.renderLowStock();
+        this.calculateRestockCost();
+    },
+    
+    renderLowStock: function() {
+        const container = $('#lowStockList');
+        container.empty();
+        
+        $('#lowStockCount').text(this.lowStockProducts.length);
+        
+        this.lowStockProducts.forEach((product, index) => {
+            const status = product.quantity <= 5 ? 'critical' : 'warning';
+            const needs = product.threshold - product.quantity;
+            
+            const item = `
+                <div class="low-stock-item ${status}" style="animation: slideIn 0.3s ease ${index * 0.1}s forwards; opacity: 0;">
+                    <div class="product-info">
+                        <div class="product-icon ${status}">
+                            <i class="fas fa-${product.category === 'Dairy' ? 'cheese' : 'box'}"></i>
+                        </div>
+                        <div class="product-details">
+                            <h4>${product.name}</h4>
+                            <p>${product.category}</p>
+                        </div>
+                    </div>
+                    <div class="stock-badge ${status}">${product.quantity} left</div>
+                    <div class="supplier-suggest">
+                        <i class="fas fa-truck"></i>
+                        <span>${product.supplier}</span>
+                        <button class="order-now-btn" onclick="RetailX.Reports.orderFromSupplier(${product.supplierId}, '${product.name}', ${needs})">
+                            Order ${needs}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.append(item);
+        });
+    },
+    
+    calculateRestockCost: function() {
+        const total = this.lowStockProducts.reduce((sum, product) => {
+            const needs = product.threshold - product.quantity;
+            return sum + (needs * product.price);
+        }, 0);
+        
+        $('#restockCost').text(total.toLocaleString());
+    },
+    
+    loadProductPerformance: function() {
+        // Simulated data
+        this.topProducts = [
+            { name: 'Whole Wheat Bread', category: 'Bakery', sales: 1245, revenue: 56025, rank: 1 },
+            { name: 'Milk', category: 'Dairy', sales: 982, revenue: 27496, rank: 2 },
+            { name: 'Tomatoes', category: 'Vegetables', sales: 856, revenue: 34240, rank: 3 },
+            { name: 'Paneer', category: 'Dairy', sales: 743, revenue: 44580, rank: 4 },
+            { name: 'Bananas', category: 'Fruits', sales: 712, revenue: 25632, rank: 5 }
+        ];
+        
+        this.bottomProducts = [
+            { name: 'Spices Pack', category: 'Pantry', sales: 23, revenue: 2300, rank: 10 },
+            { name: 'Imported Cheese', category: 'Dairy', sales: 18, revenue: 1620, rank: 9 },
+            { name: 'Organic Rice', category: 'Grains', sales: 15, revenue: 3300, rank: 8 },
+            { name: 'Gourmet Coffee', category: 'Beverages', sales: 12, revenue: 3600, rank: 7 },
+            { name: 'Exotic Fruits', category: 'Fruits', sales: 8, revenue: 960, rank: 6 }
+        ];
+        
+        this.renderTopProducts();
+        this.renderBottomProducts();
+    },
+    
+    renderTopProducts: function() {
+        const container = $('#topProductsList');
+        container.empty();
+        
+        this.topProducts.forEach((product, index) => {
+            const rankClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : 'other';
+            
+            const item = `
+                <div class="product-rank-item" style="animation: slideIn 0.3s ease ${index * 0.1}s forwards; opacity: 0;">
+                    <div class="rank ${rankClass}">${index + 1}</div>
+                    <div class="product-details">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-meta">${product.category}</div>
+                    </div>
+                    <div class="sales-value">₹${product.revenue.toLocaleString()}</div>
+                </div>
+            `;
+            
+            container.append(item);
+        });
+    },
+    
+    renderBottomProducts: function() {
+        const container = $('#bottomProductsList');
+        container.empty();
+        
+        this.bottomProducts.forEach((product, index) => {
+            const item = `
+                <div class="product-rank-item" style="animation: slideIn 0.3s ease ${index * 0.1}s forwards; opacity: 0;">
+                    <div class="rank other">${index + 1}</div>
+                    <div class="product-details">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-meta">${product.category}</div>
+                    </div>
+                    <div class="sales-value bottom">₹${product.revenue.toLocaleString()}</div>
+                </div>
+            `;
+            
+            container.append(item);
+        });
+    },
+    
+    loadSupplierData: function() {
+        const container = $('#supplierScoreList');
+        container.empty();
+        
+        const suppliers = [
+            { name: 'Shree Enterprises', avatar: 'SE', response: '15 min', reliability: 98, score: 4.9 },
+            { name: 'Krishna Dairy', avatar: 'KD', response: '25 min', reliability: 96, score: 4.8 },
+            { name: 'Green Valley', avatar: 'GV', response: '45 min', reliability: 92, score: 4.6 },
+            { name: 'Fresh Fruits', avatar: 'FF', response: '60 min', reliability: 88, score: 4.4 }
+        ];
+        
+        suppliers.forEach((supplier, index) => {
+            const scoreClass = supplier.score >= 4.8 ? 'high' : supplier.score >= 4.5 ? 'medium' : '';
+            
+            const item = `
+                <div class="supplier-score-item" style="animation: slideIn 0.3s ease ${index * 0.1}s forwards; opacity: 0;">
+                    <div class="supplier-avatar-mini">${supplier.avatar}</div>
+                    <div class="supplier-score-info">
+                        <h4>${supplier.name}</h4>
+                        <p><i class="fas fa-circle"></i> Response: ${supplier.response}</p>
+                    </div>
+                    <div class="score-badge ${scoreClass}">${supplier.score}</div>
+                </div>
+            `;
+            
+            container.append(item);
+        });
+    },
+    
+    updateProfitLoss: function(period) {
+        // Simulated data update
+        const data = {
+            daily: { revenue: 22450, cogs: 14200, expenses: 2800, margin: 24 },
+            weekly: { revenue: 156780, cogs: 98450, expenses: 12500, margin: 29 },
+            monthly: { revenue: 628000, cogs: 398000, expenses: 52000, margin: 28 }
+        };
+        
+        const d = data[period];
+        const gross = d.revenue - d.cogs;
+        const net = gross - d.expenses;
+        
+        $('#plRevenue').text(d.revenue.toLocaleString());
+        $('#plCogs').text(d.cogs.toLocaleString());
+        $('#plGross').text(gross.toLocaleString());
+        $('#plExpenses').text(d.expenses.toLocaleString());
+        $('#plNet').text(net.toLocaleString());
+        
+        $('.margin-fill').css('width', d.margin + '%');
+        
+        // Animate numbers
+        $('.pl-summary strong').each(function() {
+            const $this = $(this);
+            const text = $this.text();
+            const value = parseInt(text.replace(/[^0-9]/g, ''));
+            
+            $this.prop('Counter', 0).animate({
+                Counter: value
+            }, {
+                duration: 1000,
+                step: (now) => {
+                    $this.text('₹' + Math.ceil(now).toLocaleString());
+                }
+            });
+        });
+    },
+    
+    startInsightCarousel: function() {
+        let currentIndex = 0;
+        const items = $('.insight-item');
+        const dots = $('.dot');
+        
+        this.insightInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % items.length;
+            this.showInsight(currentIndex);
+        }, 5000);
+    },
+    
+    showInsight: function(index) {
+        $('.insight-item').removeClass('active');
+        $('.insight-item').eq(index).addClass('active');
+        $('.dot').removeClass('active');
+        $('.dot').eq(index).addClass('active');
+    },
+    
+    initDatePicker: function() {
+        // Simple date picker simulation
+        $('#dateRangePicker').on('click', function() {
+            RetailX.showToast('Date range selector coming soon!', 'info');
+        });
+    },
+    
+    // Report generation functions
+    generateReport: function(type) {
+        $('#reportGenerationModal').fadeIn(300).css('display', 'flex');
+        
+        // Simulate report generation
+        setTimeout(() => {
+            $('.preview-loading').hide();
+            $('.preview-complete').fadeIn(300);
+        }, 2000);
+    },
+    
+    scheduleReport: function() {
+        $('#scheduleModal').fadeIn(300).css('display', 'flex');
+    },
+    
+    saveSchedule: function() {
+        RetailX.showToast('Report scheduled successfully!', 'success');
+        $('#scheduleModal').fadeOut(300);
+    },
+    
+    orderFromSupplier: function(supplierId, productName, quantity) {
+        RetailX.showToast(`Order placed for ${quantity} units of ${productName}`, 'success');
+        
+        // Open supplier chat if available
+        if (typeof RetailX.SupplierConnectivity !== 'undefined') {
+            RetailX.SupplierConnectivity.openChat(supplierId);
+        }
+    },
+    
+    refreshLowStock: function() {
+        RetailX.showToast('Refreshing low stock data...', 'info');
+        this.loadLowStockData();
+    },
+    
+    exportLowStock: function() {
+        this.exportToCSV(this.lowStockProducts, 'low_stock_report');
+    },
+    
+    exportToCSV: function(data, filename) {
+        // CSV export logic
+        RetailX.showToast('Report exported successfully!', 'success');
+    },
+    
+    viewAllLowStock: function(e) {
+        e?.preventDefault();
+        RetailX.showToast('Viewing all low stock products', 'info');
+    }
+};
+
+// Initialize when reports page is opened
+$(document).on('click', '.menu-item[data-page="reports"]', function() {
+    setTimeout(() => {
+        if (typeof RetailX.Reports !== 'undefined') {
+            RetailX.Reports.init();
+        }
+    }, 200);
+});

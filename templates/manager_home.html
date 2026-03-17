@@ -1270,30 +1270,473 @@ $(document).ready(function() {
 });
 </script> -->
 
-            <!-- REPORTS PAGE -->
-            <div class="page" id="reports-page">
-                <div class="reports-container">
-                    <!-- Page Header -->
-                    <div class="reports-header">
-                        <h2><i class="fas fa-file-alt"></i> Reports</h2>
-                        <p class="header-subtitle">Generate and download reports</p>
+            <!-- ============================================
+     REPORTS PAGE - ADVANCED ANALYTICS DASHBOARD
+     ============================================ -->
+<div class="page" id="reports-page">
+    <div class="reports-container">
+        
+        <!-- Animated Header with Particle Effect -->
+        <div class="reports-header-modern">
+            <div class="header-particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="gradient-text">
+                        <i class="fas fa-chart-pie"></i> 
+                        Analytics & Reports
+                    </h1>
+                    <p class="header-subtitle">Data-driven insights for smart decisions</p>
+                </div>
+                <div class="header-right">
+                    <div class="date-range-picker-modern">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="text" id="dateRangePicker" placeholder="Select Date Range" value="Last 30 days">
                     </div>
+                    <button class="btn-primary btn-glow" id="exportAllReportsBtn">
+                        <i class="fas fa-download"></i> Export All
+                    </button>
+                </div>
+            </div>
+            
+            <!-- KPI Cards with Counters -->
+            <div class="kpi-strip">
+                <div class="kpi-item" id="totalRevenueKpi">
+                    <div class="kpi-icon"><i class="fas fa-rupee-sign"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Revenue</span>
+                        <span class="kpi-value" data-target="156780">₹0</span>
+                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 12.5%</span>
+                    </div>
+                </div>
+                <div class="kpi-item" id="totalOrdersKpi">
+                    <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Orders</span>
+                        <span class="kpi-value" data-target="1284">0</span>
+                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 8.2%</span>
+                    </div>
+                </div>
+                <div class="kpi-item" id="avgOrderKpi">
+                    <div class="kpi-icon"><i class="fas fa-calculator"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Avg. Order Value</span>
+                        <span class="kpi-value" data-target="122">₹0</span>
+                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 5.3%</span>
+                    </div>
+                </div>
+                <div class="kpi-item" id="profitMarginKpi">
+                    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Profit Margin</span>
+                        <span class="kpi-value" data-target="23.5">0%</span>
+                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 2.1%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Quick Actions Cards (two cards) -->
-                    <div class="reports-quick-actions">
-                        <div class="action-grid two-col">
-                            <div class="quick-action-card" onclick="RetailX.Reports.printPriceLabels()">
-                                <i class="fas fa-print"></i>
-                                <span>Print Price Labels</span>
+        <!-- Quick Action Tiles -->
+        <div class="quick-actions-grid">
+            <div class="action-tile" onclick="RetailX.Reports.generateReport('daily-sales')">
+                <div class="tile-icon pulse"><i class="fas fa-sun"></i></div>
+                <div class="tile-content">
+                    <h4>Daily Sales</h4>
+                    <p>Today's performance</p>
+                </div>
+                <div class="tile-glow"></div>
+            </div>
+            <div class="action-tile" onclick="RetailX.Reports.generateReport('weekly-summary')">
+                <div class="tile-icon pulse" style="animation-delay: 0.2s"><i class="fas fa-calendar-week"></i></div>
+                <div class="tile-content">
+                    <h4>Weekly Summary</h4>
+                    <p>Week over week</p>
+                </div>
+            </div>
+            <div class="action-tile" onclick="RetailX.Reports.generateReport('monthly-review')">
+                <div class="tile-icon pulse" style="animation-delay: 0.4s"><i class="fas fa-calendar-alt"></i></div>
+                <div class="tile-content">
+                    <h4>Monthly Review</h4>
+                    <p>Complete analysis</p>
+                </div>
+            </div>
+            <div class="action-tile" onclick="RetailX.Reports.scheduleReport()">
+                <div class="tile-icon"><i class="fas fa-clock"></i></div>
+                <div class="tile-content">
+                    <h4>Schedule Reports</h4>
+                    <p>Automate delivery</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Reports Grid -->
+        <div class="reports-grid">
+            
+            <!-- Left Column - Primary Reports -->
+            <div class="reports-left">
+                
+                <!-- 1. Low Stock Alert with Supplier Suggestions -->
+                <div class="report-card glass-effect" id="lowStockReport">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                            <h3>Low Stock Alert <span class="badge urgent" id="lowStockCount">0</span></h3>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn-icon" onclick="RetailX.Reports.refreshLowStock()"><i class="fas fa-sync-alt"></i></button>
+                            <button class="btn-icon" onclick="RetailX.Reports.exportLowStock()"><i class="fas fa-download"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="low-stock-list" id="lowStockList">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                        
+                        <div class="view-all-link">
+                            <a href="#" onclick="RetailX.Reports.viewAllLowStock()">View All <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="insight-badge">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Restock cost: ₹<span id="restockCost">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Top 10 & Bottom 10 Products -->
+                <div class="report-card glass-effect" id="productPerformance">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-trophy" style="color: #fbbf24;"></i>
+                            <h3>Product Performance</h3>
+                        </div>
+                        <div class="header-tabs">
+                            <button class="tab-btn-small active" data-tab="top">Top 10</button>
+                            <button class="tab-btn-small" data-tab="bottom">Bottom 10</button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-body">
+                        <!-- Top Products Tab -->
+                        <div class="tab-content active" id="topProductsTab">
+                            <div class="product-list" id="topProductsList">
+                                <!-- Dynamic content -->
                             </div>
-                            <div class="quick-action-card" onclick="RetailX.Reports.stockReport()">
-                                <i class="fas fa-chart-bar"></i>
-                                <span>Stock Report</span>
+                        </div>
+                        
+                        <!-- Bottom Products Tab -->
+                        <div class="tab-content" id="bottomProductsTab">
+                            <div class="product-list" id="bottomProductsList">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Profit & Loss Snapshot -->
+                <div class="report-card glass-effect" id="profitLoss">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-chart-line" style="color: #10b981;"></i>
+                            <h3>Profit & Loss Snapshot</h3>
+                        </div>
+                        <div class="period-selector">
+                            <select id="plPeriod" class="mini-select">
+                                <option value="daily">Daily</option>
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="pl-summary">
+                            <div class="pl-item">
+                                <span>Revenue</span>
+                                <strong class="revenue">₹<span id="plRevenue">156,780</span></strong>
+                            </div>
+                            <div class="pl-item">
+                                <span>COGS</span>
+                                <strong class="cogs">₹<span id="plCogs">98,450</span></strong>
+                            </div>
+                            <div class="pl-divider"></div>
+                            <div class="pl-item gross">
+                                <span>Gross Profit</span>
+                                <strong>₹<span id="plGross">58,330</span></strong>
+                            </div>
+                            <div class="pl-item">
+                                <span>Expenses</span>
+                                <strong class="expenses">₹<span id="plExpenses">12,500</span></strong>
+                            </div>
+                            <div class="pl-divider"></div>
+                            <div class="pl-item net">
+                                <span>Net Profit</span>
+                                <strong>₹<span id="plNet">45,830</span></strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Chart -->
+                        <div class="mini-chart-container">
+                            <canvas id="plMiniChart"></canvas>
+                        </div>
+                        
+                        <div class="pl-margin">
+                            <div class="margin-bar">
+                                <div class="margin-fill" style="width: 29%"></div>
+                            </div>
+                            <span>Profit Margin: 29%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Secondary Reports -->
+            <div class="reports-right">
+                
+                <!-- 4. Inventory Health Dashboard -->
+                <div class="report-card glass-effect" id="inventoryHealth">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-heartbeat" style="color: #ef4444;"></i>
+                            <h3>Inventory Health</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="report-body">
+                        <!-- Health Gauge -->
+                        <div class="health-gauge-container">
+                            <canvas id="healthGauge" width="200" height="100"></canvas>
+                            <div class="gauge-value" id="healthValue">82%</div>
+                        </div>
+                        
+                        <!-- Health Stats -->
+                        <div class="health-stats">
+                            <div class="stat-row">
+                                <span>Total Items</span>
+                                <strong id="healthTotalItems">1,284</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Categories</span>
+                                <strong id="healthCategories">24</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Stock Value</span>
+                                <strong id="healthStockValue">₹82.3k</strong>
+                            </div>
+                            <div class="stat-row warning">
+                                <span>Low Stock</span>
+                                <strong id="healthLowStock">12</strong>
+                            </div>
+                            <div class="stat-row danger">
+                                <span>Overstock</span>
+                                <strong id="healthOverstock">8</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Stock Distribution -->
+                        <div class="stock-distribution">
+                            <h4>Stock by Category</h4>
+                            <div id="categoryDistribution" class="distribution-bars">
+                                <!-- Dynamic bars -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Supplier Performance Scorecard -->
+                <div class="report-card glass-effect" id="supplierScorecard">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-truck" style="color: #3b82f6;"></i>
+                            <h3>Supplier Scorecard</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="supplier-list" id="supplierScoreList">
+                            <!-- Dynamic supplier cards -->
+                        </div>
+                        
+                        <div class="scorecard-summary">
+                            <div class="summary-item">
+                                <span>Top Performer</span>
+                                <strong>Shree Enterprises</strong>
+                            </div>
+                            <div class="summary-item">
+                                <span>Avg. Response</span>
+                                <strong>2.4 hours</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Scheduled Reports -->
+                <div class="report-card glass-effect" id="scheduledReports">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-clock" style="color: #8b5cf6;"></i>
+                            <h3>Scheduled Reports</h3>
+                        </div>
+                        <button class="btn-icon" onclick="RetailX.Reports.addSchedule()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="schedule-list" id="scheduleList">
+                            <div class="schedule-item">
+                                <div class="schedule-info">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <div>
+                                        <strong>Weekly Summary</strong>
+                                        <span>Every Monday, 8:00 AM</span>
+                                    </div>
+                                </div>
+                                <div class="schedule-actions">
+                                    <button class="btn-icon small"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-icon small"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="schedule-item">
+                                <div class="schedule-info">
+                                    <i class="fas fa-file-excel"></i>
+                                    <div>
+                                        <strong>Monthly Review</strong>
+                                        <span>1st of month, 9:00 AM</span>
+                                    </div>
+                                </div>
+                                <div class="schedule-actions">
+                                    <button class="btn-icon small"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-icon small"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. AI Insights -->
+                <div class="report-card glass-effect ai-insights" id="aiInsights">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fas fa-robot" style="color: #10b981;"></i>
+                            <h3>AI Insights</h3>
+                        </div>
+                        <span class="badge live">LIVE</span>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="insight-carousel">
+                            <div class="insight-item active">
+                                <i class="fas fa-lightbulb"></i>
+                                <p>Tomatoes are selling 40% faster this week. Consider increasing order by 30%.</p>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-exclamation"></i>
+                                <p>5 products haven't sold in 30 days. Consider discounting.</p>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-chart-line"></i>
+                                <p>Diwali sales predicted to be 25% higher than last year.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-dots">
+                            <span class="dot active"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Generation Modal -->
+        <div class="modal" id="reportGenerationModal">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-file-export"></i> Generate Report</h3>
+                        <button class="modal-close"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="report-preview">
+                            <div class="preview-loading">
+                                <div class="spinner"></div>
+                                <p>Generating your report...</p>
+                            </div>
+                            <div class="preview-complete" style="display: none;">
+                                <i class="fas fa-check-circle" style="color: #10b981; font-size: 48px;"></i>
+                                <h4>Report Ready!</h4>
+                                <div class="report-actions">
+                                    <button class="btn-primary"><i class="fas fa-download"></i> Download PDF</button>
+                                    <button class="btn-outline"><i class="fas fa-file-excel"></i> Excel</button>
+                                    <button class="btn-outline"><i class="fas fa-envelope"></i> Email</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Schedule Report Modal -->
+        <div class="modal" id="scheduleModal">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-clock"></i> Schedule Report</h3>
+                        <button class="modal-close"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="scheduleForm">
+                            <div class="form-group">
+                                <label>Report Type</label>
+                                <select class="form-control">
+                                    <option>Daily Sales Summary</option>
+                                    <option>Weekly Performance</option>
+                                    <option>Monthly Review</option>
+                                    <option>Low Stock Alert</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Frequency</label>
+                                <select class="form-control">
+                                    <option>Daily</option>
+                                    <option>Weekly</option>
+                                    <option>Monthly</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Time</label>
+                                <input type="time" class="form-control" value="08:00">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" class="form-control" placeholder="manager@retailx.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Format</label>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="format" checked> PDF</label>
+                                    <label><input type="radio" name="format"> Excel</label>
+                                    <label><input type="radio" name="format"> CSV</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary btn-block">Save Schedule</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- SETTINGS PAGE -->
             <div class="page" id="settings-page">
