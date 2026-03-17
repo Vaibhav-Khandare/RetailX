@@ -1,7 +1,11 @@
+import os
+from django.core.management.base import BaseCommand
+from DatasetDB.models import Cashier_Product
 
-
-products: [
-    // Electronics
+# Full product list with thresholds (your dataset)
+PRODUCTS_DATA = [
+    # Electronics
+    
     { "sku": 'ELEC001', "barcode": '8801234567890', "name": 'Samsung 65" 4K Smart TV', "category": 'Electronics', "price": 899.99, "stock": 25, "threshold": 5 },
     { "sku": 'ELEC002', "barcode": '8801234567891', "name": 'LG 55" OLED TV', "category": 'Electronics', "price": 1299.99, "stock": 15, "threshold": 5 },
     { "sku": 'ELEC003', "barcode": '8801234567892', "name": 'Sony WH-1000XM4 Headphones', "category": 'Electronics', "price": 348.00, "stock": 42, "threshold": 10 },
@@ -53,7 +57,7 @@ products: [
     { "sku": 'ELEC049', "barcode": '8801234567938', "name": 'ASUS RT-AX88U Router', "category": 'Electronics', "price": 299.99, "stock": 34, "threshold": 8 },
     { "sku": 'ELEC050', "barcode": '8801234567939', "name": 'Netgear Nighthawk Router', "category": 'Electronics', "price": 249.99, "stock": 28, "threshold": 7 },
 
-    // Groceries
+    # // Groceries
     { "sku": 'GROC001', "barcode": '8901234567012', "name": 'Organic Avocados (3-pack)', "category": 'Grocery', "price": 5.99, "stock": 234, "threshold": 40 },
     { "sku": 'GROC002', "barcode": '8901234567013', "name": 'Fresh Strawberries 1lb', "category": 'Grocery', "price": 4.99, "stock": 189, "threshold": 30 },
     { "sku": 'GROC003', "barcode": '8901234567014', "name": 'Blueberries 6oz', "category": 'Grocery', "price": 3.99, "stock": 267, "threshold": 40 },
@@ -105,7 +109,7 @@ products: [
     { "sku": 'GROC049', "barcode": '8901234567060', "name": 'Sourdough Bread', "category": 'Grocery', "price": 4.49, "stock": 234, "threshold": 35 },
     { "sku": 'GROC050', "barcode": '8901234567061', "name": 'Croissants 4-pack', "category": 'Grocery', "price": 4.99, "stock": 178, "threshold": 30 },
 
-    // Apparel
+    # // Apparel
     { "sku": 'APP001', "barcode": '8909876543012', "name": 'Men\'s Cotton T-Shirt White M', "category": 'Apparel', "price": 14.99, "stock": 234, "threshold": 40 },
     { "sku": 'APP002', "barcode": '8909876543013', "name": 'Men\'s Cotton T-Shirt White L', "category": 'Apparel', "price": 14.99, "stock": 198, "threshold": 35 },
     { "sku": 'APP003', "barcode": '8909876543014', "name": 'Men\'s Cotton T-Shirt White XL', "category": 'Apparel', "price": 16.99, "stock": 167, "threshold": 30 },
@@ -157,7 +161,7 @@ products: [
     { "sku": 'APP049', "barcode": '8909876543060', "name": 'Women\'s Hoodie Pink L', "category": 'Apparel', "price": 42.99, "stock": 189, "threshold": 30 },
     { "sku": 'APP050', "barcode": '8909876543061', "name": 'Men\'s Dress Shirt White 15.5/32', "category": 'Apparel', "price": 44.99, "stock": 134, "threshold": 20 },
 
-    // Home & Garden
+    # // Home & Garden
     { "sku": 'HOME001', "barcode": '8801357924680', "name": 'Bed Sheets Queen 4pc', "category": 'Home', "price": 49.99, "stock": 156, "threshold": 25 },
     { "sku": 'HOME002', "barcode": '8801357924681', "name": 'Bed Sheets King 4pc', "category": 'Home', "price": 59.99, "stock": 134, "threshold": 20 },
     { "sku": 'HOME003', "barcode": '8801357924682', "name": 'Pillows Standard 2-pack', "category": 'Home', "price": 29.99, "stock": 245, "threshold": 35 },
@@ -209,7 +213,7 @@ products: [
     { "sku": 'HOME049', "barcode": '8801357924728', "name": 'Recycling Bin', "category": 'Home', "price": 24.99, "stock": 198, "threshold": 30 },
     { "sku": 'HOME050', "barcode": '8801357924729', "name": 'Step Stool', "category": 'Home', "price": 19.99, "stock": 156, "threshold": 25 },
 
-    // Beauty & Personal Care
+    # // Beauty & Personal Care
     { "sku": 'BEAU001', "barcode": '7701234567890', "name": 'Shampoo Moisturizing 12oz', "category": 'Beauty', "price": 8.99, "stock": 345, "threshold": 40 },
     { "sku": 'BEAU002', "barcode": '7701234567891', "name": 'Conditioner 12oz', "category": 'Beauty', "price": 8.99, "stock": 334, "threshold": 40 },
     { "sku": 'BEAU003', "barcode": '7701234567892', "name": 'Body Wash 16oz', "category": 'Beauty', "price": 7.99, "stock": 356, "threshold": 40 },
@@ -261,7 +265,7 @@ products: [
     { "sku": 'BEAU049', "barcode": '7701234567938', "name": 'Face Mask Clay', "category": 'Beauty', "price": 12.99, "stock": 212, "threshold": 30 },
     { "sku": 'BEAU050', "barcode": '7701234567939', "name": 'Eye Cream 0.5oz', "category": 'Beauty', "price": 19.99, "stock": 178, "threshold": 25 },
 
-    // Sports & Outdoors
+    # // Sports & Outdoors
     { "sku": 'SPRT001', "barcode": '6601234567890', "name": 'Yoga Mat', "category": 'Sports', "price": 24.99, "stock": 189, "threshold": 30 },
     { "sku": 'SPRT002', "barcode": '6601234567891', "name": 'Yoga Block 2-pack', "category": 'Sports', "price": 12.99, "stock": 234, "threshold": 35 },
     { "sku": 'SPRT003', "barcode": '6601234567892', "name": 'Yoga Strap', "category": 'Sports', "price": 9.99, "stock": 245, "threshold": 35 },
@@ -313,7 +317,7 @@ products: [
     { "sku": 'SPRT049', "barcode": '6601234567938', "name": 'Baseball 3-pack', "category": 'Sports', "price": 9.99, "stock": 156, "threshold": 25 },
     { "sku": 'SPRT050', "barcode": '6601234567939', "name": 'Basketball', "category": 'Sports', "price": 24.99, "stock": 145, "threshold": 25 },
 
-    // Books & Media
+    # // Books & Media
     { "sku": 'BOOK001', "barcode": '9781234567890', "name": 'The Great Novel Hardcover', "category": 'Books', "price": 24.99, "stock": 234, "threshold": 35 },
     { "sku": 'BOOK002', "barcode": '9781234567891', "name": 'Mystery Thriller Paperback', "category": 'Books', "price": 14.99, "stock": 267, "threshold": 40 },
     { "sku": 'BOOK003', "barcode": '9781234567892', "name": 'Science Fiction Epic', "category": 'Books', "price": 16.99, "stock": 245, "threshold": 35 },
@@ -364,4 +368,30 @@ products: [
     { "sku": 'BOOK048', "barcode": '9781234567937', "name": 'Network Security', "category": 'Books', "price": 42.99, "stock": 123, "threshold": 20 },
     { "sku": 'BOOK049', "barcode": '9781234567938', "name": 'Cloud Computing', "category": 'Books', "price": 37.99, "stock": 145, "threshold": 20 },
     { "sku": 'BOOK050', "barcode": '9781234567939', "name": 'DevOps Handbook', "category": 'Books', "price": 34.99, "stock": 134, "threshold": 20 }
-],
+
+]
+
+class Command(BaseCommand):
+    help = 'Load initial product data into the database'
+
+    def handle(self, *args, **options):
+        self.stdout.write("Loading products...")
+        count = 0
+        for item in PRODUCTS_DATA:
+            product, created = Cashier_Product.objects.update_or_create(
+                sku=item['sku'],
+                defaults={
+                    'barcode': item["barcode"],
+                    'name': item["name"],
+                    'category': item["category"],
+                    'price': item["price"],
+                    'stock': item["stock"],
+                    'threshold': item["threshold"],
+                }
+            )
+            if created:
+                self.stdout.write(f"Created: {product.name}")
+            else:
+                self.stdout.write(f"Updated: {product.name}")
+            count += 1
+        self.stdout.write(self.style.SUCCESS(f'Successfully loaded {count} products.'))

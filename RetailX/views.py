@@ -53,6 +53,7 @@ from django.contrib.auth.decorators import login_required
 # ================== MODELS ==================
 from AccountsDB.models import Admin, Cashier, Manager, Supplier
 from productsDB.models import Product
+from DatasetDB.models import Cashier_Product
 
 from .gemini_chat import ask_gemini
 
@@ -2310,3 +2311,62 @@ def supplier_check_session(request):
     if request.session.get('supplier_username'):
         return JsonResponse({'authenticated': True})
     return JsonResponse({'authenticated': False}, status=401)
+
+
+logger = logging.getLogger(__name__)
+
+
+@require_POST
+def update_stock(request):
+    """
+    Recieves list of sold items: [{"sku": "ELEC001", "quantity": 2}, ...]
+    Updates stock in database.
+    """
+    try:
+        # Request body read karo
+        body = request.body.decode('utf-8')
+        logger.info(f"Stock update request: {body}")
+
+        data = json.loads(body)
+        items = data.get('items', [])
+
+        if not items:
+            return JsonResponse({'status': 'error', 'message': 'No items provided'}, status=400)
+
+        updated = []
+        errors = []
+
+        for item in items:
+            sku = item.get('sku')
+            qty = item.get('quantity')
+
+            if not sku or qty is None:
+                errors.append(f"Invalid item data: {item}")
+                continue
+
+            try:
+                # Database se product fetch karo
+                product = Cashier_Product.objects.get(sku=sku)
+                # Stock subtract karo (negative nahi hone denge)
+                product.stock = max(0, product.stock - qty)
+                product.save()
+                updated.append(sku)
+                logger.info(f"Updated stock for {sku}: new stock = {product.stock}")
+            except Cashier_Product.DoesNotExist:
+                errors.append(f"SKU not found: {sku}")
+            except Exception as e:
+                errors.append(f"Error for SKU {sku}: {str(e)}")
+
+        response_data = {
+            'status': 'success' if not errors else 'partial',
+            'updated': updated,
+            'errors': errors
+        }
+        return JsonResponse(response_data)
+
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.exception("Unexpected error in update_stock")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

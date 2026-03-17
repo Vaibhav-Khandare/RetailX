@@ -1218,6 +1218,22 @@
         // UTILITY & HELPER FUNCTIONS
         // ============================================
         RetailX.Utils = {
+
+            getCookie: function(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            },
+
             formatMoney: (amount) => `${RetailX.Config.currencySymbol}${parseFloat(amount).toFixed(2)}`,
 
             generateBillNo: () => {
@@ -2395,6 +2411,30 @@
                 RetailX.State.transactions.unshift(transaction);
 
                 RetailX.saveState();
+
+                // ===== NEW: Send item list to backend to update stock =====
+                const itemsForStock = transaction.items.map(item => ({
+                    sku: item.sku,
+                    quantity: item.qty
+                }));
+
+                // Get CSRF token for Django
+                const csrftoken = RetailX.Utils.getCookie('csrftoken');
+
+                $.ajax({
+                    url: '/api/update_stock/',   // 🔁 Change this to your actual endpoint
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken },
+                    contentType: 'application/json',
+                    data: JSON.stringify({ items: itemsForStock }),
+                    success: function(response) {
+                        console.log('Stock updated successfully');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Failed to update stock:', error);
+                        RetailX.Utils.showToast('Stock Update Failed', 'Could not update product quantities', 'error');
+                    }
+                });
 
                 this.updateDashboardKPIs();
                 this.generateReceiptHTML(transaction);
