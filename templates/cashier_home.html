@@ -11,6 +11,33 @@
     <meta http-equiv="Expires" content="0">
     
     <link rel="stylesheet" href="/static/css/cashier_home.css">
+    <!-- Additional inline fix to ensure Complete Sale button is always visible -->
+    <style>
+        /* Make the right panel scrollable */
+        .pos-right-panel {
+            overflow-y: auto !important;
+        }
+        /* Ensure the bill summary card expands to fill height */
+        .bill-summary-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        /* Let the content areas grow and shrink naturally */
+        .bill-summary-card > * {
+            flex-shrink: 0;
+        }
+        .bill-summary-card > #tenderAreaDigital {
+            flex: 1 1 auto; /* allow digital area to take extra space */
+            height: 100px;
+            overflow-y: auto;
+        }
+        /* Button stays at bottom but if content overflows, you can scroll */
+        #completeCheckoutBtn {
+            flex-shrink: 0;
+            margin-top: 20px; /* add some space above */
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -23,7 +50,10 @@
     <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
     <!-- QuaggaJS for barcode scanning -->
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <!-- QR Code Generator for real UPI payment -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
+<!-- ... rest of the body exactly as you provided ... -->
 <body data-cashier="{{ cashier_name }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 
     <!-- Preloader -->
@@ -290,18 +320,18 @@
                                 <span id="cartGrandTotal">₹0.00</span>
                             </div>
 
+                            <!-- Payment methods: Cash and Digital only (Card removed) -->
                             <div class="payment-methods-grid">
                                 <button class="pay-method-btn active" data-method="cash">
                                     <i class="fas fa-money-bill-wave"></i> Cash
                                 </button>
-                                <button class="pay-method-btn" data-method="card">
-                                    <i class="fas fa-credit-card"></i> Card
-                                </button>
                                 <button class="pay-method-btn" data-method="wallet">
                                     <i class="fas fa-mobile-alt"></i> Digital
                                 </button>
+                                <!-- Card button removed -->
                             </div>
 
+                            <!-- Cash tender area -->
                             <div class="tender-area" id="tenderAreaCash">
                                 <div class="tender-input-wrapper">
                                     <label>Amount Tendered</label>
@@ -323,7 +353,25 @@
                                 </div>
                             </div>
 
-                            <button class="btn-checkout" id="completeCheckoutBtn" disabled>
+                            <!-- Digital payment area (QR code) with editable amount -->
+                            <div class="tender-area" id="tenderAreaDigital" style="display: none;" >
+                                <div class="qr-payment-container" style="text-align: center; padding: 10px;">
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="qrAmount" style="font-size: 14px; display: block; margin-bottom: 5px;">Amount to pay (₹):</label>
+                                        <input type="number" id="qrAmount" class="form-control" step="0.01" min="0" style="width: 150px; margin: 0 auto; text-align: center;">
+                                    </div>
+                                    <div id="qrcode"></div>
+                                    <p style="margin-top: 10px; font-size: 14px; color: #475569;">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Scan this QR with any UPI app. Then click "Complete Sale".
+                                    </p>
+                                    <p style="font-size: 12px; color: #94a3b8;">
+                                        (You can change the amount above before scanning)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button class="btn-checkout" id="completeCheckoutBtn" style="z-index: 10000000;" disabled>
                                 <i class="fas fa-check-circle"></i> COMPLETE SALE
                             </button>
                         </div>
@@ -1931,7 +1979,7 @@
         };
 
         // ============================================
-        // POINT OF SALE (POS) MODULE - FIXED Complete Sale button
+        // POINT OF SALE (POS) MODULE - QR for Digital with editable amount
         // ============================================
         RetailX.POS = {
             init: function () {
@@ -2066,6 +2114,7 @@
                     RetailX.Utils.showToast('Discount Applied', 'Cart totals updated.', 'success');
                 });
 
+                // Payment method buttons (Cash and Digital only)
                 $('.pay-method-btn').on('click', function () {
                     $('.pay-method-btn').removeClass('active');
                     $(this).addClass('active');
@@ -2073,9 +2122,14 @@
 
                     if (RetailX.State.paymentMethod === 'cash') {
                         $('#tenderAreaCash').slideDown();
+                        $('#tenderAreaDigital').slideUp();
                         setTimeout(() => $('#tenderAmount').focus(), 100);
-                    } else {
+                    } else { // digital (wallet)
                         $('#tenderAreaCash').slideUp();
+                        $('#tenderAreaDigital').slideDown();
+                        // Set default amount to bill total
+                        $('#qrAmount').val(RetailX.State.billTotals ? RetailX.State.billTotals.grandTotal.toFixed(2) : '0.00');
+                        self.generateQRCode();
                     }
 
                     // FIXED: Always validate checkout when payment method changes
@@ -2097,7 +2151,46 @@
                     self.validateCheckout();
                 });
 
+                // QR amount input change -> regenerate QR
+                $('#qrAmount').on('input', function () {
+                    self.generateQRCode();
+                });
+
                 $('#completeCheckoutBtn').on('click', () => this.completeTransaction());
+            },
+
+            // Generate UPI QR code using the amount from #qrAmount input
+            generateQRCode: function () {
+                const totals = RetailX.State.billTotals;
+                if (!totals || totals.itemCount === 0) return;
+
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = ''; // Clear previous QR
+
+                const amount = parseFloat($('#qrAmount').val());
+                if (isNaN(amount) || amount <= 0) {
+                    // Show empty QR or a placeholder
+                    qrContainer.innerHTML = '<p style="color:red;">Invalid amount</p>';
+                    return;
+                }
+
+                // === YOUR ACTUAL UPI ID ===
+                // Replace with your own VPA, e.g., "yourname@okhdfcbank"
+                const upiId = 'thakareayush942006@oksbi';  // 🔁 CHANGE THIS
+                const payeeName = 'RetailX Store';
+                const currency = 'INR';
+
+                // Standard UPI QR URL – amount will be pre-filled (some apps allow edit)
+                const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=${currency}`;
+
+                new QRCode(qrContainer, {
+                    text: upiUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
             },
 
             processScan: function (code) {
@@ -2237,6 +2330,12 @@
 
                 $('#topbarSales').text(RetailX.Utils.formatMoney(RetailX.State.shift.totalSales + grandTotal));
 
+                // If digital is selected, update QR amount field and regenerate QR
+                if (RetailX.State.paymentMethod === 'wallet' && itemCount > 0) {
+                    $('#qrAmount').val(grandTotal.toFixed(2));
+                    this.generateQRCode();
+                }
+
                 // FIXED: Always validate after updating totals
                 this.validateCheckout();
             },
@@ -2270,7 +2369,7 @@
                         btn.prop('disabled', true);
                     }
                 } else {
-                    // For card/digital payments, always enable when cart has items
+                    // For digital payments, always enable when cart has items
                     btn.prop('disabled', false);
 
                     // Clear any change display for non-cash payments
@@ -2293,6 +2392,10 @@
                 $('#tenderAmount').val('');
                 $('#activeCustomerDisplay').slideUp();
 
+                // Clear QR container and amount field
+                document.getElementById('qrcode').innerHTML = '';
+                $('#qrAmount').val('');
+
                 this.renderCart();
                 $('#posBarcodeScanner').focus();
             },
@@ -2300,19 +2403,25 @@
             completeTransaction: function () {
                 const totals = RetailX.State.billTotals;
 
+                // Use the amount actually paid (from QR amount, but we record the bill total)
+                // In a real scenario, you might want to store the paid amount separately.
+                // Here we keep the bill total as the transaction total.
+                const paidAmount = RetailX.State.paymentMethod === 'wallet' 
+                    ? parseFloat($('#qrAmount').val()) || totals.grandTotal
+                    : totals.grandTotal;
+
                 const transaction = {
                     id: RetailX.State.currentBillNo,
                     date: new Date(),
-                    method: RetailX.State.paymentMethod,
+                    method: RetailX.State.paymentMethod === 'wallet' ? 'digital' : 'cash',
                     customer: RetailX.State.currentCustomer ? RetailX.State.currentCustomer.name : 'Walk-in Customer',
                     items: [...RetailX.State.cart],
                     totals: { ...totals },
-                    tendered: RetailX.State.paymentMethod === 'cash' ?
-                        (parseFloat($('#tenderAmount').val()) || totals.grandTotal) :
-                        totals.grandTotal,
-                    change: RetailX.State.paymentMethod === 'cash' ?
-                        (parseFloat($('#tenderAmount').val()) || totals.grandTotal) - totals.grandTotal :
-                        0
+                    // Note: We record the bill total as the transaction amount, not the paid amount,
+                    // because the sale amount is the bill total regardless of what the customer actually paid.
+                    // If you want to track the actual amount received, you'd need a separate field.
+                    tendered: paidAmount,
+                    change: 0 // No change for digital
                 };
 
                 RetailX.State.shift.totalSales += totals.grandTotal;
@@ -2320,8 +2429,7 @@
                 RetailX.State.shift.itemsSold += totals.itemCount;
 
                 if (transaction.method === 'cash') RetailX.State.shift.cashTendered += totals.grandTotal;
-                else if (transaction.method === 'card') RetailX.State.shift.cardTendered += totals.grandTotal;
-                else RetailX.State.shift.digitalTendered += totals.grandTotal;
+                else if (transaction.method === 'digital') RetailX.State.shift.digitalTendered += totals.grandTotal;
 
                 RetailX.State.transactions.unshift(transaction);
 
@@ -2603,7 +2711,6 @@
             RetailX.Utils.showToast('Printing', 'X-Report generated and sent to printer', 'info');
         });
 
-        // ========== MODIFIED END SHIFT BUTTON HANDLER ==========
         $('#printZReportBtn, #endShiftBtn').on('click', function (e) {
             e.preventDefault();
 
@@ -2632,8 +2739,6 @@
                     RetailX.State.shift.isActive = false;
                     RetailX.clearState();
                     RetailX.Utils.showToast('Shift Ended', 'Z-Report has been downloaded', 'success');
-                    
-                    // Redirect to logout URL to clear Django session
                     setTimeout(() => {
                         window.location.href = '/cashier_logout/';
                     }, 2000);
@@ -2661,6 +2766,7 @@
 
             RetailX.Navigation.init();
             RetailX.POS.init();
+            console.log('Complete Sale button exists?', $('#completeCheckoutBtn').length > 0);
             RetailX.CameraScanner.init();
 
             setTimeout(() => {

@@ -2134,6 +2134,13 @@ button {
     }
 }
 
+/* DEBUG: Force COMPLETE SALE button visibility */
+#completeCheckoutBtn {
+    display: block !important;
+    visibility: visible !important;
+    outline: 2px solid red !important;
+}
+
 /* Print Styles */
 @media print {
     body * { 
