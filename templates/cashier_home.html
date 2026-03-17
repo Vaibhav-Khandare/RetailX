@@ -11,7 +11,7 @@
     <meta http-equiv="Expires" content="0">
     
     <link rel="stylesheet" href="/static/css/cashier_home.css">
-    <!-- Additional inline fix to ensure Complete Sale button is always visible -->
+    <!-- Additional inline fixes -->
     <style>
         /* Make the right panel scrollable */
         .pos-right-panel {
@@ -28,14 +28,25 @@
             flex-shrink: 0;
         }
         .bill-summary-card > #tenderAreaDigital {
-            flex: 1 1 auto; /* allow digital area to take extra space */
+            flex: 1 1 auto;
             height: 100px;
             overflow-y: auto;
         }
         /* Button stays at bottom but if content overflows, you can scroll */
         #completeCheckoutBtn {
             flex-shrink: 0;
-            margin-top: 20px; /* add some space above */
+            margin-top: 20px;
+        }
+        /* Make product search modal body scrollable */
+        #posSearchModal .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        /* Optional: improve product card grid */
+        .grid-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -53,7 +64,6 @@
     <!-- QR Code Generator for real UPI payment -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<!-- ... rest of the body exactly as you provided ... -->
 <body data-cashier="{{ cashier_name }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
 
     <!-- Preloader -->
@@ -64,6 +74,7 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
+        <!-- ... (sidebar unchanged) ... -->
         <div class="sidebar-header">
             <div class="brand">
                 <i class="fas fa-cash-register"></i>
@@ -103,7 +114,6 @@
                 <ul>
                     <li><a href="#" class="menu-item" id="lockTerminalBtn"><i class="fas fa-lock"></i><span>Lock Terminal</span></a></li>
                     <li><a href="#" class="menu-item logout" id="endShiftBtn"><i class="fas fa-power-off"></i><span>End Shift</span></a></li>
-                    <!-- No extra logout button -->
                 </ul>
             </div>
         </nav>
@@ -170,6 +180,7 @@
             
             <!-- Dashboard Page -->
             <div class="page active" id="dashboard-page">
+                <!-- ... dashboard content unchanged ... -->
                 <div class="kpi-container">
                     <div class="kpi-card">
                         <div class="kpi-header">
@@ -251,6 +262,7 @@
 
             <!-- POS Page -->
             <div class="page" id="pos-page">
+                <!-- ... POS layout unchanged ... -->
                 <div class="pos-layout">
                     <div class="pos-left-panel">
                         <div class="scanner-container">
@@ -258,7 +270,6 @@
                                 <i class="fas fa-barcode"></i>
                                 <input type="text" id="posBarcodeScanner" placeholder="Scan barcode or enter product code (Press Enter)" autocomplete="off" autofocus>
                                 <button class="btn-primary" id="posManualSearchBtn"><i class="fas fa-search"></i></button>
-                                <!-- Camera Scan Button -->
                                 <button class="btn-primary" id="cameraScanBtn" style="margin-left: 8px; background: linear-gradient(135deg, #4cc9f0, #4361ee);" title="Scan QR or Barcode with Camera">
                                     <i class="fas fa-camera"></i>
                                 </button>
@@ -320,7 +331,6 @@
                                 <span id="cartGrandTotal">₹0.00</span>
                             </div>
 
-                            <!-- Payment methods: Cash and Digital only (Card removed) -->
                             <div class="payment-methods-grid">
                                 <button class="pay-method-btn active" data-method="cash">
                                     <i class="fas fa-money-bill-wave"></i> Cash
@@ -328,7 +338,6 @@
                                 <button class="pay-method-btn" data-method="wallet">
                                     <i class="fas fa-mobile-alt"></i> Digital
                                 </button>
-                                <!-- Card button removed -->
                             </div>
 
                             <!-- Cash tender area -->
@@ -532,7 +541,6 @@
                     <button class="modal-close" id="scannerClose"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Mode selector cards -->
                     <div class="scanner-mode-selector">
                         <div class="mode-card active" id="modeQR">
                             <i class="fas fa-qrcode"></i>
@@ -547,7 +555,6 @@
                     </div>
 
                     <div class="qr-scanner-container">
-                        <!-- Camera Selection Dropdown -->
                         <div class="camera-selector">
                             <select id="cameraSelect" class="modern-select">
                                 <option value="default">Default Camera</option>
@@ -560,13 +567,11 @@
                             </button>
                         </div>
                         
-                        <!-- Camera feed container -->
                         <div class="camera-container">
                             <video id="scanner-video" playsinline autoplay></video>
                             <canvas id="scanner-canvas" style="display: none;"></canvas>
                         </div>
                         
-                        <!-- Camera controls -->
                         <div class="camera-controls">
                             <button id="switchCameraBtn" class="btn-outline">
                                 <i class="fas fa-sync-alt"></i> Quick Switch
@@ -574,18 +579,12 @@
                             <button id="detectCamerasBtn" class="btn-outline">
                                 <i class="fas fa-search"></i> Detect Cameras
                             </button>
-                            <!-- Manual capture button (optional) -->
-                            <button id="manualCaptureBtn" class="btn-primary" style="display: none;">
-                                <i class="fas fa-camera"></i> Capture
-                            </button>
                         </div>
                         
-                        <!-- Status display -->
                         <div id="scanner-status" class="qr-status">
                             <i class="fas fa-info-circle"></i> Select camera and mode
                         </div>
                         
-                        <!-- Result display -->
                         <div id="scanner-result" class="qr-result" style="display: none;"></div>
                     </div>
                     
@@ -619,7 +618,6 @@
     </div>
 
     <!-- Receipt Modal -->
-     
     <div class="modal" id="receiptModal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content receipt-bg">
@@ -1181,14 +1179,18 @@
                 { sku: 'BOOK049', barcode: '9781234567938', name: 'Cloud Computing', category: 'Books', price: 37.99, stock: 145 },
                 { sku: 'BOOK050', barcode: '9781234567939', name: 'DevOps Handbook', category: 'Books', price: 34.99, stock: 134 }
             ],
+            // FIXED SEARCH FUNCTION – case‑insensitive and trimmed
             searchProducts: function (query) {
-                query = query.toLowerCase().trim();
-                if (!query) return this.products;
+                // If query is empty or just whitespace, return all products
+                if (!query || query.trim() === '') {
+                    return this.products;
+                }
+                const q = query.trim().toLowerCase();
                 return this.products.filter(p =>
-                    p.name.toLowerCase().includes(query) ||
-                    p.sku.includes(query) ||
-                    p.barcode === query ||
-                    p.category.toLowerCase().includes(query)
+                    (p.name && p.name.toLowerCase().includes(q)) ||
+                    (p.sku && p.sku.toLowerCase().includes(q)) ||
+                    (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+                    (p.category && p.category.toLowerCase().includes(q))
                 );
             },
 
@@ -1302,7 +1304,6 @@
                     return false;
                 }
 
-                // Generate receipt HTML using same logic as in POS.completeTransaction
                 let itemsHtml = '';
                 transaction.items.forEach(i => {
                     itemsHtml += `
@@ -1364,17 +1365,15 @@
                 $('#receiptPrintArea').html(html);
                 $('#receiptModal').addClass('show');
 
-                // Automatically trigger print after a short delay
                 setTimeout(() => {
                     window.print();
-                    // Close modal after printing (or after a short delay)
                     setTimeout(() => {
                         $('#receiptModal').removeClass('show');
                     }, 1000);
                 }, 300);
             },
 
-            // Generate Z-Report PDF - FIXED formatting
+            // Generate Z-Report PDF - FIXED formatting and currency symbol
             generateZReport: function () {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
@@ -1386,7 +1385,8 @@
                 const minutes = String(Math.floor((shiftDuration % 3600) / 60)).padStart(2, '0');
                 const seconds = String(shiftDuration % 60).padStart(2, '0');
 
-                // Header
+                const currency = 'Rs.';
+
                 doc.setFontSize(20);
                 doc.setTextColor(67, 97, 238);
                 doc.text('RETAILX - Z REPORT', 105, 20, { align: 'center' });
@@ -1400,7 +1400,6 @@
                 doc.text(`Time: ${endTime.toLocaleTimeString()}`, 20, 63);
                 doc.text(`Shift Duration: ${hours}:${minutes}:${seconds}`, 20, 70);
 
-                // Summary
                 doc.setFontSize(14);
                 doc.setTextColor(67, 97, 238);
                 doc.text('SHIFT SUMMARY', 20, 85);
@@ -1410,39 +1409,34 @@
                 doc.text(`Bills Generated: ${s.billsGenerated}`, 20, 95);
                 doc.text(`Items Sold: ${s.itemsSold}`, 20, 102);
 
-                // Financial Summary
                 doc.setFontSize(14);
                 doc.setTextColor(67, 97, 238);
                 doc.text('FINANCIAL SUMMARY', 20, 117);
 
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Gross Sales: ${RetailX.Config.currencySymbol}${s.totalSales.toFixed(2)}`, 20, 127);
-                doc.text(`Refunds: ${RetailX.Config.currencySymbol}${s.totalRefunds.toFixed(2)}`, 20, 134);
-                doc.text(`Net Sales: ${RetailX.Config.currencySymbol}${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
+                doc.text(`Gross Sales: ${currency}${s.totalSales.toFixed(2)}`, 20, 127);
+                doc.text(`Refunds: ${currency}${s.totalRefunds.toFixed(2)}`, 20, 134);
+                doc.text(`Net Sales: ${currency}${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
 
-                // Tax Calculation (approximate)
                 const taxAmount = s.totalSales - (s.totalSales / (1 + RetailX.Config.taxRate));
-                doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): ${RetailX.Config.currencySymbol}${taxAmount.toFixed(2)}`, 20, 148);
+                doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): ${currency}${taxAmount.toFixed(2)}`, 20, 148);
 
-                // Tender Breakdown
                 doc.setFontSize(14);
                 doc.setTextColor(67, 97, 238);
                 doc.text('TENDER BREAKDOWN', 20, 163);
 
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Cash: ${RetailX.Config.currencySymbol}${s.cashTendered.toFixed(2)}`, 20, 173);
-                doc.text(`Card: ${RetailX.Config.currencySymbol}${s.cardTendered.toFixed(2)}`, 20, 180);
-                doc.text(`Digital: ${RetailX.Config.currencySymbol}${s.digitalTendered.toFixed(2)}`, 20, 187);
-                doc.text(`Total: ${RetailX.Config.currencySymbol}${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
+                doc.text(`Cash: ${currency}${s.cashTendered.toFixed(2)}`, 20, 173);
+                doc.text(`Card: ${currency}${s.cardTendered.toFixed(2)}`, 20, 180);
+                doc.text(`Digital: ${currency}${s.digitalTendered.toFixed(2)}`, 20, 187);
+                doc.text(`Total: ${currency}${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
 
-                // Footer
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100);
                 doc.text('This is an official Z-Report generated by RetailX POS System', 105, 280, { align: 'center' });
 
-                // Save PDF
                 const filename = `Z-Report_${endTime.toISOString().slice(0, 10)}_${endTime.toTimeString().slice(0, 8).replace(/:/g, '-')}.pdf`;
                 doc.save(filename);
 
@@ -1483,7 +1477,6 @@
                     self.enumerateCameras();
                 });
 
-                // Mode selection cards
                 $('#modeQR').off('click').on('click', function () {
                     self.setMode('qr');
                 });
@@ -1512,14 +1505,12 @@
                 $(`#mode${mode === 'qr' ? 'QR' : 'Barcode'}`).addClass('active');
                 $('#scanner-status').html(`<i class="fas fa-info-circle"></i> Switched to ${mode === 'qr' ? 'QR' : 'Barcode'} mode.`);
 
-                // Restart scanning if camera is active
                 if (RetailX.State.isCameraActive) {
                     this.stopContinuousScan();
                     this.startContinuousScan();
                 }
             },
 
-            // Helper to disable/enable apply button during enumeration
             disableApplyButton: function (disabled) {
                 $('#applyCameraBtn').prop('disabled', disabled);
                 if (disabled) {
@@ -1602,7 +1593,6 @@
             },
 
             applyCameraSelection: function (selection) {
-                // Special handling for DroidCam
                 if (selection === 'droidcam') {
                     const droidCamDevice = RetailX.State.availableCameras.find(device =>
                         device.label && device.label.toLowerCase().includes('droidcam')
@@ -1644,11 +1634,9 @@
                 $('#scanner-result').removeClass('show').empty();
                 $('#scanner-status').html('<i class="fas fa-info-circle"></i> Detecting cameras...');
 
-                // Reset last scanned code when opening scanner
                 RetailX.State.lastScannedCode = null;
                 RetailX.State.lastScannedTime = 0;
 
-                // Set default mode to QR (active)
                 RetailX.State.scanMode = 'qr';
                 $('.mode-card').removeClass('active');
                 $('#modeQR').addClass('active');
@@ -1669,7 +1657,6 @@
                 $('#scanner-result').removeClass('show').empty();
                 $('#scanner-status').html('<i class="fas fa-info-circle"></i> Camera closed');
 
-                // Reset last scanned code when closing scanner
                 RetailX.State.lastScannedCode = null;
                 RetailX.State.lastScannedTime = 0;
 
@@ -1801,7 +1788,6 @@
 
                             if (code) {
                                 self.handleDetection(code.data);
-                                // Continue scanning - don't return, keep the loop running
                             }
                         }
                     }
@@ -1850,30 +1836,23 @@
                     if (!RetailX.State.scanningEnabled) return;
                     const code = data.codeResult.code;
                     self.handleDetection(code);
-                    // Don't stop scanning - just process the code and continue
                 });
             },
 
-            // FIXED: Prevent duplicate scans of the same code
             handleDetection: function (code) {
-                // Don't stop continuous scan - just process and show toast if needed
-
                 const now = Date.now();
 
-                // Check if this is the same code scanned recently (within cooldown period)
                 if (code === RetailX.State.lastScannedCode && (now - RetailX.State.lastScannedTime) < RetailX.State.scanCooldown) {
                     console.log('Duplicate scan detected, ignoring:', code);
-                    // Show a subtle message in scanner status
                     $('#scanner-status').html('<i class="fas fa-info-circle" style="color: var(--info);"></i> Duplicate scan ignored (cooldown active)');
                     setTimeout(() => {
                         if ($('#scannerModal').hasClass('show')) {
                             $('#scanner-status').html('<i class="fas fa-info-circle"></i> Scanning... Ready for next code.');
                         }
                     }, 1500);
-                    return; // Don't process duplicate
+                    return;
                 }
 
-                // Update last scanned info
                 RetailX.State.lastScannedCode = code;
                 RetailX.State.lastScannedTime = now;
 
@@ -1883,10 +1862,8 @@
                 if (product) {
                     RetailX.POS.addToCart(product);
                     RetailX.Utils.showToast('Product Found', `${product.name} added to cart`, 'success');
-                    // Show success in scanner status
                     $('#scanner-status').html('<i class="fas fa-check-circle" style="color: var(--success);"></i> Product added: ' + product.name);
 
-                    // Clear the success message after 2 seconds
                     setTimeout(() => {
                         if ($('#scannerModal').hasClass('show')) {
                             $('#scanner-status').html('<i class="fas fa-info-circle"></i> Scanning... Ready for next code.');
@@ -1896,15 +1873,12 @@
                     RetailX.Utils.showToast('Product Not Found', `No product matches code: ${code.substring(0, 20)}`, 'error');
                     $('#scanner-status').html('<i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> Product not found. Try again.');
 
-                    // Clear the error message after 2 seconds
                     setTimeout(() => {
                         if ($('#scannerModal').hasClass('show')) {
                             $('#scanner-status').html('<i class="fas fa-info-circle"></i> Scanning... Ready for next code.');
                         }
                     }, 2000);
                 }
-
-                // DO NOT close the scanner - keep it open for continuous scanning
             }
         };
 
@@ -1956,7 +1930,11 @@
                 $('#breadcrumb').text(`Terminal / ${titles[pageId]}`);
 
                 if (pageId === 'pos') $('#posBarcodeScanner').focus();
-                if (pageId === 'inventory') RetailX.Inventory.renderTable();
+                if (pageId === 'inventory') {
+                    RetailX.Inventory.renderTable();
+                    $('#inventorySearch').val('');
+                    $('#inventoryTableBody tr').show();
+                }
                 if (pageId === 'transactions') RetailX.Transactions.renderTable();
                 if (pageId === 'summary') RetailX.Summary.render();
             },
@@ -2002,13 +1980,22 @@
                 $('#posManualSearchBtn').on('click', () => {
                     $('#posSearchModal').addClass('show');
                     $('#posModalSearchInput').val('').focus();
-                    this.renderSearchModal(RetailX.Database.products.slice(0, 50));
+                    // Render all products (no filter)
+                    this.renderSearchModal(RetailX.Database.products.slice(0, 100));
                 });
 
-                $('#posModalSearchInput').on('input', RetailX.Utils.debounce(function () {
-                    const results = RetailX.Database.searchProducts($(this).val());
-                    self.renderSearchModal(results.slice(0, 50));
-                }, 300));
+                // ===== NEW: Live filter for modal search =====
+                $('#posModalSearchInput').on('keyup', function() {
+                    var searchText = $(this).val().toLowerCase();
+                    $('#posModalResults .product-card').each(function() {
+                        var cardText = $(this).text().toLowerCase();
+                        if (cardText.indexOf(searchText) === -1) {
+                            $(this).hide();
+                        } else {
+                            $(this).show();
+                        }
+                    });
+                });
 
                 $('#voidTransactionBtn').on('click', () => {
                     if (RetailX.State.cart.length === 0) return;
@@ -2114,7 +2101,6 @@
                     RetailX.Utils.showToast('Discount Applied', 'Cart totals updated.', 'success');
                 });
 
-                // Payment method buttons (Cash and Digital only)
                 $('.pay-method-btn').on('click', function () {
                     $('.pay-method-btn').removeClass('active');
                     $(this).addClass('active');
@@ -2124,19 +2110,16 @@
                         $('#tenderAreaCash').slideDown();
                         $('#tenderAreaDigital').slideUp();
                         setTimeout(() => $('#tenderAmount').focus(), 100);
-                    } else { // digital (wallet)
+                    } else {
                         $('#tenderAreaCash').slideUp();
                         $('#tenderAreaDigital').slideDown();
-                        // Set default amount to bill total
                         $('#qrAmount').val(RetailX.State.billTotals ? RetailX.State.billTotals.grandTotal.toFixed(2) : '0.00');
                         self.generateQRCode();
                     }
 
-                    // FIXED: Always validate checkout when payment method changes
                     self.validateCheckout();
                 });
 
-                // FIXED: Cash Tender Logic - ensure validation runs
                 $('#tenderAmount').on('input', function () {
                     self.validateCheckout();
                 });
@@ -2151,7 +2134,6 @@
                     self.validateCheckout();
                 });
 
-                // QR amount input change -> regenerate QR
                 $('#qrAmount').on('input', function () {
                     self.generateQRCode();
                 });
@@ -2159,28 +2141,23 @@
                 $('#completeCheckoutBtn').on('click', () => this.completeTransaction());
             },
 
-            // Generate UPI QR code using the amount from #qrAmount input
             generateQRCode: function () {
                 const totals = RetailX.State.billTotals;
                 if (!totals || totals.itemCount === 0) return;
 
                 const qrContainer = document.getElementById('qrcode');
-                qrContainer.innerHTML = ''; // Clear previous QR
+                qrContainer.innerHTML = '';
 
                 const amount = parseFloat($('#qrAmount').val());
                 if (isNaN(amount) || amount <= 0) {
-                    // Show empty QR or a placeholder
                     qrContainer.innerHTML = '<p style="color:red;">Invalid amount</p>';
                     return;
                 }
 
-                // === YOUR ACTUAL UPI ID ===
-                // Replace with your own VPA, e.g., "yourname@okhdfcbank"
-                const upiId = 'thakareayush942006@oksbi';  // 🔁 CHANGE THIS
+                const upiId = 'thakareayush942006@oksbi';
                 const payeeName = 'RetailX Store';
                 const currency = 'INR';
 
-                // Standard UPI QR URL – amount will be pre-filled (some apps allow edit)
                 const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=${currency}`;
 
                 new QRCode(qrContainer, {
@@ -2330,29 +2307,24 @@
 
                 $('#topbarSales').text(RetailX.Utils.formatMoney(RetailX.State.shift.totalSales + grandTotal));
 
-                // If digital is selected, update QR amount field and regenerate QR
                 if (RetailX.State.paymentMethod === 'wallet' && itemCount > 0) {
                     $('#qrAmount').val(grandTotal.toFixed(2));
                     this.generateQRCode();
                 }
 
-                // FIXED: Always validate after updating totals
                 this.validateCheckout();
             },
 
-            // FIXED: Complete Sale button validation logic
             validateCheckout: function () {
                 const btn = $('#completeCheckoutBtn');
                 const totals = RetailX.State.billTotals;
 
-                // If cart is empty, disable button
                 if (!totals || totals.itemCount === 0) {
                     btn.prop('disabled', true);
                     $('#changeDueAmount').text('₹0.00').removeClass('text-success text-danger');
                     return;
                 }
 
-                // For cash payments, check if tendered amount is sufficient
                 if (RetailX.State.paymentMethod === 'cash') {
                     const tendered = parseFloat($('#tenderAmount').val()) || 0;
                     const change = tendered - totals.grandTotal;
@@ -2360,8 +2332,7 @@
                     const changeEl = $('#changeDueAmount');
                     changeEl.text(RetailX.Utils.formatMoney(Math.abs(change)));
 
-                    // Add a small epsilon to handle floating point precision
-                    if (change >= -0.001) {  // Allow tiny floating point errors
+                    if (change >= -0.001) {
                         changeEl.addClass('text-success').removeClass('text-danger');
                         btn.prop('disabled', false);
                     } else {
@@ -2369,10 +2340,7 @@
                         btn.prop('disabled', true);
                     }
                 } else {
-                    // For digital payments, always enable when cart has items
                     btn.prop('disabled', false);
-
-                    // Clear any change display for non-cash payments
                     $('#changeDueAmount').text('₹0.00').removeClass('text-success text-danger');
                 }
 
@@ -2392,7 +2360,6 @@
                 $('#tenderAmount').val('');
                 $('#activeCustomerDisplay').slideUp();
 
-                // Clear QR container and amount field
                 document.getElementById('qrcode').innerHTML = '';
                 $('#qrAmount').val('');
 
@@ -2403,9 +2370,6 @@
             completeTransaction: function () {
                 const totals = RetailX.State.billTotals;
 
-                // Use the amount actually paid (from QR amount, but we record the bill total)
-                // In a real scenario, you might want to store the paid amount separately.
-                // Here we keep the bill total as the transaction total.
                 const paidAmount = RetailX.State.paymentMethod === 'wallet' 
                     ? parseFloat($('#qrAmount').val()) || totals.grandTotal
                     : totals.grandTotal;
@@ -2417,11 +2381,8 @@
                     customer: RetailX.State.currentCustomer ? RetailX.State.currentCustomer.name : 'Walk-in Customer',
                     items: [...RetailX.State.cart],
                     totals: { ...totals },
-                    // Note: We record the bill total as the transaction amount, not the paid amount,
-                    // because the sale amount is the bill total regardless of what the customer actually paid.
-                    // If you want to track the actual amount received, you'd need a separate field.
                     tendered: paidAmount,
-                    change: 0 // No change for digital
+                    change: 0
                 };
 
                 RetailX.State.shift.totalSales += totals.grandTotal;
@@ -2539,7 +2500,7 @@
         };
 
         // ============================================
-        // INVENTORY MODULE
+        // INVENTORY MODULE (with simple live filter)
         // ============================================
         RetailX.Inventory = {
             renderTable: function (query = '') {
@@ -2573,9 +2534,18 @@
             }
         };
 
-        $('#inventorySearch').on('input', RetailX.Utils.debounce(function () {
-            RetailX.Inventory.renderTable($(this).val());
-        }, 300));
+        // Simple live filter for inventory
+        $('#inventorySearch').on('keyup', function() {
+            var searchText = $(this).val().toLowerCase();
+            $('#inventoryTableBody tr').each(function() {
+                var rowText = $(this).text().toLowerCase();
+                if (rowText.indexOf(searchText) === -1) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        });
 
         // ============================================
         // TRANSACTIONS MODULE
@@ -2611,7 +2581,6 @@
                     `);
                 });
 
-                // Attach print event to each button
                 $('.print-receipt').off('click').on('click', function () {
                     const id = $(this).data('id');
                     const transaction = RetailX.State.transactions.find(t => t.id === id);

@@ -720,7 +720,7 @@ RetailX.Utils = {
         }, 300);
     },
 
-    // Generate Z-Report PDF - FIXED formatting
+    // Generate Z-Report PDF - FIXED formatting and currency symbol
     generateZReport: function () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -731,6 +731,9 @@ RetailX.Utils = {
         const hours = String(Math.floor(shiftDuration / 3600)).padStart(2, '0');
         const minutes = String(Math.floor((shiftDuration % 3600) / 60)).padStart(2, '0');
         const seconds = String(shiftDuration % 60).padStart(2, '0');
+
+        // Use plain text currency to avoid encoding issues
+        const currency = 'Rs.';
 
         // Header
         doc.setFontSize(20);
@@ -763,13 +766,13 @@ RetailX.Utils = {
 
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text(`Gross Sales: ${RetailX.Config.currencySymbol}${s.totalSales.toFixed(2)}`, 20, 127);
-        doc.text(`Refunds: ${RetailX.Config.currencySymbol}${s.totalRefunds.toFixed(2)}`, 20, 134);
-        doc.text(`Net Sales: ${RetailX.Config.currencySymbol}${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
+        doc.text(`Gross Sales: ${currency}${s.totalSales.toFixed(2)}`, 20, 127);
+        doc.text(`Refunds: ${currency}${s.totalRefunds.toFixed(2)}`, 20, 134);
+        doc.text(`Net Sales: ${currency}${(s.totalSales - s.totalRefunds).toFixed(2)}`, 20, 141);
 
         // Tax Calculation (approximate)
         const taxAmount = s.totalSales - (s.totalSales / (1 + RetailX.Config.taxRate));
-        doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): ${RetailX.Config.currencySymbol}${taxAmount.toFixed(2)}`, 20, 148);
+        doc.text(`Tax Collected (${RetailX.Config.taxRate * 100}%): ${currency}${taxAmount.toFixed(2)}`, 20, 148);
 
         // Tender Breakdown
         doc.setFontSize(14);
@@ -778,10 +781,10 @@ RetailX.Utils = {
 
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text(`Cash: ${RetailX.Config.currencySymbol}${s.cashTendered.toFixed(2)}`, 20, 173);
-        doc.text(`Card: ${RetailX.Config.currencySymbol}${s.cardTendered.toFixed(2)}`, 20, 180);
-        doc.text(`Digital: ${RetailX.Config.currencySymbol}${s.digitalTendered.toFixed(2)}`, 20, 187);
-        doc.text(`Total: ${RetailX.Config.currencySymbol}${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
+        doc.text(`Cash: ${currency}${s.cashTendered.toFixed(2)}`, 20, 173);
+        doc.text(`Card: ${currency}${s.cardTendered.toFixed(2)}`, 20, 180);
+        doc.text(`Digital: ${currency}${s.digitalTendered.toFixed(2)}`, 20, 187);
+        doc.text(`Total: ${currency}${(s.cashTendered + s.cardTendered + s.digitalTendered).toFixed(2)}`, 20, 194);
 
         // Footer
         doc.setFontSize(10);
@@ -1827,11 +1830,17 @@ RetailX.POS = {
 // ============================================
 // INVENTORY MODULE
 // ============================================
+// ============================================
+// INVENTORY MODULE (fixed search)
+// ============================================
 RetailX.Inventory = {
     renderTable: function (query = '') {
         const tbody = $('#inventoryTableBody');
         tbody.empty();
 
+        // Use the existing searchProducts method (which we'll keep but fallback to simple filter)
+        // For simplicity, we'll still use the database search to get filtered products,
+        // but ensure it's case‑insensitive and works.
         const data = RetailX.Database.searchProducts(query).slice(0, 100);
 
         if (data.length === 0) {
@@ -1859,9 +1868,18 @@ RetailX.Inventory = {
     }
 };
 
-$('#inventorySearch').on('input', RetailX.Utils.debounce(function () {
-    RetailX.Inventory.renderTable($(this).val());
-}, 300));
+// Simple live filter for inventory search – hides rows based on text
+$('#inventorySearch').on('keyup', function() {
+    var searchText = $(this).val().toLowerCase();
+    $('#inventoryTableBody tr').each(function() {
+        var rowText = $(this).text().toLowerCase();
+        if (rowText.indexOf(searchText) === -1) {
+            $(this).hide();
+        } else {
+            $(this).show();
+        }
+    });
+});
 
 // ============================================
 // TRANSACTIONS MODULE
