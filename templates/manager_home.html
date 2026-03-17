@@ -667,17 +667,23 @@
             </p>
         </div>
 
-        <!-- ===== TAB NAVIGATION ===== -->
-        <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
-            <button id="tab1Btn" class="tab-btn active" 
-                    style="padding: 12px 24px; background: #4361ee; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-magic"></i> Age Group Prediction (Category + Brand)
-            </button>
-            <button id="tab2Btn" class="tab-btn" 
-                    style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-users"></i> Age Segmentation (Age Input)
-            </button>
-        </div>
+        <!-- Replace the existing tab navigation in analysis-page with this -->
+
+<!-- ===== TAB NAVIGATION ===== -->
+<div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap;">
+    <button id="tab1Btn" class="tab-btn active" 
+            style="padding: 12px 24px; background: #4361ee; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-magic"></i> Age Group (Category+Brand)
+    </button>
+    <button id="tab2Btn" class="tab-btn" 
+            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-users"></i> Age Segmentation
+    </button>
+    <button id="tab3Btn" class="tab-btn" 
+            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-calendar-alt"></i> Festival Sales
+    </button>
+</div>
 
         <!-- ===== TAB 1: OLD MODULE (Category + Brand Prediction) ===== -->
         <div id="tab1Content" style="display: block;">
@@ -801,6 +807,112 @@
                 </div>
             </div>
         </div>
+        <!-- ===== TAB 3: Festival Sales Prediction ===== -->
+<div id="tab3Content" style="display: none;">
+    <div style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-calendar-alt" style="color: #4361ee;"></i>
+            Festival Sales Prediction
+        </h3>
+        
+        <!-- Hidden data elements for JavaScript -->
+        <div id="festival-top-products-data" data-products='[]' style="display: none;"></div>
+        <div id="festival-least-products-data" data-products='[]' style="display: none;"></div>
+        <div id="festival-detected-festival" data-festival="" style="display: none;"></div>
+        
+        <!-- Festival Search Form -->
+        <form id="festivalSearchForm" onsubmit="return false;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <!-- Festival Dropdown -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                        <i class="fas fa-calendar-alt" style="color: #4361ee; margin-right: 6px;"></i>
+                        Select Festival
+                    </label>
+                    <select id="festival_select" class="filter-select" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        <option value="">-- Choose a festival --</option>
+                        {% for festival in festival_choices %}
+                            <option value="{{ festival }}">{{ festival }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- OR Divider -->
+                <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed #e2e8f0;"></div>
+                    <span style="background: white; padding: 0 15px; position: relative; color: #64748b; font-weight: 600; z-index: 1;">OR</span>
+                </div>
+                
+                <!-- Date Input -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                        <i class="fas fa-calendar" style="color: #4361ee; margin-right: 6px;"></i>
+                        Enter Date (DD-MM-YYYY)
+                    </label>
+                    <input type="text" id="festival_date" class="filter-select" 
+                           placeholder="e.g., 25-12-2025"
+                           style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <small style="color: #64748b; margin-top: 4px; display: block;">Leave blank if using festival dropdown</small>
+                </div>
+            </div>
+            
+            <input type="hidden" id="festival_hidden" name="festival" value="">
+            
+            <button type="submit" id="predictFestivalBtn" class="btn-primary" style="width: 100%; padding: 14px;">
+                <i class="fas fa-search"></i> Predict Festival Sales
+            </button>
+        </form>
+    </div>
+
+    <!-- Results Container -->
+    <div id="festivalResults" style="display: none;">
+        <!-- Festival Banner -->
+        <div id="festival-banner" style="background: linear-gradient(135deg, #4361ee, #3a0ca3); border-radius: 16px; padding: 24px; text-align: center; color: white; margin-bottom: 24px; display: none;">
+            <i class="fas fa-glass-cheers" style="font-size: 32px; margin-right: 10px;"></i>
+            <span id="festival-name-display" style="font-size: 24px; font-weight: 700;"></span>
+            <p style="margin-top: 8px; opacity: 0.9;">Expected Sales Analysis</p>
+        </div>
+
+        <!-- Charts Grid -->
+        <div id="festival-charts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <!-- Top Selling Products Chart -->
+            <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                    <i class="fas fa-fire" style="color: #e67e22;"></i>
+                    <h3 style="margin: 0; font-size: 16px;">Top Selling Products</h3>
+                </div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="festivalTopSellingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Least Selling Products Chart -->
+            <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                    <i class="fas fa-snowflake" style="color: #3498db;"></i>
+                    <h3 style="margin: 0; font-size: 16px;">Least Selling Products</h3>
+                </div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="festivalLeastSellingChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Info -->
+        <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-chart-line"></i>
+            <span>Prophet Time Series Model • Historical sales patterns • Festival-based prediction</span>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="festivalEmptyState" style="background: white; border-radius: 16px; padding: 60px 20px; text-align: center; color: #64748b; border: 2px dashed #e2e8f0;">
+        <i class="fas fa-chart-pie" style="font-size: 48px; color: #94a3b8; margin-bottom: 15px;"></i>
+        <h4 style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #1e293b;">No Prediction Yet</h4>
+        <p style="margin-bottom: 10px;">Select a festival or enter a date to view sales forecast</p>
+        <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
+    </div>
+</div>
     </div>
 </div>
 

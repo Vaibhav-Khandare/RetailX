@@ -2378,16 +2378,15 @@ window.testPredictionAPI = function() {
     });
 };
 // ============================================
-// TAB MANAGEMENT FOR ANALYSIS PAGE
+// TAB MANAGEMENT FOR ANALYSIS PAGE (3 TABS)
 // ============================================
 function initAnalysisTabs() {
     $('#tab1Btn').on('click', function() {
         $(this).addClass('active');
-        $('#tab2Btn').removeClass('active');
+        $('#tab2Btn, #tab3Btn').removeClass('active');
         $('#tab1Content').show();
-        $('#tab2Content').hide();
+        $('#tab2Content, #tab3Content').hide();
         
-        // Initialize first module when tab is shown
         setTimeout(() => {
             if (typeof RetailX.AgePrediction !== 'undefined') {
                 RetailX.AgePrediction.init();
@@ -2397,14 +2396,26 @@ function initAnalysisTabs() {
 
     $('#tab2Btn').on('click', function() {
         $(this).addClass('active');
-        $('#tab1Btn').removeClass('active');
+        $('#tab1Btn, #tab3Btn').removeClass('active');
         $('#tab2Content').show();
-        $('#tab1Content').hide();
+        $('#tab1Content, #tab3Content').hide();
         
-        // Initialize second module when tab is shown
         setTimeout(() => {
             if (typeof RetailX.AgeSegmentation !== 'undefined') {
                 RetailX.AgeSegmentation.init();
+            }
+        }, 100);
+    });
+
+    $('#tab3Btn').on('click', function() {
+        $(this).addClass('active');
+        $('#tab1Btn, #tab2Btn').removeClass('active');
+        $('#tab3Content').show();
+        $('#tab1Content, #tab2Content').hide();
+        
+        setTimeout(() => {
+            if (typeof RetailX.FestivalPrediction !== 'undefined') {
+                RetailX.FestivalPrediction.init();
             }
         }, 100);
     });
@@ -2522,6 +2533,288 @@ $(document).on('click', '.menu-item[data-page="analysis"]', function() {
         }
         if (typeof RetailX.AgeSegmentation !== 'undefined') {
             RetailX.AgeSegmentation.init();
+        }
+    }, 200);
+});
+
+
+// ============================================
+// MODULE 3: Festival Sales Prediction (Prophet Model)
+// ============================================
+RetailX.FestivalPrediction = {
+    // Chart instances
+    topChart: null,
+    leastChart: null,
+
+    init: function() {
+        console.log('📅 Initializing Festival Prediction Module...');
+        this.bindEvents();
+        this.checkExistingData();
+    },
+
+    bindEvents: function() {
+        $('#festivalSearchForm').off('submit').on('submit', (e) => {
+            e.preventDefault();
+            this.predictFestival();
+        });
+
+        $('#festival_select').off('change').on('change', () => {
+            $('#festival_date').val(''); // Clear date when festival selected
+        });
+
+        $('#festival_date').off('input').on('input', () => {
+            $('#festival_select').val(''); // Clear festival when date entered
+        });
+    },
+
+    checkExistingData: function() {
+        // Check if we already have festival data from page load
+        const festivalEl = document.getElementById('festival-detected-festival');
+        if (festivalEl && festivalEl.dataset.festival) {
+            console.log('🎉 Existing festival data found');
+            this.showResults();
+        }
+    },
+
+    predictFestival: function() {
+        const festival = $('#festival_select').val();
+        const date = $('#festival_date').val().trim();
+        
+        if (!festival && !date) {
+            RetailX.showToast('Please select a festival or enter a date', 'warning');
+            return;
+        }
+
+        // Set the hidden input value
+        $('#festival_hidden').val(festival || date);
+
+        const btn = $('#predictFestivalBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
+
+        // Hide previous results
+        $('#festivalResults, #festival-banner, #festival-charts').hide();
+        $('#festivalEmptyState').show();
+
+        // Get CSRF token
+        const csrftoken = getCSRFToken();
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('festival', festival || '');
+        formData.append('festival_date', date || '');
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        // Send AJAX request
+        $.ajax({
+            url: window.location.pathname,
+            method: 'GET',
+            data: { festival: festival || date },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: (response) => {
+                console.log('✅ Festival prediction received:', response);
+                
+                // Update hidden data elements
+                $('#festival-top-products-data').data('products', response.top_products || []);
+                $('#festival-least-products-data').data('products', response.least_products || []);
+                $('#festival-detected-festival').data('festival', response.detected_festival || '');
+                
+                // Update display
+                if (response.detected_festival) {
+                    $('#festival-name-display').text(response.detected_festival);
+                    $('#festival-banner').show();
+                    
+                    // Initialize charts with the data
+                    this.createFestivalCharts(
+                        response.top_products || [],
+                        response.least_products || [],
+                        response.detected_festival
+                    );
+                    
+                    $('#festival-charts').show();
+                    $('#festivalResults').show();
+                    $('#festivalEmptyState').hide();
+                    
+                    RetailX.showToast(`Prediction for ${response.detected_festival}`, 'success');
+                } else {
+                    $('#festivalEmptyState').show();
+                    RetailX.showToast('No prediction data available', 'info');
+                }
+            },
+            error: (xhr) => {
+                console.error('❌ Festival prediction failed:', xhr);
+                RetailX.showToast(xhr.responseJSON?.error || 'Prediction failed', 'error');
+            },
+            complete: () => {
+                btn.prop('disabled', false).html('<i class="fas fa-search"></i> Predict Festival Sales');
+            }
+        });
+    },
+
+    createFestivalCharts: function(topProducts, leastProducts, festivalName) {
+        console.log('📊 Creating festival charts:', { topProducts, leastProducts });
+        
+        // Destroy existing charts
+        if (this.topChart) this.topChart.destroy();
+        if (this.leastChart) this.leastChart.destroy();
+        
+        // Format data
+        const formattedTop = this.formatChartData(topProducts);
+        const formattedLeast = this.formatChartData(leastProducts);
+        
+        // Create top products chart
+        if (formattedTop.length > 0) {
+            this.topChart = this.createHorizontalBarChart(
+                'festivalTopSellingChart',
+                formattedTop,
+                '#e67e22',
+                'Expected Units'
+            );
+        }
+        
+        // Create least products chart
+        if (formattedLeast.length > 0) {
+            this.leastChart = this.createHorizontalBarChart(
+                'festivalLeastSellingChart',
+                formattedLeast,
+                '#3498db',
+                'Expected Units'
+            );
+        }
+    },
+
+    formatChartData: function(products) {
+        if (!products || !Array.isArray(products)) return [];
+        
+        return products.map(item => ({
+            product: item.product || 'Unknown',
+            units: parseFloat(item.predicted_sales) || 0
+        })).filter(item => item.units > 0);
+    },
+
+    createHorizontalBarChart: function(canvasId, data, color, label) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return null;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Sort by units descending
+        const sortedData = [...data].sort((a, b) => b.units - a.units);
+        
+        // Truncate long names
+        const labels = sortedData.map(item => {
+            return item.product.length > 25 
+                ? item.product.substring(0, 22) + '...' 
+                : item.product;
+        });
+        
+        const values = sortedData.map(item => item.units);
+        
+        // Create gradient colors
+        const backgroundColors = values.map((val, idx) => {
+            const opacity = 0.8 - (idx * 0.05);
+            return color.replace('#', `rgba(${this.hexToRgb(color)}, ${Math.max(opacity, 0.3)})`);
+        });
+        
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderColor: color,
+                    borderWidth: 1,
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const item = sortedData[context.dataIndex];
+                                return `${item.product}: ${context.raw.toLocaleString()} units`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        title: {
+                            display: true,
+                            text: 'Expected Units',
+                            color: '#666',
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    },
+
+    hexToRgb: function(hex) {
+        hex = hex.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `${r}, ${g}, ${b}`;
+    },
+
+    resetForm: function() {
+        $('#festival_select').val('');
+        $('#festival_date').val('');
+        $('#festival_hidden').val('');
+        $('#festivalResults').hide();
+        $('#festival-banner').hide();
+        $('#festival-charts').hide();
+        $('#festivalEmptyState').show();
+        
+        if (this.topChart) this.topChart.destroy();
+        if (this.leastChart) this.leastChart.destroy();
+    }
+};
+
+// Initialize tabs when document is ready
+$(document).ready(function() {
+    initAnalysisTabs();
+    
+    if ($('#analysis-page').hasClass('active')) {
+        setTimeout(() => {
+            if (typeof RetailX.AgePrediction !== 'undefined') {
+                RetailX.AgePrediction.init();
+            }
+            if (typeof RetailX.AgeSegmentation !== 'undefined') {
+                RetailX.AgeSegmentation.init();
+            }
+            if (typeof RetailX.FestivalPrediction !== 'undefined') {
+                RetailX.FestivalPrediction.init();
+            }
+        }, 500);
+    }
+});
+
+// Initialize modules when analysis page is opened
+$(document).on('click', '.menu-item[data-page="analysis"]', function() {
+    setTimeout(() => {
+        if (typeof RetailX.AgePrediction !== 'undefined') {
+            RetailX.AgePrediction.init();
+        }
+        if (typeof RetailX.AgeSegmentation !== 'undefined') {
+            RetailX.AgeSegmentation.init();
+        }
+        if (typeof RetailX.FestivalPrediction !== 'undefined') {
+            RetailX.FestivalPrediction.init();
         }
     }, 200);
 });

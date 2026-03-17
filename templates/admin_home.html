@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="chat-bot">
                 <span>Hello! I'm your RetailX Assistant. How can I help you today?</span>
             </div>
+<<<<<<< Updated upstream
         `;
     }
     
@@ -86,6 +87,848 @@ document.addEventListener('DOMContentLoaded', function() {
     if (chatbotInput) {
         chatbotInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+=======
+            <h2>Retail<span style="color: var(--accent);">X</span></h2>
+            <p class="admin-role">Admin Dashboard</p>
+        </div>
+
+        <!-- User Info Section -->
+        <div class="user-info">
+            <div class="avatar">
+                <img src="https://ui-avatars.com/api/?name={{ uname|default:'Admin' }}&background=4361ee&color=fff&size=56" alt="Admin">
+                <span class="status-indicator online"></span>
+            </div>
+            <div class="user-details">
+                <h4 id="adminName">{{ uname|default:'Admin User' }}</h4>
+                <p id="adminEmail">{{ email|default:'admin@retailx.com' }}</p>
+                <span class="role-badge">Administrator</span>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section">
+                <p class="nav-caption">MAIN</p>
+                <a href="#" class="nav-item {% if not detected_festival %}active{% endif %}" data-section="dashboard">
+                    <i class="fas fa-home"></i> <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <p class="nav-caption">MANAGEMENT</p>
+                <a href="#" class="nav-item" data-section="users">
+                    <i class="fas fa-users"></i> <span>User Management</span>
+                </a>
+                <!-- <a href="#" class="nav-item" data-section="products">
+                    <i class="fas fa-box"></i> <span>Product Management</span>
+                </a> -->
+                <a href="#" class="nav-item" data-section="inventory">
+                    <i class="fas fa-warehouse"></i> <span>Inventory</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <p class="nav-caption">ANALYTICS</p>
+                <a href="#" class="nav-item {% if detected_festival %}active{% endif %}" data-section="analytics">
+                    <i class="fas fa-chart-line"></i> <span>Analysis</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <p class="nav-caption">SYSTEM</p>
+                <a href="#" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i> <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Logout Section -->
+        <div class="logout-section">
+            <a href="/admin_logout/" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+            <div class="system-status">
+                <span class="status-indicator active"></span>
+                <span>System Online</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="main">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="page-title-area">
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="breadcrumb" id="breadcrumb">Admin / Dashboard</div>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <!-- Search Box -->
+                <!-- <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
+                </div> -->
+
+                <!-- KPI Pills -->
+                <div class="kpi-pills">
+                    <div class="pill">
+                        <span>Total Users</span>
+                        <strong id="topbarUsers">{{ totaluser }}</strong>
+                    </div>
+                    <div class="pill">
+                        <span>Products</span>
+                        <strong id="topbarProducts">{{ totalpro }}</strong>
+                    </div>
+                </div>
+
+                <!-- Action Icons -->
+                <div class="action-icons">
+                    <!-- Fullscreen Button -->
+                    <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+                            <i class="fas fa-expand"></i>
+                    </button>
+
+                    <!-- Notification Button -->
+                    <div class="notification-container">
+                        <button class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-count">3</span>
+                        </button>
+                        <div class="notification-panel" id="notificationPanel">
+                            <div class="notification-header">
+                                <h4><i class="fas fa-bell" style="color: var(--primary); margin-right: 8px;"></i>Notifications</h4>
+                                <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <!-- Notifications loaded via AJAX -->
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#" onclick="viewAllNotifications()">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date-Time Display -->
+                    <div class="date-time-display">
+                        <span id="currentDate"></span>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== CONTENT WRAPPER ========== -->
+        <div class="content-wrapper">
+            <!-- DASHBOARD SECTION -->
+            <section id="dashboard" class="content-section {% if not detected_festival %}active{% endif %}">
+                <div class="section-header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                </div>
+
+                <!-- Horizontal Stats Cards -->
+                <div class="horizontal-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-content">
+                            <h3>Total Users</h3>
+                            <p class="stat-value" id="totalUsers">{{ totaluser }}</p>
+                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> Updated</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-box"></i></div>
+                        <div class="stat-content">
+                            <h3>Total Products</h3>
+                            <p class="stat-value" id="totalProducts">{{ totalpro }}</p>
+                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> Updated</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-content">
+                            <h3>Today's Revenue</h3>
+                            <p class="stat-value" id="todayRevenue">$2,845</p>
+                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> +12.5%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="stat-content">
+                            <h3>Low Stock Items</h3>
+                            <p class="stat-value" id="lowStockCount">{{ low_stock_count }}</p>
+                            <span class="stat-change negative"><i class="fas fa-exclamation-circle"></i> Attention Required</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <div class="dashboard-card wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Sales Overview</h3>
+                            <select id="salesPeriod" class="period-select" onchange="updateSalesChart()">
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
+                        </div>
+                        <div class="card-body" id="recentAlerts">
+                            <!-- Alerts loaded via AJAX -->
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                        </div>
+                        <div class="card-body" id="recentActivity">
+                            <!-- Activity loaded via AJAX -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- USER MANAGEMENT SECTION -->
+            <section id="users" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-users"></i> User Management</h1>
+                    <button class="add-new-btn" onclick="openUserModal()">
+                        <i class="fas fa-user-plus"></i> Add New User
+                    </button>
+                </div>
+
+                <div class="action-bar">
+                    <div class="filter-options">
+                        <select id="userFilter" class="filter-select" onchange="filterUsers()">
+                            <option value="all">All Users</option>
+                            <option value="admin">Admins</option>
+                            <option value="manager">Managers</option>
+                            <option value="cashier">Cashiers</option>
+                        </select>
+                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input" onkeyup="searchUsers()">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="exportUsers()"><i class="fas fa-file-export"></i> Export</button>
+                        <!-- <button class="action-btn" onclick="bulkResetPassword()"><i class="fas fa-key"></i> Reset Passwords</button> -->
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllUsers" onclick="toggleAllUsers()"></th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            {% if users %}
+                                {% for user in users %}
+                                <tr>
+                                    <td><input type="checkbox" class="user-checkbox" value="{{ user.id }}"></td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td><span class="status-badge">{{ user.role|capfirst }}</span></td>
+                                    <td>{{ user.last_login }}</td>
+                                    <td>
+                                        <button class="action-btn small" onclick="openEditUserModal('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn small" onclick="deleteUser('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px;">
+                                        <i class="fas fa-users-slash" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                                        <p>No users found. Add your first user using the "Add New User" button above.</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
+                    Showing {{ users|length }} user(s) in total
+                </div>
+            </section>
+
+            <!-- PRODUCT MANAGEMENT SECTION -->
+            <section id="products" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-box"></i> Product Management</h1>
+                    <button class="add-new-btn" onclick="openProductModal()">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+
+                <div class="action-bar">
+                    <div class="filter-options">
+                        <select id="categoryFilter" class="filter-select" onchange="filterProducts()">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <select id="stockFilter" class="filter-select" onchange="filterProducts()">
+                            <option value="all">All Stock Status</option>
+                            <option value="low">Low Stock</option>
+                            <option value="out">Out of Stock</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="bulkUpdateStock()"><i class="fas fa-arrow-up"></i> Bulk Stock Update</button>
+                        <button class="action-btn" onclick="importProducts()"><i class="fas fa-file-import"></i> Import CSV</button>
+                    </div>
+                </div>
+
+                <div class="products-grid" id="productsGrid">
+                    {% if products %}
+                        {% for product in products %}
+                        <div class="product-card">
+                            <div class="product-image">
+                                <i class="fas fa-box fa-3x"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4 class="product-title">{{ product.name }}</h4>
+                                <p class="product-category">{{ product.category|capfirst }}</p>
+                                <p class="product-price">${{ product.price }}</p>
+                                <div class="product-stock">
+                                    <span>SKU: {{ product.sku }}</span>
+                                    <span class="stock-level {% if product.in_stock <= product.min_stock_level %}low{% else %}high{% endif %}">
+                                        {{ product.in_stock }} units
+                                    </span>
+                                </div>
+                                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                    <button class="action-btn small" onclick="editProduct('{{ product.id }}')"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn small" onclick="deleteProduct('{{ product.id }}')"><i class="fas fa-trash"></i></button>
+                                    <button class="action-btn small" onclick="viewProductDetails('{{ product.id }}')"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                            <i class="fas fa-box-open" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                            <p>No products found. Add your first product using the "Add Product" button above.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
+                    Showing {{ products|length }} product(s) in total
+                </div>
+            </section>
+
+            <!-- INVENTORY SECTION -->
+            <section id="inventory" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-warehouse"></i> Inventory Management</h1>
+                    <button class="add-new-btn" onclick="openInventoryModal()">
+                        <i class="fas fa-plus"></i> Stock Adjustment
+                    </button>
+                </div>
+
+                <div class="inventory-stats">
+                    <div class="inventory-card">
+                        <h4>Total Stock Value</h4>
+                        <p class="inventory-value" id="totalStockValue">$45,280</p>
+                    </div>
+                    <div class="inventory-card warning">
+                        <h4>Low Stock Items</h4>
+                        <p class="inventory-value" id="lowStockItems">{{ low_stock_count }} items</p>
+                    </div>
+                    <div class="inventory-card">
+                        <h4>Monthly Turnover</h4>
+                        <p class="inventory-value" id="monthlyTurnover">2.8x</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Current Stock</th>
+                                <th>Min. Stock</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.sku }}</td>
+                                <td>{{ product.in_stock }}</td>
+                                <td>{{ product.min_stock_level }}</td>
+                                <td>
+                                    <span class="status-badge {% if product.in_stock <= product.min_stock_level %}status-pending{% else %}status-active{% endif %}">
+                                        {% if product.in_stock <= product.min_stock_level %}Low Stock{% else %}In Stock{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ product.category|capfirst }}</td>
+                                <td>
+                                    <button class="action-btn small" onclick="adjustStock('{{ product.id }}')"><i class="fas fa-edit"></i> Adjust</button>
+                                    <button class="action-btn small" onclick="viewInventoryHistory('{{ product.id }}')"><i class="fas fa-history"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ========== ANALYTICS SECTION ========== -->
+            <section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
+                <!-- Hidden data elements for JavaScript -->
+                <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
+                <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
+                <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
+
+                <div class="analytics-grid">
+                    <!-- FESTIVAL SEARCH CARD -->
+                    <div class="analytics-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-search"></i> Festival Sales Prediction</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+                                Choose a festival OR enter a date to predict demand
+                            </p>
+
+                            <form method="get" action="" id="festivalSearchForm">
+                                <!-- Festival Dropdown -->
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar-alt" style="color: var(--primary); margin-right: 8px;"></i> Select Festival</label>
+                                    <select name="festival" id="festival_select" class="filter-select">
+                                        <option value="">-- Choose a festival --</option>
+                                        {% for festival in festival_choices %}
+                                            <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
+                                                {{ festival }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- OR Divider -->
+                                <div style="text-align: center; margin: 20px 0; position: relative;">
+                                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--text-light);"></div>
+                                    <span style="background: white; padding: 0 20px; position: relative; color: var(--text-muted); font-weight: 600;">OR</span>
+                                </div>
+
+                                <!-- Date Input -->
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar" style="color: var(--primary); margin-right: 8px;"></i> Enter Date</label>
+                                    <input type="text" name="festival_date" id="festival_date"
+                                           placeholder="DD-MM-YYYY (example: 25-12-2025)"
+                                           class="filter-select">
+                                    <small style="display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px;">
+                                        Leave blank if using dropdown above
+                                    </small>
+                                </div>
+
+                                <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
+
+                                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 16px;">
+                                    <i class="fas fa-search"></i> Predict Sales
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- FESTIVAL SALES FORECAST CARD -->
+                    <div class="analytics-card full">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
+                        </div>
+
+                        <div class="card-body">
+                            {% if festival_error %}
+                                <div class="ux-error">
+                                    <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
+                                </div>
+                            {% endif %}
+
+                            <!-- Festival Banner (always present, hidden if no festival) -->
+                            <div class="ux-festival-banner" id="festival-banner" style="{% if not detected_festival %}display: none;{% endif %}">
+                                <i class="fas fa-glass-cheers"></i>
+                                <span id="festival-name">{{ detected_festival|default:'' }}</span>
+                                <small>Expected Sales Analysis</small>
+                            </div>
+
+                            <!-- Charts Grid (always present, hidden if no festival) -->
+                            <div class="ux-chart-grid" id="festival-charts" style="{% if not detected_festival %}display: none;{% endif %}">
+                                <!-- Top Selling Products Chart -->
+                                <div class="ux-chart-card">
+                                    <h4 class="ux-chart-title fire">
+                                        <i class="fas fa-fire"></i> Top Selling Products
+                                    </h4>
+                                    <div class="ux-chart-box">
+                                        <canvas id="topSellingChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Least Selling Products Chart -->
+                                <div class="ux-chart-card">
+                                    <h4 class="ux-chart-title cool">
+                                        <i class="fas fa-snowflake"></i> Least Selling Products
+                                    </h4>
+                                    <div class="ux-chart-box">
+                                        <canvas id="leastSellingChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+
+                            <!-- Empty State (always present, hidden if festival exists) -->
+                            <div class="ux-empty-state" id="festival-empty" style="{% if detected_festival %}display: none;{% endif %}">
+                                <i class="fas fa-chart-pie"></i>
+                                <h4>No Prediction Yet</h4>
+                                <p>Select a festival or enter a date to view forecast</p>
+                                <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
+                            </div>
+
+                            {% if top_products %}
+                            <div class="ux-summary">
+                                <i class="fas fa-chart-line"></i> Forecast generated for {{ detected_festival }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SETTINGS SECTION -->
+            <section id="settings" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-cog"></i> System Settings</h1>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- Notification Settings -->
+                    <div class="settings-card">
+                        <h3><i class="fas fa-bell"></i> Notification Settings</h3>
+                        <div class="settings-options">
+                            <label class="switch">
+                                <input type="checkbox" id="emailNotifications" checked onchange="saveSettings()">
+                                <span class="slider"></span>
+                                <span>Email Notifications</span>
+                            </label>
+                            <label class="switch">
+                                <input type="checkbox" id="lowStockAlerts" checked onchange="saveSettings()">
+                                <span class="slider"></span>
+                                <span>Low Stock Alerts</span>
+                            </label>
+                            <label class="switch">
+                                <input type="checkbox" id="newUserAlerts" checked onchange="saveSettings()">
+                                <span class="slider"></span>
+                                <span>New User Alerts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="settings-card">
+                        <h3><i class="fas fa-paint-brush"></i> Theme Settings</h3>
+                        <div class="theme-options">
+                            <button class="theme-btn active" data-theme="default" onclick="changeTheme('default')">
+                                <span class="theme-preview default"></span> Default
+                            </button>
+                            <button class="theme-btn" data-theme="dark" onclick="changeTheme('dark')">
+                                <span class="theme-preview dark"></span> Dark
+                            </button>
+                            <button class="theme-btn" data-theme="light" onclick="changeTheme('light')">
+                                <span class="theme-preview light"></span> Light
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="settings-card">
+                        <h3><i class="fas fa-database"></i> Data Management</h3>
+                        <div class="data-actions">
+                            <button class="data-btn" onclick="backupDatabase()"><i class="fas fa-save"></i> Backup Database</button>
+                            <button class="data-btn" onclick="clearCache()"><i class="fas fa-trash"></i> Clear Cache</button>
+                            <button class="data-btn" onclick="exportAllData()"><i class="fas fa-download"></i> Export All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ========== MODALS ========== -->
+
+    <!-- Add User Modal (original) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+                <span class="close-modal" onclick="closeUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="/admin_home/" id="userForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="formType" value="userModal">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="userEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="userName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select name="userRole" required>
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="cashier">Cashier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="userPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" name="confirmUserPassword" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal (updated – no password, no role) -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit"></i> Edit User</h3>
+                <span class="close-modal" onclick="closeEditUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" id="edit_user_id">
+                    <input type="hidden" name="user_type" id="edit_user_type">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="fullname" id="edit_fullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" id="edit_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" id="edit_username" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal (original) -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> Add New Product</h3>
+                <span class="close-modal" onclick="closeProductModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="/admin_home/" id="productForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="formType" value="productModal">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" name="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="productCategory" required>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="home">Home</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU</label>
+                        <input type="text" name="productSKU" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Brand</label>
+                        <input type="text" name="productBrand" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" step="0.01" name="productPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Stock</label>
+                        <input type="number" name="productStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Stock Level</label>
+                        <input type="number" name="productMinStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="productDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Modal (original) -->
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-warehouse"></i> Stock Adjustment</h3>
+                <span class="close-modal" onclick="closeInventoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="inventoryForm">
+                    <div class="form-group">
+                        <label>Adjustment Type</label>
+                        <select id="adjustmentType" required>
+                            <option value="add">Add Stock</option>
+                            <option value="remove">Remove Stock</option>
+                            <option value="set">Set Exact Quantity</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Product</label>
+                        <select id="inventoryProduct" required>
+                            <option value="">Select Product</option>
+                            <!-- Options will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="adjustmentQuantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason</label>
+                        <input type="text" id="adjustmentReason" placeholder="e.g., Damaged, Return, Restock">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="adjustmentDate" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeInventoryModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Adjustment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Modal (original) -->
+    <div id="quickActionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                <span class="close-modal" onclick="closeQuickAction()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="quick-actions-grid">
+                    <div class="quick-action-item" onclick="quickAddProduct()">
+                        <i class="fas fa-box"></i>
+                        <span>Add Product</span>
+                    </div>
+                    <div class="quick-action-item" onclick="quickAddUser()">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add User</span>
+                    </div>
+                    <div class="quick-action-item" onclick="quickStockCheck()">
+                        <i class="fas fa-warehouse"></i>
+                        <span>Stock Check</span>
+                    </div>
+                    <div class="quick-action-item" onclick="quickGenerateReport()">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Generate Report</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== LOADING OVERLAY ========== -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- ========== TOAST NOTIFICATION ========== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ========== CHATBOT ========== -->
+    <div id="chatbot-button" onclick="toggleChatbot()">🤖</div>
+    <div id="chatbot-box">
+        <div id="chatbot-header">
+            <span>🤖 RetailX Assistant</span>
+            <span style="cursor: pointer;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
+        </div>
+        <div id="chatbot-messages"></div>
+        <div id="chatbot-input-area">
+            <input type="text" id="chatbot-input" placeholder="Type message..." autocomplete="off">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- CSRF Token for AJAX (already present in forms) -->
+    {% csrf_token %}
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="{% static 'js/admin_home.js' %}"></script>
+    <!-- Simple inline script to handle festival form (setting hidden field) -->
+    <script>
+        document.getElementById('festivalSearchForm')?.addEventListener('submit', function(e) {
+            const selectValue = document.getElementById('festival_select').value;
+            const dateValue = document.getElementById('festival_date').value;
+            const hiddenInput = document.getElementById('festival_hidden');
+
+            if (dateValue) {
+                hiddenInput.value = dateValue;
+            } else if (selectValue) {
+                hiddenInput.value = selectValue;
+            } else {
+>>>>>>> Stashed changes
                 e.preventDefault();
                 sendMessage();
             }

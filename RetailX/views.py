@@ -1,19 +1,44 @@
+# ============================================
+# RETAILX - ADVANCED ANALYTICS PLATFORM
+# ============================================
+#           _ _   _  __   __  _   _  ___  
+#  ___ _ __| | |_| | \ \ / / | | | |/ _ \ 
+# / _ \ '__| | __| |  \ V /  | |_| | | | |
+#  __/ |  | | |_| |   | |   |  _  | |_| |
+# \___|_|  |_|\__|_|   |_|   |_| |_|\___/ 
+#                                          
+# ============================================
+# Author: RetailX Team
+# Version: 3.0 (Production Ready)
+# Description: Enterprise Retail Analytics Platform
+# Features: 
+#   • 3 ML Models (KNN, Decision Tree, Prophet)
+#   • 4 User Types (Admin, Manager, Cashier, Supplier)
+#   • Email OTP Verification
+#   • Festival Sales Prediction
+#   • Age-Based Customer Segmentation
+# ============================================
+
 import os
 import json
-import pickle
 import random
 import smtplib
 import csv
+import pickle
 import traceback
+import logging
 import string
-from email.mime.text import MIMEText
+import sys
 from datetime import datetime, date as date_type
 from collections import defaultdict
+from functools import lru_cache
+from email.mime.text import MIMEText
 
 import pandas as pd
 import numpy as np
 from prophet import Prophet
 import joblib
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
@@ -21,12 +46,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.conf import settings
-from django.core import serializers
 from django.db import IntegrityError
-from django.db.models import Q
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib.auth.decorators import login_required
-from functools import lru_cache
 
 # ================== MODELS ==================
 from AccountsDB.models import Admin, Cashier, Manager, Supplier
@@ -34,28 +56,94 @@ from productsDB.models import Product
 
 from .gemini_chat import ask_gemini
 
-# ================== OTP STORAGES ==================
+# ============================================
+# CONSOLE COLOR CODES
+# ============================================
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_banner():
+    """Print cool startup banner"""
+    banner = f"""
+{Colors.CYAN}╔══════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║  {Colors.BOLD}██████╗ ███████╗████████╗ █████╗ ██╗██╗     ██╗  ██╗{Colors.CYAN}      ║
+║  {Colors.BOLD}██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ╚██╗██╔╝{Colors.CYAN}      ║
+║  {Colors.BOLD}██████╔╝█████╗     ██║   ███████║██║██║      ╚███╔╝ {Colors.CYAN}      ║
+║  {Colors.BOLD}██╔══██╗██╔══╝     ██║   ██╔══██║██║██║      ██╔██╗ {Colors.CYAN}      ║
+║  {Colors.BOLD}██║  ██║███████╗   ██║   ██║  ██║██║███████╗██╔╝ ██╗{Colors.CYAN}      ║
+║  {Colors.BOLD}╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝{Colors.CYAN}      ║
+║                                                                      ║
+║  {Colors.GREEN}🚀 Advanced Analytics Platform • v3.0 • Production Ready{Colors.CYAN}    ║
+║  {Colors.YELLOW}⚡ 3 ML Models • 4 User Types • OTP Email Verification{Colors.CYAN}     ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝{Colors.END}
+"""
+    print(banner)
+
+def print_success(msg):
+    print(f"{Colors.GREEN}✅ {msg}{Colors.END}")
+
+def print_error(msg):
+    print(f"{Colors.RED}❌ {msg}{Colors.END}")
+
+def print_warning(msg):
+    print(f"{Colors.YELLOW}⚠️  {msg}{Colors.END}")
+
+def print_info(msg):
+    print(f"{Colors.BLUE}ℹ️  {msg}{Colors.END}")
+
+def print_header(msg):
+    print(f"\n{Colors.CYAN}═══════════ {Colors.BOLD}{msg}{Colors.END} {Colors.CYAN}═══════════{Colors.END}\n")
+
+# Print startup banner
+print_banner()
+
+# ============================================
+# OTP STORAGES
+# ============================================
+print_header("INITIALIZING OTP STORAGE")
 otp_storage = {}
 manager_otp_storage = {}
 cashier_otp_storage = {}
 supplier_otp_storage = {}
+print_success("OTP storage initialized for all user types")
 
-# ================== AGE PREDICTION SETUP ==================
+# ============================================
+# MODULE 1: AGE PREDICTION (KNN MODEL)
+# ============================================
+print_header("MODULE 1: KNN AGE PREDICTION MODEL")
+
 AGE_MODEL_PATH = os.path.join(settings.BASE_DIR, 'RetailX', 'trained_models', 'age_prediction')
 AGE_MODEL_FILE = os.path.join(AGE_MODEL_PATH, 'customer_age_prediction_model.pkl')
 ENCODERS_FILE = os.path.join(AGE_MODEL_PATH, 'encoders.pkl')
-
-# Path to customer data CSV for category-brand mapping
 CUSTOMER_DATA_CSV = os.path.join(settings.BASE_DIR, 'static', 'Dataset_CSV', 'customer_data.csv')
 _category_brands = None
 
-print(f"=== Age Prediction Model Path ===")
-print(f"BASE_DIR: {settings.BASE_DIR}")
-print(f"AGE_MODEL_PATH: {AGE_MODEL_PATH}")
-print(f"Model file exists: {os.path.exists(AGE_MODEL_FILE)}")
-print(f"Encoders file exists: {os.path.exists(ENCODERS_FILE)}")
-print(f"================================")
+print_info(f"Model path: {AGE_MODEL_PATH}")
 
+if os.path.exists(AGE_MODEL_FILE):
+    print_success(f"KNN model found: {os.path.basename(AGE_MODEL_FILE)}")
+else:
+    print_error(f"KNN model not found at {AGE_MODEL_FILE}")
+
+if os.path.exists(ENCODERS_FILE):
+    print_success(f"Encoders found: {os.path.basename(ENCODERS_FILE)}")
+else:
+    print_error(f"Encoders not found at {ENCODERS_FILE}")
+
+if os.path.exists(CUSTOMER_DATA_CSV):
+    print_success(f"Customer data CSV found: {os.path.basename(CUSTOMER_DATA_CSV)}")
+else:
+    print_warning(f"Customer data CSV not found at {CUSTOMER_DATA_CSV}")
 
 def get_category_brands_mapping():
     """Load category to brands mapping from customer_data.csv"""
@@ -66,7 +154,7 @@ def get_category_brands_mapping():
     mapping = defaultdict(set)
     try:
         if not os.path.exists(CUSTOMER_DATA_CSV):
-            print(f"Warning: Customer data CSV not found at {CUSTOMER_DATA_CSV}")
+            print_warning(f"Customer data CSV not found at {CUSTOMER_DATA_CSV}")
             _category_brands = {}
             return _category_brands
 
@@ -78,31 +166,30 @@ def get_category_brands_mapping():
                 if cat and brand:
                     mapping[cat].add(brand)
 
-        # Convert sets to sorted lists
         for cat in mapping:
             mapping[cat] = sorted(list(mapping[cat]))
 
         _category_brands = dict(mapping)
-        print(f"Loaded {len(_category_brands)} categories with brands from CSV")
+        print_success(f"Loaded {len(_category_brands)} categories with brands from CSV")
 
     except Exception as e:
-        print(f"Error loading customer_data.csv: {e}")
+        print_error(f"Error loading customer_data.csv: {e}")
         _category_brands = {}
 
     return _category_brands
-
 
 @lru_cache(maxsize=1)
 def load_age_prediction_model():
     """Load and cache the KNN model and encoders."""
     if not os.path.exists(AGE_MODEL_FILE):
-        raise FileNotFoundError(f"Model file not found at {AGE_MODEL_FILE}")
+        raise FileNotFoundError(f"KNN model file not found at {AGE_MODEL_FILE}")
     if not os.path.exists(ENCODERS_FILE):
         raise FileNotFoundError(f"Encoders file not found at {ENCODERS_FILE}")
 
     model = joblib.load(AGE_MODEL_FILE)
     encoders = joblib.load(ENCODERS_FILE)
-
+    
+    print_success("KNN model and encoders loaded successfully")
     return model, encoders
 
 
@@ -114,10 +201,13 @@ def predict_age_api(request):
     API endpoint for age group prediction.
     UPDATED: Model now expects only 2 features (product_category and brand)
     """
+    print_header("AGE PREDICTION API CALLED")
     try:
         if not os.path.exists(AGE_MODEL_FILE):
+            print_error(f"Model file not found at {AGE_MODEL_FILE}")
             return JsonResponse({'error': f'Model file not found at {AGE_MODEL_FILE}'}, status=500)
         if not os.path.exists(ENCODERS_FILE):
+            print_error(f"Encoders file not found at {ENCODERS_FILE}")
             return JsonResponse({'error': f'Encoders file not found at {ENCODERS_FILE}'}, status=500)
 
         model = joblib.load(AGE_MODEL_FILE)
@@ -127,48 +217,47 @@ def predict_age_api(request):
         product_category = data.get('product_category', '').strip()
         brand = data.get('brand', '').strip()
 
+        print_info(f"Input - Category: '{product_category}', Brand: '{brand}'")
+
         le_category = encoders["category"]
         le_brand = encoders["brand"]
         le_agegroup = encoders["agegroup"]
 
-        print(f"\nInput category: '{product_category}'")
-        print(f"Input brand: '{brand}'")
-
         # Encode categorical features
         try:
             cat_encoded = le_category.transform([product_category])[0]
-            print(f"Encoded category: {cat_encoded}")
+            print_info(f"Encoded category: {cat_encoded}")
         except ValueError as e:
             valid_cats = list(le_category.classes_)
             error_msg = f"Unknown category '{product_category}'. Valid categories: {valid_cats}"
-            print(error_msg)
+            print_error(error_msg)
             return JsonResponse({'error': error_msg}, status=400)
 
         try:
             brand_encoded = le_brand.transform([brand])[0]
-            print(f"Encoded brand: {brand_encoded}")
+            print_info(f"Encoded brand: {brand_encoded}")
         except ValueError as e:
             valid_brands = list(le_brand.classes_)[:20]
             error_msg = f"Unknown brand '{brand}'. Valid brands: {valid_brands}..."
-            print(error_msg)
+            print_error(error_msg)
             return JsonResponse({'error': error_msg}, status=400)
 
         # Prepare features with ONLY 2 features (matching the retrained model)
-        # Order: [product_category, brand]
         features = np.array([[cat_encoded, brand_encoded]])
-        print(f"✅ Feature array shape: {features.shape} - should be (1, 2)")
-        print(f"Feature array: {features[0]}")
+        print_info(f"Feature array shape: {features.shape}")
 
         # Predict
         pred_encoded = model.predict(features)[0]
         age_group = le_agegroup.inverse_transform([pred_encoded])[0]
-        print(f"✅ Predicted age group: {age_group}")
+        print_success(f"Predicted age group: {age_group}")
 
         return JsonResponse({'age_group': age_group})
 
     except json.JSONDecodeError:
+        print_error("Invalid JSON format")
         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
     except Exception as e:
+        print_error(f"Error in age prediction: {str(e)}")
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -182,8 +271,10 @@ def get_valid_categories_brands(request):
         encoders = joblib.load(ENCODERS_FILE)
         categories = list(encoders["category"].classes_)
         brands = list(encoders["brand"].classes_)
+        print_success(f"Returning {len(categories)} categories and {len(brands)} brands")
         return JsonResponse({'categories': categories, 'brands': brands})
     except Exception as e:
+        print_error(f"Error in get_valid_categories_brands: {str(e)}")
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -195,11 +286,10 @@ def get_brands_for_category(request):
     First tries to load from CSV, falls back to all brands from encoder.
     """
     category = request.GET.get('category', '').strip()
-    print(f"=" * 50)
-    print(f"🔍 get_brands_for_category called with category: '{category}'")
+    print_info(f"get_brands_for_category called with category: '{category}'")
 
     if not category:
-        print("⚠️ No category provided")
+        print_warning("No category provided")
         return JsonResponse({'brands': []})
 
     brands = []
@@ -208,19 +298,19 @@ def get_brands_for_category(request):
     try:
         mapping = get_category_brands_mapping()
         brands = mapping.get(category, [])
-        print(f"📊 Found {len(brands)} brands from CSV for '{category}'")
+        print_info(f"Found {len(brands)} brands from CSV for '{category}'")
     except Exception as e:
-        print(f"⚠️ Error getting brands from CSV: {e}")
+        print_warning(f"Error getting brands from CSV: {e}")
 
     # If no brands found from CSV, fall back to all brands from encoder
     if not brands:
-        print(f"⚠️ No brands found from CSV, falling back to encoder...")
+        print_warning("No brands found from CSV, falling back to encoder...")
         try:
             encoders = joblib.load(ENCODERS_FILE)
             brands = list(encoders["brand"].classes_)
-            print(f"✅ Loaded {len(brands)} brands from encoder")
+            print_success(f"Loaded {len(brands)} brands from encoder")
         except Exception as e:
-            print(f"❌ Error loading brands from encoder: {e}")
+            print_error(f"Error loading brands from encoder: {e}")
             return JsonResponse({'error': 'Could not load brands'}, status=500)
 
     return JsonResponse({'brands': brands})
@@ -277,40 +367,43 @@ def predict_sales_api(request):
     })
 
 # ============================================
-# MODULE 2: AGE SEGMENTATION FROM AGE INPUT (DECISION TREE MODEL)
+# MODULE 2: AGE SEGMENTATION (DECISION TREE MODEL)
 # ============================================
-# This module uses a Decision Tree model trained on:
-# - age
-# It predicts age group and provides product/brand preferences.
-# 
-# Model files:
-# - age_group_model.pkl          : Trained Decision Tree
-# - age_group_encoder.pkl        : Label encoder for age groups
-# - product_preferences.pkl      : DataFrame of top products per age group
-# - brand_preferences.pkl        : DataFrame of top brands per age group
-# ============================================
+print_header("MODULE 2: DECISION TREE AGE SEGMENTATION MODEL")
 
-# Path to Decision Tree model files
 DT_MODEL_PATH = os.path.join(settings.BASE_DIR, 'RetailX', 'trained_models', 'age_segmentation')
 DT_MODEL_FILE = os.path.join(DT_MODEL_PATH, 'age_group_model.pkl')
 DT_ENCODER_FILE = os.path.join(DT_MODEL_PATH, 'age_group_encoder.pkl')
 DT_PRODUCT_PREFS_FILE = os.path.join(DT_MODEL_PATH, 'product_preferences.pkl')
 DT_BRAND_PREFS_FILE = os.path.join(DT_MODEL_PATH, 'brand_preferences.pkl')
 
+print_info(f"Model path: {DT_MODEL_PATH}")
+
+if os.path.exists(DT_MODEL_FILE):
+    print_success(f"Decision Tree model found: {os.path.basename(DT_MODEL_FILE)}")
+else:
+    print_error(f"Decision Tree model not found at {DT_MODEL_FILE}")
+
+if os.path.exists(DT_ENCODER_FILE):
+    print_success(f"Age encoder found: {os.path.basename(DT_ENCODER_FILE)}")
+else:
+    print_error(f"Age encoder not found at {DT_ENCODER_FILE}")
+
+if os.path.exists(DT_PRODUCT_PREFS_FILE):
+    print_success(f"Product preferences found: {os.path.basename(DT_PRODUCT_PREFS_FILE)}")
+else:
+    print_warning(f"Product preferences not found at {DT_PRODUCT_PREFS_FILE}")
+
+if os.path.exists(DT_BRAND_PREFS_FILE):
+    print_success(f"Brand preferences found: {os.path.basename(DT_BRAND_PREFS_FILE)}")
+else:
+    print_warning(f"Brand preferences not found at {DT_BRAND_PREFS_FILE}")
+
 # Global variables to cache loaded data for Module 2
 _dt_model = None
 _dt_encoder = None
 _dt_product_prefs = None
 _dt_brand_prefs = None
-
-print(f"=== MODULE 2: Decision Tree Age Segmentation Model ===")
-print(f"Model path: {DT_MODEL_PATH}")
-print(f"Model file exists: {os.path.exists(DT_MODEL_FILE)}")
-print(f"Encoder file exists: {os.path.exists(DT_ENCODER_FILE)}")
-print(f"Product prefs exists: {os.path.exists(DT_PRODUCT_PREFS_FILE)}")
-print(f"Brand prefs exists: {os.path.exists(DT_BRAND_PREFS_FILE)}")
-print(f"======================================================")
-
 
 def load_dt_models():
     """
@@ -326,27 +419,27 @@ def load_dt_models():
         if os.path.exists(DT_MODEL_FILE):
             with open(DT_MODEL_FILE, 'rb') as f:
                 _dt_model = pickle.load(f)
-            print(f"✅ Loaded Decision Tree model from {DT_MODEL_FILE}")
+            print_success(f"Loaded Decision Tree model from {DT_MODEL_FILE}")
         
         if os.path.exists(DT_ENCODER_FILE):
             with open(DT_ENCODER_FILE, 'rb') as f:
                 _dt_encoder = pickle.load(f)
-            print(f"✅ Loaded age encoder from {DT_ENCODER_FILE}")
+            print_success(f"Loaded age encoder from {DT_ENCODER_FILE}")
         
         # Load preference DataFrames
         if os.path.exists(DT_PRODUCT_PREFS_FILE):
             with open(DT_PRODUCT_PREFS_FILE, 'rb') as f:
                 _dt_product_prefs = pickle.load(f)
-            print(f"✅ Loaded product preferences from {DT_PRODUCT_PREFS_FILE}")
+            print_success(f"Loaded product preferences from {DT_PRODUCT_PREFS_FILE}")
         
         if os.path.exists(DT_BRAND_PREFS_FILE):
             with open(DT_BRAND_PREFS_FILE, 'rb') as f:
                 _dt_brand_prefs = pickle.load(f)
-            print(f"✅ Loaded brand preferences from {DT_BRAND_PREFS_FILE}")
+            print_success(f"Loaded brand preferences from {DT_BRAND_PREFS_FILE}")
         
         return True
     except Exception as e:
-        print(f"❌ Error loading Decision Tree models: {e}")
+        print_error(f"Error loading Decision Tree models: {e}")
         traceback.print_exc()
         return False
 
@@ -370,13 +463,13 @@ def predict_age_segmentation_api(request):
             "brands": {"Electronics": "Sony", ...}
         }
     """
+    print_header("AGE SEGMENTATION API CALLED")
     try:
-        print("=" * 50)
-        print("📊 MODULE 2: Age Segmentation API called")
-        
         # Check if models are loaded
         if _dt_model is None or _dt_encoder is None:
+            print_warning("Decision Tree models not loaded, attempting to load...")
             if not load_dt_models():
+                print_error("Failed to load Decision Tree models")
                 return JsonResponse({
                     'error': 'Decision Tree models not loaded properly. Check server logs.'
                 }, status=500)
@@ -385,23 +478,26 @@ def predict_age_segmentation_api(request):
         data = json.loads(request.body)
         age = data.get('age')
         
-        print(f"📥 Received age: {age}")
+        print_info(f"Received age: {age}")
         
         # Validate input
         if age is None:
+            print_error("Age is required")
             return JsonResponse({'error': 'Age is required'}, status=400)
         
         try:
             age = int(age)
             if age < 18 or age > 100:
+                print_error(f"Age {age} is outside valid range (18-100)")
                 return JsonResponse({'error': 'Age must be between 18 and 100'}, status=400)
         except ValueError:
+            print_error(f"Invalid age value: {age}")
             return JsonResponse({'error': 'Age must be a valid number'}, status=400)
         
         # Predict age group
         age_pred_encoded = _dt_model.predict([[age]])[0]
         age_group = _dt_encoder.inverse_transform([age_pred_encoded])[0]
-        print(f"🎯 Predicted age group: {age_group}")
+        print_success(f"Predicted age group: {age_group}")
         
         # Get product preferences
         products_dict = {}
@@ -417,8 +513,7 @@ def predict_age_segmentation_api(request):
             for _, row in age_brands.iterrows():
                 brands_dict[row['product_category']] = row['brand']
         
-        print(f"📦 Found {len(products_dict)} product categories")
-        print(f"🏷️ Found {len(brands_dict)} brand categories")
+        print_success(f"Found {len(products_dict)} product categories and {len(brands_dict)} brand categories")
         
         return JsonResponse({
             'age_group': age_group,
@@ -427,9 +522,10 @@ def predict_age_segmentation_api(request):
         })
         
     except json.JSONDecodeError:
+        print_error("Invalid JSON format")
         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
     except Exception as e:
-        print("❌ Error in MODULE 2:")
+        print_error(f"Error in age segmentation: {str(e)}")
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -450,17 +546,30 @@ def get_age_segmentation_info(request):
         'status': 'loaded' if _dt_model is not None else 'not loaded'
     })
 
-# ================== FESTIVAL SALES PREDICTION (old models) ==================
+# ============================================
+# MODULE 3: FESTIVAL SALES PREDICTION (PROPHET MODEL)
+# ============================================
+print_header("MODULE 3: PROPHET FESTIVAL SALES PREDICTION MODEL")
+
 BASE_DIR = settings.BASE_DIR
 MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models')
 FESTIVAL_MODEL_FOLDER = os.path.join(BASE_DIR, 'RetailX', 'trained_models', 'festival')
+
+print_info(f"Festival models folder: {FESTIVAL_MODEL_FOLDER}")
+
+if os.path.exists(FESTIVAL_MODEL_FOLDER):
+    festival_models = [f for f in os.listdir(FESTIVAL_MODEL_FOLDER) if f.endswith('.pkl')]
+    print_success(f"Found {len(festival_models)} festival models")
+    if festival_models:
+        print_info(f"Available festivals: {', '.join([f.split('_')[0] for f in festival_models[:5]])}...")
+else:
+    print_warning(f"Festival models folder not found at {FESTIVAL_MODEL_FOLDER}")
 
 FESTIVAL_CHOICES = [
     "Diwali", "Holi", "Christmas", "Eid", "Navratri", "Raksha Bandhan",
     "Ganesh Chaturthi", "Makar Sankranti", "Onam", "Pongal", "Karva Chauth",
     "Valentine", "New Year"
 ]
-
 
 def get_festival_from_date(date_obj):
     month = date_obj.month
@@ -531,9 +640,11 @@ def get_festival_from_date(date_obj):
     }
     return month_mapping.get(month)
 
-
 def get_festival_sales(festival_name):
+    print_info(f"Processing festival: {festival_name}")
+    
     if not os.path.exists(MODEL_FOLDER):
+        print_error(f"Model folder not found at {MODEL_FOLDER}")
         return {
             'error': 'Model folder not found.',
             'top_products': [],
@@ -583,6 +694,7 @@ def get_festival_sales(festival_name):
                 break
 
     if not festival_models:
+        print_warning(f"No models found for festival '{festival_name}'")
         return {
             'error': f'No models found for festival "{festival_name}".',
             'top_products': [],
@@ -590,7 +702,7 @@ def get_festival_sales(festival_name):
             'festival': festival_name
         }
 
-    print(f"Found {len(festival_models)} models for festival {festival_name}")
+    print_success(f"Found {len(festival_models)} models for festival {festival_name}")
 
     predictions = []
     for model_file in festival_models:
@@ -598,7 +710,7 @@ def get_festival_sales(festival_name):
         try:
             model = joblib.load(model_path)
         except Exception as e:
-            print(f"Error loading model {model_file}: {e}")
+            print_error(f"Error loading model {model_file}: {e}")
             continue
 
         product_name = model_file.replace('.pkl', '')
@@ -646,7 +758,7 @@ def get_festival_sales(festival_name):
             if np.isnan(predicted_sales) or predicted_sales < 0:
                 predicted_sales = 0
         except Exception as e:
-            print(f"Prediction failed for {model_file}: {e}")
+            print_error(f"Prediction failed for {model_file}: {e}")
             continue
 
         predictions.append({
@@ -655,6 +767,7 @@ def get_festival_sales(festival_name):
         })
 
     if not predictions:
+        print_warning("Could not generate predictions")
         return {
             'error': 'Could not generate predictions.',
             'top_products': [],
@@ -666,6 +779,7 @@ def get_festival_sales(festival_name):
     top_products = predictions[:10]
     least_products = predictions[-10:] if len(predictions) >= 10 else predictions[::-1]
 
+    print_success(f"Generated predictions: {len(top_products)} top products, {len(least_products)} least products")
     return {
         'festival': festival_name,
         'top_products': top_products,
@@ -745,11 +859,10 @@ RetailX Team"""
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
-        print(f"{user_type.capitalize()} Registration Detected !!")
-        print(f"OTP email sent to {receiver_email}")
+        print_success(f"OTP email sent to {receiver_email} for {user_type}")
         return True
     except Exception as e:
-        print("Error sending email:", e)
+        print_error(f"Error sending email: {e}")
         return False
 
 
@@ -775,8 +888,9 @@ RetailX Team"""
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, email, msg.as_string())
+        print_success(f"Password reset email sent to {email}")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        print_error(f"Failed to send email: {e}")
 
 
 # ================== PUBLIC PAGES ==================
@@ -818,13 +932,16 @@ def admin_login(request):
         try:
             user = Admin.objects.get(username=username)
         except Admin.DoesNotExist:
+            print_warning(f"Failed login attempt - invalid username: {username}")
             return render(request, 'admin_login.html', {'error': 'Invalid username'})
 
         if check_password(password, user.password):
             request.session['username'] = user.username
             request.session['email'] = user.email
+            print_success(f"Admin logged in: {username}")
             return redirect('/admin_home')
         else:
+            print_warning(f"Failed login attempt - invalid password for: {username}")
             return render(request, 'admin_login.html', {'error': 'Invalid username or password'})
 
     return render(request, 'admin_login.html')
@@ -843,11 +960,13 @@ def admin_registration(request):
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
 
                 if Admin.objects.filter(email=email).exists():
+                    print_warning(f"OTP requested for existing admin email: {email}")
                     return JsonResponse({'status': 'error', 'message': 'This email is already registered'}, status=400)
 
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "admin"):
                     otp_storage[f'email_{email}'] = otp
+                    print_success(f"OTP sent to {email}")
                     return JsonResponse({'status': 'success', 'message': f'OTP sent to {email}'})
                 return JsonResponse({'status': 'error', 'message': 'Failed to send OTP'}, status=500)
 
@@ -862,8 +981,10 @@ def admin_registration(request):
 
                 if stored_otp and stored_otp == user_otp:
                     del otp_storage[f'email_{email}']
+                    print_success(f"OTP verified for {email}")
                     return JsonResponse({'status': 'success', 'message': 'Email verified successfully'})
 
+                print_warning(f"Invalid OTP attempt for {email}")
                 return JsonResponse({'status': 'error', 'message': 'Incorrect OTP. Please check and try again.'}, status=400)
 
             else:
@@ -872,7 +993,7 @@ def admin_registration(request):
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
         except Exception as e:
-            print("Error:", str(e))
+            print_error(f"Error in admin registration: {str(e)}")
             return JsonResponse({'status': 'error', 'message': 'Server error'}, status=500)
 
     if request.method == 'POST':
@@ -905,6 +1026,7 @@ def admin_registration(request):
         )
         admin.save()
 
+        print_success(f"New admin registered: {username}")
         messages.success(request, "Registration successful! Please login.")
         return redirect('/admin_login')
 
@@ -921,10 +1043,13 @@ def manager_login(request):
             manager = Manager.objects.get(username=username)
             if check_password(password, manager.password):
                 request.session['manager_username'] = manager.username
+                print_success(f"Manager logged in: {username}")
                 return redirect('manager_home')
             else:
+                print_warning(f"Failed login attempt - invalid password for: {username}")
                 error = "Invalid password"
         except Manager.DoesNotExist:
+            print_warning(f"Failed login attempt - invalid username: {username}")
             error = "Manager not found"
 
         return render(request, 'manager_login.html', {'error': error})
@@ -945,11 +1070,13 @@ def manager_registration(request):
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
 
                 if Manager.objects.filter(email=email).exists():
+                    print_warning(f"OTP requested for existing manager email: {email}")
                     return JsonResponse({'status': 'error', 'message': 'This email is already registered'}, status=400)
 
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "manager"):
                     manager_otp_storage[f'email_{email}'] = otp
+                    print_success(f"OTP sent to {email}")
                     return JsonResponse({'status': 'success', 'message': f'OTP sent to {email}'})
                 return JsonResponse({'status': 'error', 'message': 'Failed to send OTP'}, status=500)
 
@@ -964,8 +1091,10 @@ def manager_registration(request):
 
                 if stored_otp and stored_otp == user_otp:
                     del manager_otp_storage[f'email_{email}']
+                    print_success(f"OTP verified for {email}")
                     return JsonResponse({'status': 'success', 'message': 'Email verified successfully'})
 
+                print_warning(f"Invalid OTP attempt for {email}")
                 return JsonResponse({'status': 'error', 'message': 'Incorrect OTP. Please check and try again.'}, status=400)
 
             else:
@@ -974,7 +1103,7 @@ def manager_registration(request):
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
         except Exception as e:
-            print("Error:", str(e))
+            print_error(f"Error in manager registration: {str(e)}")
             return JsonResponse({'status': 'error', 'message': 'Server error'}, status=500)
 
     if request.method == 'POST':
@@ -1007,6 +1136,7 @@ def manager_registration(request):
         )
         manager.save()
 
+        print_success(f"New manager registered: {username}")
         messages.success(request, "Registration successful! Please login.")
         return redirect('/manager_login')
 
@@ -1022,13 +1152,16 @@ def cashier_login(request):
         try:
             user = Cashier.objects.get(username=username)
         except Cashier.DoesNotExist:
+            print_warning(f"Failed login attempt - invalid cashier username: {username}")
             return render(request, 'cashier_login.html', {'error': 'Invalid username'})
 
         if check_password(password, user.password):
             request.session['cashier_username'] = user.username
             request.session['cashier_email'] = user.email
+            print_success(f"Cashier logged in: {username}")
             return redirect('/cashier_home')
         else:
+            print_warning(f"Failed login attempt - invalid password for cashier: {username}")
             return render(request, 'cashier_login.html', {'error': 'Invalid username or password'})
 
     return render(request, "cashier_login.html")
@@ -1047,11 +1180,13 @@ def cashier_registration(request):
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
 
                 if Cashier.objects.filter(email=email).exists():
+                    print_warning(f"OTP requested for existing cashier email: {email}")
                     return JsonResponse({'status': 'error', 'message': 'This email is already registered'}, status=400)
 
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "cashier"):
                     cashier_otp_storage[f'email_{email}'] = otp
+                    print_success(f"OTP sent to {email}")
                     return JsonResponse({'status': 'success', 'message': f'OTP sent to {email}'})
                 return JsonResponse({'status': 'error', 'message': 'Failed to send OTP'}, status=500)
 
@@ -1066,8 +1201,10 @@ def cashier_registration(request):
 
                 if stored_otp and stored_otp == user_otp:
                     del cashier_otp_storage[f'email_{email}']
+                    print_success(f"OTP verified for {email}")
                     return JsonResponse({'status': 'success', 'message': 'Email verified successfully'})
 
+                print_warning(f"Invalid OTP attempt for {email}")
                 return JsonResponse({'status': 'error', 'message': 'Incorrect OTP. Please check and try again.'}, status=400)
 
             else:
@@ -1076,7 +1213,7 @@ def cashier_registration(request):
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
         except Exception as e:
-            print("Error:", str(e))
+            print_error(f"Error in cashier registration: {str(e)}")
             return JsonResponse({'status': 'error', 'message': 'Server error'}, status=500)
 
     if request.method == 'POST':
@@ -1109,6 +1246,7 @@ def cashier_registration(request):
         )
         cashier.save()
 
+        print_success(f"New cashier registered: {username}")
         messages.success(request, "Registration successful! Please login.")
         return redirect('/cashier_login')
 
@@ -1124,13 +1262,16 @@ def supplier_login(request):
         try:
             user = Supplier.objects.get(username=username)
         except Supplier.DoesNotExist:
+            print_warning(f"Failed login attempt - invalid supplier username: {username}")
             return render(request, 'supplier_login.html', {'error': 'Invalid username'})
 
         if check_password(password, user.password):
             request.session['supplier_username'] = user.username
             request.session['supplier_email'] = user.email
+            print_success(f"Supplier logged in: {username}")
             return redirect('/supplier_home')
         else:
+            print_warning(f"Failed login attempt - invalid password for supplier: {username}")
             return render(request, 'supplier_login.html', {'error': 'Invalid username or password'})
 
     return render(request, 'supplier_login.html')
@@ -1151,11 +1292,13 @@ def supplier_registration(request):
                     return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
 
                 if Supplier.objects.filter(email=email).exists():
+                    print_warning(f"OTP requested for existing supplier email: {email}")
                     return JsonResponse({'status': 'error', 'message': 'This email is already registered'}, status=400)
 
                 otp = str(random.randint(100000, 999999))
                 if send_email_otp(email, otp, "supplier"):
                     supplier_otp_storage[f'email_{email}'] = otp
+                    print_success(f"OTP sent to {email}")
                     return JsonResponse({'status': 'success', 'message': f'OTP sent to {email}'})
                 return JsonResponse({'status': 'error', 'message': 'Failed to send OTP'}, status=500)
 
@@ -1170,8 +1313,10 @@ def supplier_registration(request):
 
                 if stored_otp and stored_otp == user_otp:
                     del supplier_otp_storage[f'email_{email}']
+                    print_success(f"OTP verified for {email}")
                     return JsonResponse({'status': 'success', 'message': 'Email verified successfully'})
 
+                print_warning(f"Invalid OTP attempt for {email}")
                 return JsonResponse({'status': 'error', 'message': 'Incorrect OTP. Please check and try again.'}, status=400)
 
             else:
@@ -1180,7 +1325,7 @@ def supplier_registration(request):
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
         except Exception as e:
-            print("Error:", str(e))
+            print_error(f"Error in supplier registration: {str(e)}")
             return JsonResponse({'status': 'error', 'message': 'Server error'}, status=500)
 
     if request.method == 'POST':
@@ -1219,6 +1364,7 @@ def supplier_registration(request):
         )
         supplier.save()
 
+        print_success(f"New supplier registered: {username}")
         messages.success(request, "Registration successful! Please login.")
         return redirect('/supplier_login')
 
@@ -1524,6 +1670,52 @@ def manager_home(request):
             'total_cashiers': 0,
             'today_date': today_date,
         }
+
+    # Festival sales analytics
+    festival_input = (request.GET.get('festival') or '').strip()
+    print_info(f"Festival input received: {festival_input or 'None'}")
+    
+    detected_festival = None
+    top_products = []
+    least_products = []
+    festival_error = None
+
+    if festival_input:
+        print_info(f"Processing festival input: {festival_input}")
+        # Check if input is a date or festival name
+        try:
+            # Try to parse as date
+            input_date = datetime.strptime(festival_input, '%d-%m-%Y')
+            festival_name = get_festival_from_date(input_date)
+            if festival_name:
+                print_success(f"Date {festival_input} mapped to festival: {festival_name}")
+                festival_result = get_festival_sales(festival_name)
+                top_products = festival_result.get("top_products", [])
+                least_products = festival_result.get("least_products", [])
+                detected_festival = festival_name
+                festival_error = festival_result.get("error")
+            else:
+                festival_error = f"No festival found for date {festival_input}"
+                print_warning(festival_error)
+        except ValueError:
+            # Not a valid date, treat as festival name
+            print_info(f"Treating '{festival_input}' as festival name")
+            festival_result = get_festival_sales(festival_input)
+            top_products = festival_result.get("top_products", [])
+            least_products = festival_result.get("least_products", [])
+            detected_festival = festival_result.get("festival")
+            festival_error = festival_result.get("error")
+
+    # If AJAX request, return JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        print_success(f"AJAX request processed for festival: {detected_festival or 'None'}")
+        return JsonResponse({
+            'detected_festival': detected_festival,
+            'top_products': top_products,
+            'least_products': least_products,
+            'festival_error': festival_error,
+        })
+    
     return render(request, 'manager_home.html', context)
 
 
@@ -1544,6 +1736,7 @@ def get_all_cashiers(request):
                 'email': cashier.email,
                 'username': cashier.username,
             })
+        print_success(f"Retrieved {len(cashiers_data)} cashiers")
         return JsonResponse({'success': True, 'cashiers': cashiers_data, 'total': len(cashiers_data)})
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1566,9 +1759,11 @@ def add_cashier(request):
                 return JsonResponse({'success': False, 'error': 'All required fields must be filled'}, status=400)
 
             if Cashier.objects.filter(username=username).exists():
+                print_warning(f"Attempt to add cashier with existing username: {username}")
                 return JsonResponse({'success': False, 'error': 'Username already exists'}, status=400)
 
             if Cashier.objects.filter(email=email).exists():
+                print_warning(f"Attempt to add cashier with existing email: {email}")
                 return JsonResponse({'success': False, 'error': 'Email already registered'}, status=400)
 
             hashed_password = make_password(password)
@@ -1581,6 +1776,7 @@ def add_cashier(request):
             )
             cashier.save()
 
+            print_success(f"New cashier added: {username}")
             return JsonResponse({
                 'success': True,
                 'message': 'Cashier added successfully',
@@ -1594,6 +1790,7 @@ def add_cashier(request):
         except IntegrityError:
             return JsonResponse({'success': False, 'error': 'Database error. Username or email may already exist.'}, status=400)
         except Exception as e:
+            print_error(f"Error adding cashier: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1631,8 +1828,10 @@ def edit_cashier(request, cashier_id):
                 cashier.confirm_password = cashier.password
 
             cashier.save()
+            print_success(f"Cashier updated: {username}")
             return JsonResponse({'success': True, 'message': 'Cashier updated successfully'})
         except Exception as e:
+            print_error(f"Error updating cashier: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1648,8 +1847,10 @@ def delete_cashier(request, cashier_id):
             cashier = get_object_or_404(Cashier, id=cashier_id)
             cashier_name = cashier.fullname
             cashier.delete()
+            print_success(f"Cashier deleted: {cashier_name}")
             return JsonResponse({'success': True, 'message': f'Cashier {cashier_name} deleted successfully'})
         except Exception as e:
+            print_error(f"Error deleting cashier: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1673,6 +1874,7 @@ def get_cashier_details(request, cashier_id):
                 }
             })
         except Exception as e:
+            print_error(f"Error fetching cashier details: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -1680,6 +1882,7 @@ def get_cashier_details(request, cashier_id):
 # ================== LOGOUT ==================
 def logout_view(request):
     request.session.flush()
+    print_info("User logged out")
     response = redirect('/')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
@@ -1690,6 +1893,7 @@ def logout_view(request):
 def admin_logout(request):
     """Admin-specific logout: clears session and redirects to admin login."""
     request.session.flush()
+    print_info("Admin logged out")
     response = redirect('/admin_login')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
@@ -1699,6 +1903,7 @@ def admin_logout(request):
 def cashier_logout(request):
     """Cashier-specific logout: clears session and redirects to cashier login."""
     request.session.flush()
+    print_info("Cashier logged out")
     response = redirect('/cashier_login')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
@@ -1706,13 +1911,12 @@ def cashier_logout(request):
     return response
 
 
-
-
 def supplier_logout(request):
     """Supplier-specific logout: clears session and redirects to supplier login with cache prevention."""
     # Clear all session data
     request.session.flush()
     
+    print_info("Supplier logged out")
     # Create response that redirects to supplier login
     response = redirect('/supplier_login/')
     
@@ -1727,8 +1931,6 @@ def supplier_logout(request):
     return response
 
 
-
-
 # ================== CHATBOT API ==================
 @csrf_exempt
 def chatbot_api(request):
@@ -1739,10 +1941,12 @@ def chatbot_api(request):
             if not message:
                 return JsonResponse({"reply": "Please send a message."}, status=400)
             reply = ask_gemini(message)
+            print_success(f"Chatbot response sent for message: {message[:50]}...")
             return JsonResponse({"reply": reply})
         except json.JSONDecodeError:
             return JsonResponse({"reply": "Invalid request format."}, status=400)
         except Exception as e:
+            print_error(f"Chatbot error: {str(e)}")
             return JsonResponse({"reply": "Server error. Please try again."}, status=500)
     return JsonResponse({"reply": "Only POST requests are allowed."}, status=405)
 
@@ -1978,10 +2182,12 @@ def edit_user(request, user_type, user_id):
             user.confirm_password = user.password
         user.save()
 
+        print_success(f"User updated: {username}")
         return JsonResponse({'success': True, 'message': 'User updated successfully'})
     except model.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
     except Exception as e:
+        print_error(f"Error updating user: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -2004,6 +2210,7 @@ def delete_user(request, user_type, user_id):
         user = model.objects.get(id=user_id)
         name = user.fullname
         user.delete()
+        print_success(f"User deleted: {name}")
         logger.info(f"User {name} deleted")
         return JsonResponse({'success': True, 'message': f'User {name} deleted successfully'})
     except model.DoesNotExist:
@@ -2030,10 +2237,12 @@ def reset_password(request, user_type, user_id):
         user.confirm_password = user.password
         user.save()
         send_password_reset_email(user.email, temp_password, user_type)
+        print_success(f"Password reset for user: {user.username}")
         return JsonResponse({'success': True, 'message': f'Temporary password sent to {user.email}'})
     except model.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
     except Exception as e:
+        print_error(f"Error resetting password: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -2055,6 +2264,7 @@ def export_users(request):
     for cashier in Cashier.objects.all():
         writer.writerow(['Cashier', cashier.fullname, cashier.email, cashier.username])
 
+    print_success(f"Users exported to CSV")
     return response
 
 
@@ -2083,6 +2293,13 @@ def bulk_reset_passwords(request):
                 except Exception as e:
                     results.append(f"ID {u['id']} failed: {str(e)}")
 
+        print_success(f"Bulk password reset processed for {len(results)} users")
         return JsonResponse({'success': True, 'message': f'Processed {len(results)} users.'})
     except Exception as e:
+        print_error(f"Error in bulk password reset: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+print_header("RETAILX STARTUP COMPLETE")
+print_success("All modules loaded successfully")
+print_info("Ready to accept connections")
+print(f"{Colors.CYAN}══════════════════════════════════════════════════════════════{Colors.END}\n")
