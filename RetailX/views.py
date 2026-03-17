@@ -1,5 +1,6 @@
 import os
 import json
+import pickle
 import random
 import smtplib
 import csv
@@ -275,6 +276,179 @@ def predict_sales_api(request):
         'date': request.GET.get('date')
     })
 
+# ============================================
+# MODULE 2: AGE SEGMENTATION FROM AGE INPUT (DECISION TREE MODEL)
+# ============================================
+# This module uses a Decision Tree model trained on:
+# - age
+# It predicts age group and provides product/brand preferences.
+# 
+# Model files:
+# - age_group_model.pkl          : Trained Decision Tree
+# - age_group_encoder.pkl        : Label encoder for age groups
+# - product_preferences.pkl      : DataFrame of top products per age group
+# - brand_preferences.pkl        : DataFrame of top brands per age group
+# ============================================
+
+# Path to Decision Tree model files
+DT_MODEL_PATH = os.path.join(settings.BASE_DIR, 'RetailX', 'trained_models', 'age_segmentation')
+DT_MODEL_FILE = os.path.join(DT_MODEL_PATH, 'age_group_model.pkl')
+DT_ENCODER_FILE = os.path.join(DT_MODEL_PATH, 'age_group_encoder.pkl')
+DT_PRODUCT_PREFS_FILE = os.path.join(DT_MODEL_PATH, 'product_preferences.pkl')
+DT_BRAND_PREFS_FILE = os.path.join(DT_MODEL_PATH, 'brand_preferences.pkl')
+
+# Global variables to cache loaded data for Module 2
+_dt_model = None
+_dt_encoder = None
+_dt_product_prefs = None
+_dt_brand_prefs = None
+
+print(f"=== MODULE 2: Decision Tree Age Segmentation Model ===")
+print(f"Model path: {DT_MODEL_PATH}")
+print(f"Model file exists: {os.path.exists(DT_MODEL_FILE)}")
+print(f"Encoder file exists: {os.path.exists(DT_ENCODER_FILE)}")
+print(f"Product prefs exists: {os.path.exists(DT_PRODUCT_PREFS_FILE)}")
+print(f"Brand prefs exists: {os.path.exists(DT_BRAND_PREFS_FILE)}")
+print(f"======================================================")
+
+
+def load_dt_models():
+    """
+    Load all Decision Tree models and preference data
+    
+    Returns:
+        bool: True if loaded successfully, False otherwise
+    """
+    global _dt_model, _dt_encoder, _dt_product_prefs, _dt_brand_prefs
+    
+    try:
+        # Load model and encoder
+        if os.path.exists(DT_MODEL_FILE):
+            with open(DT_MODEL_FILE, 'rb') as f:
+                _dt_model = pickle.load(f)
+            print(f"✅ Loaded Decision Tree model from {DT_MODEL_FILE}")
+        
+        if os.path.exists(DT_ENCODER_FILE):
+            with open(DT_ENCODER_FILE, 'rb') as f:
+                _dt_encoder = pickle.load(f)
+            print(f"✅ Loaded age encoder from {DT_ENCODER_FILE}")
+        
+        # Load preference DataFrames
+        if os.path.exists(DT_PRODUCT_PREFS_FILE):
+            with open(DT_PRODUCT_PREFS_FILE, 'rb') as f:
+                _dt_product_prefs = pickle.load(f)
+            print(f"✅ Loaded product preferences from {DT_PRODUCT_PREFS_FILE}")
+        
+        if os.path.exists(DT_BRAND_PREFS_FILE):
+            with open(DT_BRAND_PREFS_FILE, 'rb') as f:
+                _dt_brand_prefs = pickle.load(f)
+            print(f"✅ Loaded brand preferences from {DT_BRAND_PREFS_FILE}")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Error loading Decision Tree models: {e}")
+        traceback.print_exc()
+        return False
+
+# Load Module 2 models on startup
+load_dt_models()
+
+
+@csrf_exempt
+@require_POST
+def predict_age_segmentation_api(request):
+    """
+    MODULE 2: Age segmentation from age input (Decision Tree model)
+    
+    Expected JSON:
+        {"age": 24}
+    
+    Returns:
+        JsonResponse: {
+            "age_group": "18-25",
+            "products": {"Electronics": "Headphones", ...},
+            "brands": {"Electronics": "Sony", ...}
+        }
+    """
+    try:
+        print("=" * 50)
+        print("📊 MODULE 2: Age Segmentation API called")
+        
+        # Check if models are loaded
+        if _dt_model is None or _dt_encoder is None:
+            if not load_dt_models():
+                return JsonResponse({
+                    'error': 'Decision Tree models not loaded properly. Check server logs.'
+                }, status=500)
+        
+        # Parse request
+        data = json.loads(request.body)
+        age = data.get('age')
+        
+        print(f"📥 Received age: {age}")
+        
+        # Validate input
+        if age is None:
+            return JsonResponse({'error': 'Age is required'}, status=400)
+        
+        try:
+            age = int(age)
+            if age < 18 or age > 100:
+                return JsonResponse({'error': 'Age must be between 18 and 100'}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'Age must be a valid number'}, status=400)
+        
+        # Predict age group
+        age_pred_encoded = _dt_model.predict([[age]])[0]
+        age_group = _dt_encoder.inverse_transform([age_pred_encoded])[0]
+        print(f"🎯 Predicted age group: {age_group}")
+        
+        # Get product preferences
+        products_dict = {}
+        if _dt_product_prefs is not None:
+            age_products = _dt_product_prefs[_dt_product_prefs['age_group'] == age_group]
+            for _, row in age_products.iterrows():
+                products_dict[row['product_category']] = row['product_name']
+        
+        # Get brand preferences
+        brands_dict = {}
+        if _dt_brand_prefs is not None:
+            age_brands = _dt_brand_prefs[_dt_brand_prefs['age_group'] == age_group]
+            for _, row in age_brands.iterrows():
+                brands_dict[row['product_category']] = row['brand']
+        
+        print(f"📦 Found {len(products_dict)} product categories")
+        print(f"🏷️ Found {len(brands_dict)} brand categories")
+        
+        return JsonResponse({
+            'age_group': age_group,
+            'products': products_dict,
+            'brands': brands_dict
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Exception as e:
+        print("❌ Error in MODULE 2:")
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_age_segmentation_info(request):
+    """
+    MODULE 2 helper: Returns metadata about the age segmentation model
+    
+    Returns:
+        JsonResponse: Model information including type, age groups, and status
+    """
+    return JsonResponse({
+        'model_type': 'DecisionTreeClassifier',
+        'age_groups': list(_dt_encoder.classes_) if _dt_encoder else [],
+        'accuracy': '100%',
+        'description': 'Predicts age group from age and shows product/brand preferences',
+        'status': 'loaded' if _dt_model is not None else 'not loaded'
+    })
 
 # ================== FESTIVAL SALES PREDICTION (old models) ==================
 BASE_DIR = settings.BASE_DIR

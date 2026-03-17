@@ -103,4 +103,7 @@ urlpatterns = [
     path('cashier_logout/', views.cashier_logout, name='cashier_logout'),
 
     path('supplier_logout/', views.supplier_logout, name='supplier_logout'),
+    # ================== MODULE 2: Decision Tree Age Segmentation ==================
+    path('api/predict-age-segmentation/', views.predict_age_segmentation_api, name='predict_age_segmentation'),
+    path('api/age-segmentation-info/', views.get_age_segmentation_info, name='age_segmentation_info'),
 ]

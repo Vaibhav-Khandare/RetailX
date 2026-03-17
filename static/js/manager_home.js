@@ -2373,5 +2373,155 @@ window.testPredictionAPI = function() {
             console.error('❌ API Test Failed:', xhr);
             alert('API Test Failed. Check console for details.');
         }
+
+        
     });
 };
+// ============================================
+// TAB MANAGEMENT FOR ANALYSIS PAGE
+// ============================================
+function initAnalysisTabs() {
+    $('#tab1Btn').on('click', function() {
+        $(this).addClass('active');
+        $('#tab2Btn').removeClass('active');
+        $('#tab1Content').show();
+        $('#tab2Content').hide();
+        
+        // Initialize first module when tab is shown
+        setTimeout(() => {
+            if (typeof RetailX.AgePrediction !== 'undefined') {
+                RetailX.AgePrediction.init();
+            }
+        }, 100);
+    });
+
+    $('#tab2Btn').on('click', function() {
+        $(this).addClass('active');
+        $('#tab1Btn').removeClass('active');
+        $('#tab2Content').show();
+        $('#tab1Content').hide();
+        
+        // Initialize second module when tab is shown
+        setTimeout(() => {
+            if (typeof RetailX.AgeSegmentation !== 'undefined') {
+                RetailX.AgeSegmentation.init();
+            }
+        }, 100);
+    });
+}
+
+// ============================================
+// MODULE 2: Age Segmentation (Decision Tree)
+// ============================================
+RetailX.AgeSegmentation = {
+    init: function() {
+        console.log('📊 Initializing Age Segmentation Module (Decision Tree)...');
+        this.bindEvents();
+    },
+
+    bindEvents: function() {
+        $('#ageSegmentationForm').off('submit').on('submit', (e) => {
+            e.preventDefault();
+            this.analyzeAge();
+        });
+
+        $('#resetAnalysisBtn').off('click').on('click', () => {
+            this.resetForm();
+        });
+
+        $('#customerAge').off('keypress').on('keypress', (e) => {
+            if (e.which === 13) {
+                e.preventDefault();
+                $('#analyzeBtn').click();
+            }
+        });
+    },
+
+    analyzeAge: function() {
+        const age = $('#customerAge').val().trim();
+        
+        if (!age) {
+            RetailX.showToast('Please enter customer age', 'warning');
+            $('#customerAge').focus();
+            return;
+        }
+
+        const ageNum = parseInt(age);
+        if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+            RetailX.showToast('Age must be between 18 and 100', 'warning');
+            $('#customerAge').focus();
+            return;
+        }
+
+        const btn = $('#analyzeBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Analyzing...');
+        $('#analysisResults').hide();
+
+        $.ajax({
+            url: '/api/predict-age-segmentation/',
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            contentType: 'application/json',
+            data: JSON.stringify({ age: ageNum }),
+            success: (response) => {
+                $('#segmentationAgeGroupResult').text(response.age_group);
+                this.displayPreferences('products', response.products);
+                this.displayPreferences('brands', response.brands);
+                $('#analysisResults').fadeIn(500);
+                RetailX.showToast(`Age group: ${response.age_group}`, 'success');
+            },
+            error: (xhr) => {
+                const msg = xhr.responseJSON?.error || 'Analysis failed';
+                RetailX.showToast(msg, 'error');
+            },
+            complete: () => {
+                btn.prop('disabled', false).html('<i class="fas fa-search"></i> Analyze Customer');
+            }
+        });
+    },
+
+    displayPreferences: function(type, data) {
+        const container = type === 'products' ? $('#productsContainer') : $('#brandsContainer');
+        const icon = type === 'products' ? 'fa-shopping-bag' : 'fa-tag';
+        
+        container.empty();
+        
+        if (!data || Object.keys(data).length === 0) {
+            container.append('<div style="text-align: center; padding: 15px; color: #94a3b8;">No data available</div>');
+            return;
+        }
+
+        Object.keys(data).sort().forEach(category => {
+            container.append(`
+                <div class="category-item">
+                    <span class="category-name"><i class="fas ${icon}" style="margin-right: 6px; color: #4361ee;"></i>${category}</span>
+                    <span class="category-value">${data[category]}</span>
+                </div>
+            `);
+        });
+    },
+
+    resetForm: function() {
+        $('#customerAge').val('');
+        $('#analysisResults').fadeOut(300);
+        $('#segmentationAgeGroupResult').text('-');
+        $('#productsContainer, #brandsContainer').empty();
+    }
+};
+
+// Initialize tabs when document is ready
+$(document).ready(function() {
+    initAnalysisTabs();
+});
+
+// Initialize modules when analysis page is opened via navigation
+$(document).on('click', '.menu-item[data-page="analysis"]', function() {
+    setTimeout(() => {
+        if (typeof RetailX.AgePrediction !== 'undefined') {
+            RetailX.AgePrediction.init();
+        }
+        if (typeof RetailX.AgeSegmentation !== 'undefined') {
+            RetailX.AgeSegmentation.init();
+        }
+    }, 200);
+});
