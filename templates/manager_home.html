@@ -246,13 +246,13 @@
                 </div>
             </div>
 
-            <!-- ============================================
-     SUPPLIER CONNECTIVITY PAGE
+<!-- ============================================
+     SUPPLIER CONNECTIVITY PAGE - WHATSAPP STYLE WITH EXPANDABLE CHAT
      ============================================ -->
 <div class="page" id="supplier-page">
     <div class="supplier-container">
         
-        <!-- Page Header with Gradient -->
+        <!-- Page Header -->
         <div class="supplier-header">
             <div class="header-title">
                 <h2><i class="fas fa-truck"></i> Supplier Connectivity</h2>
@@ -277,7 +277,7 @@
             </div>
             
             <div class="search-form">
-                <!-- Product Selection with Search -->
+                <!-- Product Selection -->
                 <div class="form-group enhanced">
                     <label>
                         <i class="fas fa-box"></i>
@@ -291,71 +291,31 @@
                                 <option value="Whole Wheat Bread">Whole Wheat Bread (₹45/loaf)</option>
                                 <option value="White Rice">White Rice (₹220/5kg)</option>
                                 <option value="Toor Dal">Toor Dal (₹120/kg)</option>
-                                <option value="Wheat Flour">Wheat Flour (₹45/kg)</option>
-                                <option value="Basmati Rice">Basmati Rice (₹180/kg)</option>
                             </optgroup>
                             <!-- Dairy -->
                             <optgroup label="🥛 Dairy">
                                 <option value="Whole Milk">Whole Milk (₹28/500ml)</option>
                                 <option value="Paneer">Paneer (₹60/200g)</option>
                                 <option value="Curd">Curd (₹30/400g)</option>
-                                <option value="Butter">Butter (₹55/100g)</option>
-                                <option value="Eggs">Eggs (₹6/piece)</option>
                             </optgroup>
                             <!-- Vegetables -->
                             <optgroup label="🥬 Vegetables">
                                 <option value="Tomatoes">Tomatoes (₹40/kg)</option>
                                 <option value="Onions">Onions (₹35/kg)</option>
                                 <option value="Potatoes">Potatoes (₹30/kg)</option>
-                                <option value="Spinach">Spinach (₹25/bunch)</option>
-                                <option value="Capsicum">Capsicum (₹60/kg)</option>
                             </optgroup>
                             <!-- Fruits -->
                             <optgroup label="🍎 Fruits">
                                 <option value="Bananas">Bananas (₹36/dozen)</option>
                                 <option value="Apples">Apples (₹120/kg)</option>
                                 <option value="Oranges">Oranges (₹80/kg)</option>
-                                <option value="Mangoes">Mangoes (₹150/kg)</option>
-                                <option value="Grapes">Grapes (₹90/kg)</option>
-                            </optgroup>
-                            <!-- Pantry -->
-                            <optgroup label="🥫 Pantry">
-                                <option value="Sunflower Oil">Sunflower Oil (₹110/L)</option>
-                                <option value="Sugar">Sugar (₹45/kg)</option>
-                                <option value="Salt">Salt (₹20/kg)</option>
-                                <option value="Spices">Spices (₹100/pack)</option>
-                                <option value="Rice Flour">Rice Flour (₹60/kg)</option>
-                            </optgroup>
-                            <!-- Beverages -->
-                            <optgroup label="🧃 Beverages">
-                                <option value="Tea">Tea (₹250/kg)</option>
-                                <option value="Coffee">Coffee (₹300/kg)</option>
-                                <option value="Packaged Water">Packaged Water (₹20/L)</option>
-                                <option value="Juice">Juice (₹80/L)</option>
-                                <option value="Soda">Soda (₹40/bottle)</option>
-                            </optgroup>
-                            <!-- Snacks -->
-                            <optgroup label="🍪 Snacks">
-                                <option value="Biscuits">Biscuits (₹30/pack)</option>
-                                <option value="Namkeen">Namkeen (₹60/pack)</option>
-                                <option value="Maggi">Maggi (₹14/pack)</option>
-                                <option value="Chips">Chips (₹20/pack)</option>
-                                <option value="Cookies">Cookies (₹80/pack)</option>
-                            </optgroup>
-                            <!-- Household -->
-                            <optgroup label="🧹 Household">
-                                <option value="Soap">Soap (₹35/bar)</option>
-                                <option value="Shampoo">Shampoo (₹10/sachet)</option>
-                                <option value="Toothpaste">Toothpaste (₹50/tube)</option>
-                                <option value="Detergent">Detergent (₹120/kg)</option>
-                                <option value="Dish Soap">Dish Soap (₹60/bottle)</option>
                             </optgroup>
                         </select>
                         <i class="fas fa-chevron-down select-arrow"></i>
                     </div>
                 </div>
 
-                <!-- Location Selection with Autocomplete -->
+                <!-- Location Selection -->
                 <div class="form-group enhanced">
                     <label>
                         <i class="fas fa-map-marker-alt"></i>
@@ -368,9 +328,7 @@
                                placeholder="Enter city name..."
                                autocomplete="off"
                                value="Khamgaon">
-                        <div class="location-suggestions" id="locationSuggestions">
-                            <!-- Location suggestions will be populated here -->
-                        </div>
+                        <div class="location-suggestions" id="locationSuggestions"></div>
                         <i class="fas fa-location-dot input-icon"></i>
                     </div>
                     <div class="quick-locations">
@@ -378,8 +336,6 @@
                         <span class="quick-location-tag" data-location="Akola">Akola</span>
                         <span class="quick-location-tag" data-location="Buldhana">Buldhana</span>
                         <span class="quick-location-tag" data-location="Shegaon">Shegaon</span>
-                        <span class="quick-location-tag" data-location="Amravati">Amravati</span>
-                        <span class="quick-location-tag" data-location="Nagpur">Nagpur</span>
                     </div>
                 </div>
 
@@ -387,92 +343,99 @@
                 <button class="search-button" id="findSuppliersBtn">
                     <i class="fas fa-search"></i>
                     <span>Find Suppliers</span>
-                    <div class="button-glow"></div>
                 </button>
             </div>
         </div>
 
-        <!-- Suppliers Results Section -->
-        <div class="suppliers-results" id="suppliersResults" style="display: none;">
-            <div class="results-header">
-                <div class="results-title">
-                    <i class="fas fa-truck-fast"></i>
-                    <h3>Available Suppliers <span id="supplierCount">0</span></h3>
+        <!-- Split View: Suppliers List and Chat -->
+        <div class="supplier-split-view">
+            
+            <!-- LEFT SIDE: Suppliers List (minimizes when chat opens) -->
+            <div class="suppliers-list-section" id="suppliersListSection">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-truck-fast"></i>
+                        <h3>Available Suppliers <span id="supplierCount">0</span></h3>
+                    </div>
+                    <div class="results-filters">
+                        <button class="filter-chip active" data-filter="all">All</button>
+                        <button class="filter-chip" data-filter="nearby">Nearby</button>
+                        <button class="filter-chip" data-filter="verified">Verified</button>
+                    </div>
                 </div>
-                <div class="results-filters">
-                    <button class="filter-chip active" data-filter="all">All</button>
-                    <button class="filter-chip" data-filter="nearby">Nearby</button>
-                    <button class="filter-chip" data-filter="verified">Verified</button>
+
+                <!-- Suppliers Grid -->
+                <div class="suppliers-grid" id="suppliersGrid">
+                    <!-- Supplier cards will be dynamically inserted here -->
+                </div>
+
+                <!-- No Results State -->
+                <div class="no-results-state" id="noResultsState" style="display: none;">
+                    <i class="fas fa-store-slash"></i>
+                    <h3>No Suppliers Found</h3>
+                    <p>Try selecting a different product or location</p>
+                    <button class="btn-primary btn-sm" id="resetSearchBtn">
+                        <i class="fas fa-undo"></i> Reset Search
+                    </button>
                 </div>
             </div>
 
-            <!-- Supplier Cards Grid -->
-            <div class="suppliers-grid" id="suppliersGrid">
-                <!-- Supplier cards will be dynamically inserted here -->
-            </div>
-        </div>
-
-        <!-- No Results State -->
-        <div class="no-results-state" id="noResultsState" style="display: none;">
-            <i class="fas fa-store-slash"></i>
-            <h3>No Suppliers Found</h3>
-            <p>Try selecting a different product or location</p>
-            <button class="btn-primary btn-sm" id="resetSearchBtn">
-                <i class="fas fa-undo"></i> Reset Search
-            </button>
-        </div>
-
-        <!-- Chat Modal -->
-        <div class="chat-modal" id="chatModal">
-            <div class="chat-modal-content">
+            <!-- RIGHT SIDE: WhatsApp Style Chat (expands when opened) -->
+            <div class="chat-section" id="chatSection" style="display: none;">
                 <!-- Chat Header -->
-                <div class="chat-header">
-                    <div class="supplier-info">
-                        <div class="supplier-avatar" id="chatSupplierAvatar">
-                            <img src="https://ui-avatars.com/api/?name=Supplier&background=4361ee&color=fff&size=40" alt="Supplier">
+                <div class="chat-header-whatsapp">
+                    <div class="chat-supplier-info">
+                        <button class="back-to-suppliers" id="backToSuppliersBtn" title="Back to suppliers">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div class="chat-supplier-avatar">
+                            <img src="https://ui-avatars.com/api/?name=SE&background=25D366&color=fff&size=44" alt="Supplier" id="chatAvatar">
                         </div>
-                        <div class="supplier-details">
-                            <h4 id="chatSupplierName">Supplier Name</h4>
-                            <p id="chatSupplierLocation"><i class="fas fa-map-marker-alt"></i> Khamgaon</p>
+                        <div class="chat-supplier-details">
+                            <h3 id="chatSupplierName">Shree Enterprises</h3>
+                            <div class="chat-supplier-status">
+                                <span class="status-dot"></span>
+                                <span id="chatSupplierLocation">Khamgaon</span>
+                                <span class="status-text">Online</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="chat-actions">
-                        <span class="online-badge"><i class="fas fa-circle"></i> Online</span>
-                        <button class="close-chat" id="closeChatBtn"><i class="fas fa-times"></i></button>
+                    <div class="chat-header-actions">
+                        <button class="chat-action-btn" id="minimizeChatBtn" title="Minimize chat">
+                            <i class="fas fa-minus"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Chat Messages -->
-                <div class="chat-messages" id="chatMessages">
+                <!-- Chat Messages Area - WhatsApp Style -->
+                <div class="chat-messages-whatsapp" id="chatMessages">
                     <!-- Messages will be dynamically inserted here -->
-                    <div class="message welcome-message">
-                        <div class="message-avatar">
-                            <img src="https://ui-avatars.com/api/?name=System&background=10b981&color=fff&size=30" alt="System">
-                        </div>
-                        <div class="message-content">
-                            <p>👋 Hello! I'm your supplier assistant. How can I help you with your order today?</p>
-                            <span class="message-time">Just now</span>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Chat Input -->
-                <div class="chat-input-area">
-                    <div class="input-wrapper">
+                <!-- Chat Input Area - WhatsApp Style -->
+                <div class="chat-input-whatsapp">
+                    <div class="input-wrapper-whatsapp">
+                        <button class="emoji-btn">
+                            <i class="far fa-smile"></i>
+                        </button>
                         <input type="text" 
                                id="chatInput" 
                                placeholder="Type your message..." 
                                autocomplete="off">
-                        <button class="attach-btn"><i class="fas fa-paperclip"></i></button>
-                        <button class="send-btn" id="sendMessageBtn">
+                        <button class="attach-btn-whatsapp">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button class="send-btn-whatsapp" id="sendMessageBtn">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
-                    <div class="chat-quick-replies">
-                        <span class="quick-reply">Price quote</span>
-                        <span class="quick-reply">Delivery time</span>
-                        <span class="quick-reply">Minimum order</span>
-                        <span class="quick-reply">Sample available?</span>
+                    
+                    <!-- Quick Replies - WhatsApp Style -->
+                    <div class="quick-replies-whatsapp">
+                        <span class="quick-reply-chip">Price quote</span>
+                        <span class="quick-reply-chip">Delivery time</span>
+                        <span class="quick-reply-chip">Minimum order</span>
+                        <span class="quick-reply-chip">Sample available?</span>
                     </div>
                 </div>
             </div>
