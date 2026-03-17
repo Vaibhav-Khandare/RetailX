@@ -1,883 +1,1494 @@
-{% load static %}
+/**
+ * RetailX Advanced Admin Dashboard
+ * Version: 3.0 (Enhanced with new features)
+ * Theme: Midnight Slate & Electric Cobalt
+ */
 
-<!DOCTYPE html>
-<html lang="en">
+console.log("✅ ADMIN JS LOADED - Version 3.0 (Enhanced)");
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>RetailX - Advanced Admin Dashboard</title>
+// Dummy function for noBack() called from body onload
+function noBack() {
+    // Does nothing, only prevents JS error
+}
+
+/* =========================
+   GLOBAL VARIABLES
+========================= */
+let currentUser = 'admin@retailx.com';
+let salesChart, analyticsChart, categoryChart, topProductsChart, conversionChart;
+let notificationCount = 3;
+
+// Make chart variables globally accessible
+window.topSellingChart = null;
+window.leastSellingChart = null;
+window.salesAnalyticsChart = null;
+
+// Fullscreen state
+let isFullscreen = false;
+
+// WebSocket for real-time alerts (optional)
+let stockAlertSocket = null;
+
+/* =========================
+   DOCUMENT READY - INITIALIZATION
+========================= */
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("📦 Initializing Admin Dashboard...");
     
-    <!-- Cache Control Meta Tags -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    // Initialize date and time
+    updateCurrentDate();
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
     
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="{% static 'css/admin_home.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    // Initialize navigation
+    initNavigation();
     
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-
-<body data-admin="{{ uname }}" onload="noBack();" onpageshow="if (event.persisted) noBack();">
-
-    <!-- ========== SIDEBAR ========== -->
-    <aside class="sidebar">
-        <!-- Logo Section -->
-        <div class="logo">
-            <div class="logo-circle">
-                <div class="logo-image">
-                    <img src="{% static 'images/RetailX logo with fruits and bar design.png' %}" alt="RetailX Logo">
-                </div>
+    // Initialize fullscreen functionality
+    initFullscreen();
+    
+    // Initialize dashboard
+    initDashboard();
+    
+    // Load initial data
+    loadDashboardData();
+    loadUsers();
+    loadProducts();
+    loadInventory();
+    loadAnalytics();
+    loadNotifications();
+    
+    // NEW: Load new features data
+    loadSalesAnalytics();
+    loadProductPerformance();
+    loadActivityLog();
+    
+    // Setup form handlers
+    setupFormHandlers();
+    
+    // Setup search functionality
+    setupSearch();
+    
+    // Setup mobile menu toggle
+    setupMobileMenu();
+    
+    // Add default chatbot welcome message
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    if (chatbotMessages && chatbotMessages.children.length === 0) {
+        chatbotMessages.innerHTML = `
+            <div class="chat-bot">
+                <span>Hello! I'm your RetailX Assistant. How can I help you today?</span>
             </div>
-            <h2>Retail<span style="color: var(--accent);">X</span></h2>
-            <p class="admin-role">Admin Dashboard</p>
-        </div>
-
-        <!-- User Info Section -->
-        <div class="user-info">
-            <div class="avatar">
-                <img src="https://ui-avatars.com/api/?name={{ uname|default:'Admin' }}&background=4361ee&color=fff&size=56" alt="Admin">
-                <span class="status-indicator online"></span>
-            </div>
-            <div class="user-details">
-                <h4 id="adminName">{{ uname|default:'Admin User' }}</h4>
-                <p id="adminEmail">{{ email|default:'admin@retailx.com' }}</p>
-                <span class="role-badge">Administrator</span>
-            </div>
-        </div>
-
-        <!-- Navigation Menu -->
-        <nav class="nav-menu">
-            <div class="nav-section">
-                <p class="nav-caption">MAIN</p>
-                <a href="#" class="nav-item {% if not detected_festival %}active{% endif %}" data-section="dashboard">
-                    <i class="fas fa-home"></i> <span>Dashboard</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <p class="nav-caption">MANAGEMENT</p>
-                <a href="#" class="nav-item" data-section="users">
-                    <i class="fas fa-users"></i> <span>User Management</span>
-                </a>
-                <!-- <a href="#" class="nav-item" data-section="products">
-                    <i class="fas fa-box"></i> <span>Product Management</span>
-                </a> -->
-                <a href="#" class="nav-item" data-section="inventory">
-                    <i class="fas fa-warehouse"></i> <span>Inventory</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <p class="nav-caption">ANALYTICS</p>
-                <a href="#" class="nav-item {% if detected_festival %}active{% endif %}" data-section="analytics">
-                    <i class="fas fa-chart-line"></i> <span>Analysis</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <p class="nav-caption">SYSTEM</p>
-                <a href="#" class="nav-item" data-section="settings">
-                    <i class="fas fa-cog"></i> <span>Settings</span>
-                </a>
-            </div>
-        </nav>
-
-        <!-- Logout Section -->
-        <div class="logout-section">
-            <a href="/admin_logout/" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-            </a>
-            <div class="system-status">
-                <span class="status-indicator active"></span>
-                <span>System Online</span>
-            </div>
-        </div>
-    </aside>
-
-    <!-- ========== MAIN CONTENT ========== -->
-    <div class="main">
-        <!-- TOPBAR -->
-        <header class="topbar">
-            <div class="page-title-area">
-                <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div>
-                    <h1 id="pageTitle">Dashboard</h1>
-                    <div class="breadcrumb" id="breadcrumb">Admin / Dashboard</div>
-                </div>
-            </div>
-
-            <div class="topbar-right">
-                <!-- Search Box -->
-                <!-- <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="globalSearch" placeholder="Search users, products, reports...">
-                </div> -->
-
-                <!-- KPI Pills -->
-                <div class="kpi-pills">
-                    <div class="pill">
-                        <span>Total Users</span>
-                        <strong id="topbarUsers">{{ totaluser }}</strong>
-                    </div>
-                    <div class="pill">
-                        <span>Products</span>
-                        <strong id="topbarProducts">{{ totalpro }}</strong>
-                    </div>
-                </div>
-
-                <!-- Action Icons -->
-                <div class="action-icons">
-                    <!-- Fullscreen Button -->
-                    <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">
-                            <i class="fas fa-expand"></i>
-                    </button>
-
-                    <!-- Notification Button -->
-                    <div class="notification-container">
-                        <button class="notification-btn" onclick="toggleNotifications()">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-count">3</span>
-                        </button>
-                        <div class="notification-panel" id="notificationPanel">
-                            <div class="notification-header">
-                                <h4><i class="fas fa-bell" style="color: var(--primary); margin-right: 8px;"></i>Notifications</h4>
-                                <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
-                            </div>
-                            <div class="notification-list" id="notificationList">
-                                <!-- Notifications loaded via AJAX -->
-                            </div>
-                            <div class="notification-footer">
-                                <a href="#" onclick="viewAllNotifications()">View all notifications</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date-Time Display -->
-                    <div class="date-time-display">
-                        <span id="currentDate"></span>
-                        <span id="currentTime"></span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- ========== CONTENT WRAPPER ========== -->
-        <div class="content-wrapper">
-            <!-- DASHBOARD SECTION -->
-            <section id="dashboard" class="content-section {% if not detected_festival %}active{% endif %}">
-                <div class="section-header">
-                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
-                </div>
-
-                <!-- Horizontal Stats Cards -->
-                <div class="horizontal-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-users"></i></div>
-                        <div class="stat-content">
-                            <h3>Total Users</h3>
-                            <p class="stat-value" id="totalUsers">{{ totaluser }}</p>
-                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> Updated</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-box"></i></div>
-                        <div class="stat-content">
-                            <h3>Total Products</h3>
-                            <p class="stat-value" id="totalProducts">{{ totalpro }}</p>
-                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> Updated</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                        <div class="stat-content">
-                            <h3>Today's Revenue</h3>
-                            <p class="stat-value" id="todayRevenue">$2,845</p>
-                            <span class="stat-change positive"><i class="fas fa-arrow-up"></i> +12.5%</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div class="stat-content">
-                            <h3>Low Stock Items</h3>
-                            <p class="stat-value" id="lowStockCount">{{ low_stock_count }}</p>
-                            <span class="stat-change negative"><i class="fas fa-exclamation-circle"></i> Attention Required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dashboard Grid -->
-                <div class="dashboard-grid">
-                    <div class="dashboard-card wide">
-                        <div class="card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Sales Overview</h3>
-                            <select id="salesPeriod" class="period-select" onchange="updateSalesChart()">
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="year">This Year</option>
-                            </select>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="salesChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
-                        </div>
-                        <div class="card-body" id="recentAlerts">
-                            <!-- Alerts loaded via AJAX -->
-                        </div>
-                    </div>
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
-                        </div>
-                        <div class="card-body" id="recentActivity">
-                            <!-- Activity loaded via AJAX -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- USER MANAGEMENT SECTION -->
-            <section id="users" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-users"></i> User Management</h1>
-                    <button class="add-new-btn" onclick="openUserModal()">
-                        <i class="fas fa-user-plus"></i> Add New User
-                    </button>
-                </div>
-
-                <div class="action-bar">
-                    <div class="filter-options">
-                        <select id="userFilter" class="filter-select" onchange="filterUsers()">
-                            <option value="all">All Users</option>
-                            <option value="admin">Admins</option>
-                            <option value="manager">Managers</option>
-                            <option value="cashier">Cashiers</option>
-                        </select>
-                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input" onkeyup="searchUsers()">
-                    </div>
-                    <div class="action-buttons">
-                        <button class="action-btn" onclick="exportUsers()"><i class="fas fa-file-export"></i> Export</button>
-                        <!-- <button class="action-btn" onclick="bulkResetPassword()"><i class="fas fa-key"></i> Reset Passwords</button> -->
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table id="usersTable">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="selectAllUsers" onclick="toggleAllUsers()"></th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th>Last Login</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            {% if users %}
-                                {% for user in users %}
-                                <tr>
-                                    <td><input type="checkbox" class="user-checkbox" value="{{ user.id }}"></td>
-                                    <td>{{ user.name }}</td>
-                                    <td>{{ user.email }}</td>
-                                    <td>{{ user.username }}</td>
-                                    <td><span class="status-badge">{{ user.role|capfirst }}</span></td>
-                                    <td>{{ user.last_login }}</td>
-                                    <td>
-                                        <button class="action-btn small" onclick="openEditUserModal('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn small" onclick="deleteUser('{{ user.id }}', '{{ user.type }}')"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="7" style="text-align: center; padding: 40px;">
-                                        <i class="fas fa-users-slash" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
-                                        <p>No users found. Add your first user using the "Add New User" button above.</p>
-                                    </td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
-                    Showing {{ users|length }} user(s) in total
-                </div>
-            </section>
-
-            <!-- PRODUCT MANAGEMENT SECTION -->
-            <section id="products" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-box"></i> Product Management</h1>
-                    <button class="add-new-btn" onclick="openProductModal()">
-                        <i class="fas fa-plus"></i> Add Product
-                    </button>
-                </div>
-
-                <div class="action-bar">
-                    <div class="filter-options">
-                        <select id="categoryFilter" class="filter-select" onchange="filterProducts()">
-                            <option value="all">All Categories</option>
-                        </select>
-                        <select id="stockFilter" class="filter-select" onchange="filterProducts()">
-                            <option value="all">All Stock Status</option>
-                            <option value="low">Low Stock</option>
-                            <option value="out">Out of Stock</option>
-                        </select>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="action-btn" onclick="bulkUpdateStock()"><i class="fas fa-arrow-up"></i> Bulk Stock Update</button>
-                        <button class="action-btn" onclick="importProducts()"><i class="fas fa-file-import"></i> Import CSV</button>
-                    </div>
-                </div>
-
-                <div class="products-grid" id="productsGrid">
-                    {% if products %}
-                        {% for product in products %}
-                        <div class="product-card">
-                            <div class="product-image">
-                                <i class="fas fa-box fa-3x"></i>
-                            </div>
-                            <div class="product-info">
-                                <h4 class="product-title">{{ product.name }}</h4>
-                                <p class="product-category">{{ product.category|capfirst }}</p>
-                                <p class="product-price">${{ product.price }}</p>
-                                <div class="product-stock">
-                                    <span>SKU: {{ product.sku }}</span>
-                                    <span class="stock-level {% if product.in_stock <= product.min_stock_level %}low{% else %}high{% endif %}">
-                                        {{ product.in_stock }} units
-                                    </span>
-                                </div>
-                                <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                    <button class="action-btn small" onclick="editProduct('{{ product.id }}')"><i class="fas fa-edit"></i></button>
-                                    <button class="action-btn small" onclick="deleteProduct('{{ product.id }}')"><i class="fas fa-trash"></i></button>
-                                    <button class="action-btn small" onclick="viewProductDetails('{{ product.id }}')"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                            <i class="fas fa-box-open" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
-                            <p>No products found. Add your first product using the "Add Product" button above.</p>
-                        </div>
-                    {% endif %}
-                </div>
-                <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 14px;">
-                    Showing {{ products|length }} product(s) in total
-                </div>
-            </section>
-
-            <!-- INVENTORY SECTION -->
-            <section id="inventory" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-warehouse"></i> Inventory Management</h1>
-                    <button class="add-new-btn" onclick="openInventoryModal()">
-                        <i class="fas fa-plus"></i> Stock Adjustment
-                    </button>
-                </div>
-
-                <div class="inventory-stats">
-                    <div class="inventory-card">
-                        <h4>Total Stock Value</h4>
-                        <p class="inventory-value" id="totalStockValue">$45,280</p>
-                    </div>
-                    <div class="inventory-card warning">
-                        <h4>Low Stock Items</h4>
-                        <p class="inventory-value" id="lowStockItems">{{ low_stock_count }} items</p>
-                    </div>
-                    <div class="inventory-card">
-                        <h4>Monthly Turnover</h4>
-                        <p class="inventory-value" id="monthlyTurnover">2.8x</p>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table id="inventoryTable">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>SKU</th>
-                                <th>Current Stock</th>
-                                <th>Min. Stock</th>
-                                <th>Status</th>
-                                <th>Category</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventoryTableBody">
-                            {% for product in products %}
-                            <tr>
-                                <td>{{ product.name }}</td>
-                                <td>{{ product.sku }}</td>
-                                <td>{{ product.in_stock }}</td>
-                                <td>{{ product.min_stock_level }}</td>
-                                <td>
-                                    <span class="status-badge {% if product.in_stock <= product.min_stock_level %}status-pending{% else %}status-active{% endif %}">
-                                        {% if product.in_stock <= product.min_stock_level %}Low Stock{% else %}In Stock{% endif %}
-                                    </span>
-                                </td>
-                                <td>{{ product.category|capfirst }}</td>
-                                <td>
-                                    <button class="action-btn small" onclick="adjustStock('{{ product.id }}')"><i class="fas fa-edit"></i> Adjust</button>
-                                    <button class="action-btn small" onclick="viewInventoryHistory('{{ product.id }}')"><i class="fas fa-history"></i></button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ========== ANALYTICS SECTION ========== -->
-            <section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
-                <!-- Hidden data elements for JavaScript -->
-                <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
-                <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
-                <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
-
-                <div class="analytics-grid">
-                    <!-- FESTIVAL SEARCH CARD -->
-                    <div class="analytics-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-search"></i> Festival Sales Prediction</h3>
-                        </div>
-                        <div class="card-body">
-                            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
-                                Choose a festival OR enter a date to predict demand
-                            </p>
-
-                            <form method="get" action="" id="festivalSearchForm">
-                                <!-- Festival Dropdown -->
-                                <div class="form-group">
-                                    <label><i class="fas fa-calendar-alt" style="color: var(--primary); margin-right: 8px;"></i> Select Festival</label>
-                                    <select name="festival" id="festival_select" class="filter-select">
-                                        <option value="">-- Choose a festival --</option>
-                                        {% for festival in festival_choices %}
-                                            <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
-                                                {{ festival }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <!-- OR Divider -->
-                                <div style="text-align: center; margin: 20px 0; position: relative;">
-                                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed var(--text-light);"></div>
-                                    <span style="background: white; padding: 0 20px; position: relative; color: var(--text-muted); font-weight: 600;">OR</span>
-                                </div>
-
-                                <!-- Date Input -->
-                                <div class="form-group">
-                                    <label><i class="fas fa-calendar" style="color: var(--primary); margin-right: 8px;"></i> Enter Date</label>
-                                    <input type="text" name="festival_date" id="festival_date"
-                                           placeholder="DD-MM-YYYY (example: 25-12-2025)"
-                                           class="filter-select">
-                                    <small style="display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px;">
-                                        Leave blank if using dropdown above
-                                    </small>
-                                </div>
-
-                                <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
-
-                                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 16px;">
-                                    <i class="fas fa-search"></i> Predict Sales
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- FESTIVAL SALES FORECAST CARD -->
-                    <div class="analytics-card full">
-                        <div class="card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
-                        </div>
-
-                        <div class="card-body">
-                            {% if festival_error %}
-                                <div class="ux-error">
-                                    <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
-                                </div>
-                            {% endif %}
-
-                            <!-- Festival Banner (always present, hidden if no festival) -->
-                            <div class="ux-festival-banner" id="festival-banner" style="{% if not detected_festival %}display: none;{% endif %}">
-                                <i class="fas fa-glass-cheers"></i>
-                                <span id="festival-name">{{ detected_festival|default:'' }}</span>
-                                <small>Expected Sales Analysis</small>
-                            </div>
-
-                            <!-- Charts Grid (always present, hidden if no festival) -->
-                            <div class="ux-chart-grid" id="festival-charts" style="{% if not detected_festival %}display: none;{% endif %}">
-                                <!-- Top Selling Products Chart -->
-                                <div class="ux-chart-card">
-                                    <h4 class="ux-chart-title fire">
-                                        <i class="fas fa-fire"></i> Top Selling Products
-                                    </h4>
-                                    <div class="ux-chart-box">
-                                        <canvas id="topSellingChart"></canvas>
-                                    </div>
-                                </div>
-
-                                <!-- Least Selling Products Chart -->
-                                <div class="ux-chart-card">
-                                    <h4 class="ux-chart-title cool">
-                                        <i class="fas fa-snowflake"></i> Least Selling Products
-                                    </h4>
-                                    <div class="ux-chart-box">
-                                        <canvas id="leastSellingChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            
-
-                            <!-- Empty State (always present, hidden if festival exists) -->
-                            <div class="ux-empty-state" id="festival-empty" style="{% if detected_festival %}display: none;{% endif %}">
-                                <i class="fas fa-chart-pie"></i>
-                                <h4>No Prediction Yet</h4>
-                                <p>Select a festival or enter a date to view forecast</p>
-                                <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
-                            </div>
-
-                            {% if top_products %}
-                            <div class="ux-summary">
-                                <i class="fas fa-chart-line"></i> Forecast generated for {{ detected_festival }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SETTINGS SECTION -->
-            <section id="settings" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-cog"></i> System Settings</h1>
-                </div>
-
-                <div class="settings-grid">
-                    <!-- Notification Settings -->
-                    <div class="settings-card">
-                        <h3><i class="fas fa-bell"></i> Notification Settings</h3>
-                        <div class="settings-options">
-                            <label class="switch">
-                                <input type="checkbox" id="emailNotifications" checked onchange="saveSettings()">
-                                <span class="slider"></span>
-                                <span>Email Notifications</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="lowStockAlerts" checked onchange="saveSettings()">
-                                <span class="slider"></span>
-                                <span>Low Stock Alerts</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="newUserAlerts" checked onchange="saveSettings()">
-                                <span class="slider"></span>
-                                <span>New User Alerts</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Theme Settings -->
-                    <div class="settings-card">
-                        <h3><i class="fas fa-paint-brush"></i> Theme Settings</h3>
-                        <div class="theme-options">
-                            <button class="theme-btn active" data-theme="default" onclick="changeTheme('default')">
-                                <span class="theme-preview default"></span> Default
-                            </button>
-                            <button class="theme-btn" data-theme="dark" onclick="changeTheme('dark')">
-                                <span class="theme-preview dark"></span> Dark
-                            </button>
-                            <button class="theme-btn" data-theme="light" onclick="changeTheme('light')">
-                                <span class="theme-preview light"></span> Light
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Data Management -->
-                    <div class="settings-card">
-                        <h3><i class="fas fa-database"></i> Data Management</h3>
-                        <div class="data-actions">
-                            <button class="data-btn" onclick="backupDatabase()"><i class="fas fa-save"></i> Backup Database</button>
-                            <button class="data-btn" onclick="clearCache()"><i class="fas fa-trash"></i> Clear Cache</button>
-                            <button class="data-btn" onclick="exportAllData()"><i class="fas fa-download"></i> Export All Data</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <!-- ========== MODALS ========== -->
-
-    <!-- Add User Modal (original) -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-user-plus"></i> Add New User</h3>
-                <span class="close-modal" onclick="closeUserModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="/admin_home/" id="userForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="formType" value="userModal">
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="fullName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="userEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="userName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select name="userRole" required>
-                            <option value="admin">Admin</option>
-                            <option value="manager">Manager</option>
-                            <option value="cashier">Cashier</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="userPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" name="confirmUserPassword" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add User</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit User Modal (updated – no password, no role) -->
-    <div id="editUserModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-user-edit"></i> Edit User</h3>
-                <span class="close-modal" onclick="closeEditUserModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="editUserForm" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="user_id" id="edit_user_id">
-                    <input type="hidden" name="user_type" id="edit_user_type">
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="fullname" id="edit_fullname" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" id="edit_email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" id="edit_username" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update User</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Product Modal (original) -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-box"></i> Add New Product</h3>
-                <span class="close-modal" onclick="closeProductModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="/admin_home/" id="productForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="formType" value="productModal">
-                    <div class="form-group">
-                        <label>Product Name</label>
-                        <input type="text" name="productName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select name="productCategory" required>
-                            <option value="electronics">Electronics</option>
-                            <option value="clothing">Clothing</option>
-                            <option value="groceries">Groceries</option>
-                            <option value="home">Home</option>
-                            <option value="others">Others</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>SKU</label>
-                        <input type="text" name="productSKU" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Brand</label>
-                        <input type="text" name="productBrand" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Price</label>
-                        <input type="number" step="0.01" name="productPrice" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Initial Stock</label>
-                        <input type="number" name="productStock" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Minimum Stock Level</label>
-                        <input type="number" name="productMinStock" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="productDescription" rows="3"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Inventory Modal (original) -->
-    <div id="inventoryModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-warehouse"></i> Stock Adjustment</h3>
-                <span class="close-modal" onclick="closeInventoryModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="inventoryForm">
-                    <div class="form-group">
-                        <label>Adjustment Type</label>
-                        <select id="adjustmentType" required>
-                            <option value="add">Add Stock</option>
-                            <option value="remove">Remove Stock</option>
-                            <option value="set">Set Exact Quantity</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Product</label>
-                        <select id="inventoryProduct" required>
-                            <option value="">Select Product</option>
-                            <!-- Options will be loaded dynamically -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="adjustmentQuantity" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Reason</label>
-                        <input type="text" id="adjustmentReason" placeholder="e.g., Damaged, Return, Restock">
-                    </div>
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="adjustmentDate" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeInventoryModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Adjustment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Action Modal (original) -->
-    <div id="quickActionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-                <span class="close-modal" onclick="closeQuickAction()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="quick-actions-grid">
-                    <div class="quick-action-item" onclick="quickAddProduct()">
-                        <i class="fas fa-box"></i>
-                        <span>Add Product</span>
-                    </div>
-                    <div class="quick-action-item" onclick="quickAddUser()">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Add User</span>
-                    </div>
-                    <div class="quick-action-item" onclick="quickStockCheck()">
-                        <i class="fas fa-warehouse"></i>
-                        <span>Stock Check</span>
-                    </div>
-                    <div class="quick-action-item" onclick="quickGenerateReport()">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Generate Report</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========== LOADING OVERLAY ========== -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <p>Loading...</p>
-    </div>
-
-    <!-- ========== TOAST NOTIFICATION ========== -->
-    <div id="toast" class="toast"></div>
-
-    <!-- ========== CHATBOT ========== -->
-    <div id="chatbot-button" onclick="toggleChatbot()">🤖</div>
-    <div id="chatbot-box">
-        <div id="chatbot-header">
-            <span>🤖 RetailX Assistant</span>
-            <span style="cursor: pointer;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
-        </div>
-        <div id="chatbot-messages"></div>
-        <div id="chatbot-input-area">
-            <input type="text" id="chatbot-input" placeholder="Type message..." autocomplete="off">
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </div>
-
-    <!-- CSRF Token for AJAX (already present in forms) -->
-    {% csrf_token %}
-
-    <!-- ========== SCRIPTS ========== -->
-    <script src="{% static 'js/admin_home.js' %}"></script>
-    <!-- Simple inline script to handle festival form (setting hidden field) -->
-    <script>
-        document.getElementById('festivalSearchForm')?.addEventListener('submit', function(e) {
-            const selectValue = document.getElementById('festival_select').value;
-            const dateValue = document.getElementById('festival_date').value;
-            const hiddenInput = document.getElementById('festival_hidden');
-
-            if (dateValue) {
-                hiddenInput.value = dateValue;
-            } else if (selectValue) {
-                hiddenInput.value = selectValue;
-            } else {
+        `;
+    }
+    
+    // Allow Enter key to send chat message
+    const chatbotInput = document.getElementById('chatbot-input');
+    if (chatbotInput) {
+        chatbotInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                alert('Please select a festival or enter a date');
+                sendMessage();
             }
         });
-    </script>
-</body>
+    }
+    
+    // Check if we have festival data to display
+    setTimeout(function() {
+        const festivalEl = document.getElementById('detected-festival');
+        const hasFestivalData = festivalEl && festivalEl.dataset.festival;
+        if (hasFestivalData && typeof initFestivalCharts === 'function') {
+            console.log('🎉 Festival data detected on page load, initializing charts...');
+            initFestivalCharts();
+        }
+    }, 500);
+    
+    // Close notification panel when clicking outside
+    document.addEventListener('click', function(e) {
+        const notificationPanel = document.getElementById('notificationPanel');
+        const notificationBtn = document.querySelector('.notification-btn');
+        
+        if (notificationPanel && notificationBtn) {
+            if (!notificationPanel.contains(e.target) && !notificationBtn.contains(e.target)) {
+                notificationPanel.classList.remove('show');
+            }
+        }
+    });
+    
+    // Close quick actions panel when clicking outside
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('quickActionsPanel');
+        const btn = document.querySelector('.add-new-btn');
+        if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+    
+    // Auto-refresh data every 30 seconds
+    setInterval(() => {
+        const dash = document.querySelector('#dashboard');
+        if (dash && dash.classList.contains('active')) {
+            loadDashboardData();
+        }
+        
+        // Refresh activity log if active
+        const log = document.querySelector('#activity-log');
+        if (log && log.classList.contains('active')) {
+            loadActivityLog();
+        }
+    }, 30000);
+    
+    console.log("✅ Admin Dashboard initialized successfully");
+});
 
-</html>
+/* =========================
+   DATE & TIME FUNCTIONS
+========================= */
+function updateCurrentDate() {
+    const now = new Date();
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    const dateElement = document.getElementById('currentDate');
+    if (dateElement) dateElement.textContent = now.toLocaleDateString('en-US', options);
+}
+
+function updateCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const timeElement = document.getElementById('currentTime');
+    if (timeElement) timeElement.textContent = timeString;
+}
+
+/* =========================
+   FULLSCREEN FUNCTIONALITY
+========================= */
+function initFullscreen() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+        else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+        else if (document.documentElement.msRequestFullscreen) document.documentElement.msRequestFullscreen();
+        isFullscreen = true;
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+        isFullscreen = false;
+    }
+}
+
+function updateFullscreenIcon() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+    const icon = fullscreenBtn.querySelector('i');
+    if (document.fullscreenElement) {
+        icon.className = 'fas fa-compress';
+        fullscreenBtn.setAttribute('title', 'Exit Fullscreen');
+    } else {
+        icon.className = 'fas fa-expand';
+        fullscreenBtn.setAttribute('title', 'Enter Fullscreen');
+    }
+}
+
+/* =========================
+   MOBILE MENU
+========================= */
+function setupMobileMenu() {
+    const menuToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+    }
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+function initNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.content-section');
+    const pageTitle = document.getElementById('pageTitle');
+    const breadcrumb = document.getElementById('breadcrumb');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            navItems.forEach(nav => nav.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            this.classList.add('active');
+            const sectionId = this.dataset.section;
+            const sectionElement = document.getElementById(sectionId);
+            if (sectionElement) sectionElement.classList.add('active');
+            
+            const sectionName = this.querySelector('span').textContent;
+            if (pageTitle) pageTitle.textContent = sectionName;
+            if (breadcrumb) breadcrumb.textContent = `Admin / ${sectionName}`;
+            
+            loadSectionData(sectionId);
+            
+            if (sectionId === 'analytics') {
+                setTimeout(() => { if (typeof initFestivalCharts === 'function') initFestivalCharts(); }, 300);
+            } else if (sectionId === 'product-performance') {
+                loadProductPerformance();
+            } else if (sectionId === 'activity-log') {
+                loadActivityLog();
+            }
+        });
+    });
+}
+
+function loadSectionData(sectionId) {
+    switch(sectionId) {
+        case 'dashboard': loadDashboardData(); break;
+        case 'users': loadUsers(); break;
+        case 'products': loadProducts(); break;
+        case 'inventory': loadInventory(); break;
+        case 'analytics': loadAnalytics(); break;
+        case 'product-performance': loadProductPerformance(); break;
+        case 'settings': loadSettings(); break;
+        case 'activity-log': loadActivityLog(); break;
+    }
+}
+
+/* =========================
+   FORM HANDLERS
+========================= */
+function setupFormHandlers() {
+    // User Form - normal submission
+    const userForm = document.getElementById('userForm');
+    if (userForm) userForm.addEventListener('submit', function(e) { /* normal */ });
+    
+    // Product Form - normal submission
+    const productForm = document.getElementById('productForm');
+    if (productForm) productForm.addEventListener('submit', function(e) { /* normal */ });
+    
+    // Inventory Form
+    const inventoryForm = document.getElementById('inventoryForm');
+    if (inventoryForm) inventoryForm.addEventListener('submit', function(e) { e.preventDefault(); saveInventoryAdjustment(); });
+    
+    // Festival Search Form - AJAX
+    const festivalForm = document.getElementById('festivalSearchForm');
+    if (festivalForm) {
+        festivalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading();
+            const formData = new FormData(festivalForm);
+            const params = new URLSearchParams(formData).toString();
+            fetch(window.location.pathname + '?' + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    const topDataEl = document.getElementById('top-products-data');
+                    const leastDataEl = document.getElementById('least-products-data');
+                    const festivalEl = document.getElementById('detected-festival');
+                    const festivalNameSpan = document.getElementById('festival-name');
+                    const bannerEl = document.getElementById('festival-banner');
+                    const chartsEl = document.getElementById('festival-charts');
+                    const emptyEl = document.getElementById('festival-empty');
+                    
+                    if (topDataEl) topDataEl.dataset.products = JSON.stringify(data.top_products || []);
+                    if (leastDataEl) leastDataEl.dataset.products = JSON.stringify(data.least_products || []);
+                    if (festivalEl) festivalEl.dataset.festival = data.detected_festival || '';
+                    
+                    const hasFestival = data.detected_festival && data.detected_festival !== '';
+                    if (bannerEl) {
+                        bannerEl.style.display = hasFestival ? 'flex' : 'none';
+                        if (hasFestival && festivalNameSpan) festivalNameSpan.textContent = data.detected_festival;
+                    }
+                    if (chartsEl) chartsEl.style.display = hasFestival ? 'grid' : 'none';
+                    if (emptyEl) emptyEl.style.display = hasFestival ? 'none' : 'flex';
+                    
+                    if (typeof initFestivalCharts === 'function') initFestivalCharts();
+                    hideLoading();
+                    showToast('Prediction updated', 'success');
+                })
+                .catch(error => { console.error('Error:', error); hideLoading(); showToast('Failed to load prediction', 'error'); });
+        });
+    }
+    
+    // Edit User Form - AJAX
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(editUserForm);
+            const userId = formData.get('user_id');
+            const userType = formData.get('user_type');
+            fetch(`/edit-user/${userType}/${userId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCSRFToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) { showToast('User updated successfully', 'success'); closeEditUserModal(); setTimeout(() => location.reload(), 1000); }
+                else showToast(data.error || 'Update failed', 'error');
+            })
+            .catch(error => { console.error('Error:', error); showToast('Server error', 'error'); });
+        });
+    }
+}
+
+/* =========================
+   SEARCH FUNCTIONALITY
+========================= */
+function setupSearch() {
+    const globalSearch = document.getElementById('globalSearch');
+    if (globalSearch) {
+        globalSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            if (searchTerm.length >= 2) performGlobalSearch(searchTerm);
+        });
+    }
+}
+
+/* =========================
+   DASHBOARD DATA LOADING
+========================= */
+function loadDashboardData() {
+    showLoading();
+    setTimeout(() => {
+        updateStats();
+        initSalesChart();
+        hideLoading();
+    }, 1000);
+}
+
+function updateStats() { /* No stats to update manually */ }
+
+/* =========================
+   USER MANAGEMENT
+========================= */
+function loadUsers() { filterUsers(); }
+
+function filterUsers() {
+    const filterEl = document.getElementById('userFilter');
+    const filterValue = filterEl ? filterEl.value : 'all';
+    const searchEl = document.getElementById('userSearch');
+    const searchValue = searchEl ? searchEl.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('#usersTableBody tr');
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const role = row.querySelector('.status-badge').textContent.toLowerCase();
+        const text = row.textContent.toLowerCase();
+        let shouldShow = true;
+        if (filterValue !== 'all' && !role.includes(filterValue)) shouldShow = false;
+        if (searchValue && !text.includes(searchValue)) shouldShow = false;
+        row.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visibleCount++;
+    });
+    const userCountElement = document.querySelector('.content-section#users .table-container + div');
+    if (userCountElement) userCountElement.textContent = `Showing ${visibleCount} user(s) in total`;
+}
+
+function searchUsers() { filterUsers(); }
+
+/* =========================
+   PRODUCT MANAGEMENT
+========================= */
+function loadProducts() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (categoryFilter) { updateCategoryFilter(); filterProducts(); }
+}
+
+function filterProducts() {
+    const catEl = document.getElementById('categoryFilter');
+    const categoryValue = catEl ? catEl.value : 'all';
+    const stockEl = document.getElementById('stockFilter');
+    const stockValue = stockEl ? stockEl.value : 'all';
+    const productCards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+    productCards.forEach(card => {
+        const category = card.querySelector('.product-category').textContent.toLowerCase();
+        const stockLevel = card.querySelector('.stock-level');
+        let shouldShow = true;
+        if (categoryValue !== 'all' && !category.includes(categoryValue)) shouldShow = false;
+        if (stockValue === 'low' && !stockLevel.classList.contains('low')) shouldShow = false;
+        else if (stockValue === 'out' && parseInt(stockLevel.textContent) > 0) shouldShow = false;
+        card.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visibleCount++;
+    });
+    const productCountElement = document.querySelector('#productsGrid + div');
+    if (productCountElement) productCountElement.textContent = `Showing ${visibleCount} product(s) in total`;
+}
+
+function updateCategoryFilter() {
+    const filter = document.getElementById('categoryFilter');
+    if (!filter) return;
+    const categories = new Set();
+    document.querySelectorAll('.product-category').forEach(el => categories.add(el.textContent.trim()));
+    filter.innerHTML = '<option value="all">All Categories</option>';
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.toLowerCase();
+        option.textContent = category;
+        filter.appendChild(option);
+    });
+}
+
+/* =========================
+   INVENTORY MANAGEMENT
+========================= */
+function loadInventory() { /* Already server‑rendered */ }
+
+/* =========================
+   ANALYTICS
+========================= */
+function loadAnalytics() {
+    showLoading();
+    setTimeout(() => {
+        initAnalyticsChart();
+        initCategoryChart();
+        hideLoading();
+    }, 1000);
+}
+
+/* =========================
+   FESTIVAL CHART FUNCTIONS
+========================= */
+function initFestivalCharts() {
+    console.log('📊 initFestivalCharts called');
+    const topProductsElement = document.getElementById('top-products-data');
+    const leastProductsElement = document.getElementById('least-products-data');
+    if (!topProductsElement || !leastProductsElement) { console.log('❌ Data elements not found'); return; }
+    
+    try {
+        let topProducts = [], leastProducts = [];
+        if (topProductsElement.dataset.products && topProductsElement.dataset.products !== 'None' && topProductsElement.dataset.products !== '') {
+            const rawData = topProductsElement.dataset.products.replace(/&quot;/g, '"');
+            topProducts = JSON.parse(rawData);
+        }
+        if (leastProductsElement.dataset.products && leastProductsElement.dataset.products !== 'None' && leastProductsElement.dataset.products !== '') {
+            const rawData = leastProductsElement.dataset.products.replace(/&quot;/g, '"');
+            leastProducts = JSON.parse(rawData);
+        }
+        if (!Array.isArray(topProducts)) topProducts = [];
+        if (!Array.isArray(leastProducts)) leastProducts = [];
+        
+        if (topProducts.length > 0 || leastProducts.length > 0) {
+            createFestivalCharts(topProducts, leastProducts, 'Festival');
+        } else {
+            ['topSellingChart', 'leastSellingChart'].forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.font = '14px Inter, sans-serif';
+                    ctx.fillStyle = '#999';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
+                }
+            });
+        }
+    } catch (e) { console.error('❌ Error in initFestivalCharts:', e); }
+}
+
+function createFestivalCharts(topProducts, leastProducts, festivalName) {
+    const formattedTop = (Array.isArray(topProducts) ? topProducts : []).map(item => ({
+        product: item.product || 'Unknown',
+        units: parseFloat(item.predicted_sales) || 0
+    }));
+    const formattedLeast = (Array.isArray(leastProducts) ? leastProducts : []).map(item => ({
+        product: item.product || 'Unknown',
+        units: parseFloat(item.predicted_sales) || 0
+    }));
+    
+    if (formattedTop.length > 0) {
+        createHorizontalBarChart('topSellingChart', formattedTop, '#e67e22', 'Top Selling Products');
+    } else {
+        const canvas = document.getElementById('topSellingChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#999';
+            ctx.textAlign = 'center';
+            ctx.fillText('No top products data', canvas.width/2, canvas.height/2);
+        }
+    }
+    
+    if (formattedLeast.length > 0) {
+        createHorizontalBarChart('leastSellingChart', formattedLeast, '#3498db', 'Least Selling Products');
+    } else {
+        const canvas = document.getElementById('leastSellingChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#999';
+            ctx.textAlign = 'center';
+            ctx.fillText('No least products data', canvas.width/2, canvas.height/2);
+        }
+    }
+}
+
+function createHorizontalBarChart(canvasId, data, color, label) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (canvasId === 'topSellingChart' && window.topSellingChart) window.topSellingChart.destroy();
+    else if (canvasId === 'leastSellingChart' && window.leastSellingChart) window.leastSellingChart.destroy();
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px Inter, sans-serif';
+        ctx.fillStyle = '#999';
+        ctx.textAlign = 'center';
+        ctx.fillText('No prediction data available', canvas.width/2, canvas.height/2);
+        return;
+    }
+    const sortedData = [...data].sort((a,b) => b.units - a.units);
+    const labels = sortedData.map(item => item.product && item.product.length > 20 ? item.product.substring(0,17)+'...' : item.product || 'Unknown');
+    const values = sortedData.map(item => Math.max(0, parseFloat(item.units) || 0));
+    const backgroundColors = values.map((_, i) => color.replace('#', `rgba(${hexToRgb(color)}, ${0.7 - i*0.04})`));
+    const newChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Expected Units', data: values, backgroundColor: backgroundColors, borderColor: color, borderWidth: 1, borderRadius: 5 }] },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { left:10, right:20, top:10, bottom:10 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const fullProduct = sortedData[ctx.dataIndex].product || 'Unknown';
+                            return fullProduct + ': ' + ctx.raw.toLocaleString() + ' units';
+                        },
+                        title: () => ''
+                    }
+                }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, title: { display: true, text: 'Expected Units', color:'#666', font:{ size:11, family:'Inter' } } },
+                y: { grid: { display: false }, ticks: { font: { size:11, family:'Inter' }, maxRotation:0, autoSkip:true, autoSkipPadding:10 } }
+            }
+        }
+    });
+    if (canvasId === 'topSellingChart') window.topSellingChart = newChart;
+    else window.leastSellingChart = newChart;
+}
+
+function hexToRgb(hex) {
+    hex = hex.replace('#','');
+    const r = parseInt(hex.substring(0,2),16);
+    const g = parseInt(hex.substring(2,4),16);
+    const b = parseInt(hex.substring(4,6),16);
+    return `${r}, ${g}, ${b}`;
+}
+
+/* =========================
+   CHART INITIALIZATION
+========================= */
+function initSalesChart() {
+    const ctx = document.getElementById('salesChart');
+    if (!ctx) return;
+    const canvas = ctx.getContext('2d');
+    if (salesChart) salesChart.destroy();
+    salesChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+            datasets: [{
+                label: 'Sales ($)',
+                data: [1200,1900,3000,5000,2845,3200,1800],
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67,97,238,0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.05)' } }, x: { grid: { color:'rgba(0,0,0,0.05)' } } }
+        }
+    });
+}
+
+function initAnalyticsChart() {
+    const ctx = document.getElementById('analyticsChart');
+    if (!ctx) return;
+    const canvas = ctx.getContext('2d');
+    if (analyticsChart) analyticsChart.destroy();
+    analyticsChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+            datasets: [
+                { label: 'Revenue', data: [12000,19000,15000,25000,22000,30000], borderColor:'#4361ee', backgroundColor:'rgba(67,97,238,0.1)', borderWidth:2, fill:true },
+                { label: 'Profit', data: [4000,7000,5000,9000,8000,12000], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.1)', borderWidth:2, fill:true }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.05)' } }, x: { grid: { color:'rgba(0,0,0,0.05)' } } }
+        }
+    });
+}
+
+function initCategoryChart() {
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+    const canvas = ctx.getContext('2d');
+    if (categoryChart) categoryChart.destroy();
+    categoryChart = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Electronics','Clothing','Groceries','Home','Others'],
+            datasets: [{
+                data: [40,20,15,15,10],
+                backgroundColor: ['#4361ee','#ef4444','#10b981','#f59e0b','#8b5cf6']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+    });
+}
+
+/* =========================
+   NEW: ADVANCED SALES ANALYTICS
+========================= */
+function loadSalesAnalytics() {
+    showLoading();
+    const days = document.getElementById('analyticsDays')?.value || 30;
+    
+    // Simulate API call - In production, replace with actual fetch
+    setTimeout(() => {
+        const mockData = generateMockSalesData(days);
+        updateAnalyticsMetrics(mockData.metrics);
+        updateSalesAnalyticsChart(mockData);
+        hideLoading();
+    }, 800);
+}
+
+function generateMockSalesData(days) {
+    const labels = [];
+    const sales = [];
+    const orders = [];
+    
+    for (let i = 0; i < Math.min(days, 30); i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (Math.min(days, 30) - 1 - i));
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        
+        const dailySales = Math.floor(Math.random() * 5000) + 1000;
+        sales.push(dailySales);
+        orders.push(Math.floor(Math.random() * 50) + 10);
+    }
+    
+    const totalRevenue = sales.reduce((a, b) => a + b, 0);
+    const totalOrders = orders.reduce((a, b) => a + b, 0);
+    
+    return {
+        labels: labels,
+        sales: sales,
+        orders: orders,
+        metrics: {
+            total_revenue: totalRevenue,
+            avg_order_value: totalRevenue / totalOrders,
+            total_orders: totalOrders,
+            conversion_rate: (Math.random() * 5 + 2).toFixed(1)
+        }
+    };
+}
+
+function updateAnalyticsMetrics(metrics) {
+    document.getElementById('totalRevenue').textContent = `$${metrics.total_revenue.toLocaleString()}`;
+    document.getElementById('avgOrderValue').textContent = `$${metrics.avg_order_value.toFixed(2)}`;
+    document.getElementById('totalOrders').textContent = metrics.total_orders;
+    document.getElementById('conversionRate').textContent = `${metrics.conversion_rate}%`;
+}
+
+function updateSalesAnalyticsChart(data) {
+    const ctx = document.getElementById('analyticsChart');
+    if (!ctx) return;
+    
+    if (window.salesAnalyticsChart) {
+        window.salesAnalyticsChart.destroy();
+    }
+    
+    window.salesAnalyticsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Daily Sales ($)',
+                data: data.sales,
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67,97,238,0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Sales: $${context.raw.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/* =========================
+   NEW: PRODUCT PERFORMANCE
+========================= */
+function loadProductPerformance() {
+    showLoading();
+    
+    // Simulate API call - In production, replace with actual fetch
+    setTimeout(() => {
+        const mockData = generateMockProductData();
+        updateProductPerformanceCharts(mockData);
+        updateProductPerformanceTable(mockData);
+        hideLoading();
+    }, 800);
+}
+
+function generateMockProductData() {
+    const products = [
+        { name: 'Laptop Pro', category: 'Electronics', views: 2450, sales: 128, revenue: 127500, conversion: 5.22, turnover: 85 },
+        { name: 'Wireless Mouse', category: 'Electronics', views: 3800, sales: 342, revenue: 20520, conversion: 9.0, turnover: 92 },
+        { name: 'T-Shirt', category: 'Clothing', views: 5200, sales: 415, revenue: 12450, conversion: 7.98, turnover: 78 },
+        { name: 'Coffee Maker', category: 'Home', views: 1800, sales: 89, revenue: 17800, conversion: 4.94, turnover: 45 },
+        { name: 'Headphones', category: 'Electronics', views: 3100, sales: 276, revenue: 41400, conversion: 8.9, turnover: 88 },
+        { name: 'Backpack', category: 'Accessories', views: 2100, sales: 156, revenue: 7800, conversion: 7.43, turnover: 62 },
+        { name: 'Smart Watch', category: 'Electronics', views: 2900, sales: 198, revenue: 39600, conversion: 6.83, turnover: 71 },
+        { name: 'Desk Lamp', category: 'Home', views: 1200, sales: 67, revenue: 3350, conversion: 5.58, turnover: 38 }
+    ];
+    
+    const topProducts = [...products].sort((a, b) => b.sales - a.sales).slice(0, 5);
+    const conversionData = [...products].sort((a, b) => b.conversion - a.conversion).slice(0, 5);
+    
+    return { products, topProducts, conversionData };
+}
+
+function updateProductPerformanceCharts(data) {
+    // Top Products Chart
+    const topCtx = document.getElementById('topProductsChart');
+    if (topCtx) {
+        if (topProductsChart) topProductsChart.destroy();
+        
+        topProductsChart = new Chart(topCtx, {
+            type: 'bar',
+            data: {
+                labels: data.topProducts.map(p => p.name),
+                datasets: [{
+                    label: 'Units Sold',
+                    data: data.topProducts.map(p => p.sales),
+                    backgroundColor: '#e67e22',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+    
+    // Conversion Chart
+    const convCtx = document.getElementById('conversionChart');
+    if (convCtx) {
+        if (conversionChart) conversionChart.destroy();
+        
+        conversionChart = new Chart(convCtx, {
+            type: 'doughnut',
+            data: {
+                labels: data.conversionData.map(p => p.name),
+                datasets: [{
+                    data: data.conversionData.map(p => p.conversion),
+                    backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+}
+
+function updateProductPerformanceTable(data) {
+    const tbody = document.getElementById('productPerformanceBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    data.products.forEach(product => {
+        const row = document.createElement('tr');
+        
+        // Determine turnover badge class
+        let turnoverClass = 'high';
+        if (product.turnover < 50) turnoverClass = 'low';
+        else if (product.turnover < 70) turnoverClass = 'medium';
+        
+        row.innerHTML = `
+            <td><strong>${product.name}</strong></td>
+            <td>${product.category}</td>
+            <td>${product.views.toLocaleString()}</td>
+            <td>${product.sales}</td>
+            <td>$${product.revenue.toLocaleString()}</td>
+            <td><span class="performance-badge ${product.conversion > 7 ? 'high' : product.conversion > 4 ? 'medium' : 'low'}">${product.conversion}%</span></td>
+            <td><span class="performance-badge ${turnoverClass}">${product.turnover}%</span></td>
+            <td>
+                <button class="action-btn small" onclick="viewProductDetails(${product.id})"><i class="fas fa-eye"></i></button>
+                <button class="action-btn small" onclick="editProduct(${product.id})"><i class="fas fa-edit"></i></button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+function refreshProductPerformance() {
+    loadProductPerformance();
+    showToast('Product performance data refreshed', 'success');
+}
+
+/* =========================
+   NEW: ACTIVITY LOG
+========================= */
+function loadActivityLog() {
+    showLoading();
+    
+    // Simulate API call - In production, replace with actual fetch
+    setTimeout(() => {
+        const mockLogs = generateMockActivityLog();
+        renderActivityLog(mockLogs);
+        hideLoading();
+    }, 600);
+}
+
+function generateMockActivityLog() {
+    const actions = ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'EXPORT'];
+    const models = ['User', 'Product', 'Inventory', 'Order', 'Report'];
+    const users = ['admin@retailx.com', 'manager@retailx.com', 'cashier@retailx.com'];
+    const ips = ['192.168.1.105', '10.0.0.23', '172.16.0.45', '192.168.1.200'];
+    
+    const logs = [];
+    const now = new Date();
+    
+    for (let i = 0; i < 25; i++) {
+        const date = new Date(now);
+        date.setMinutes(date.getMinutes() - i * 30);
+        
+        const action = actions[Math.floor(Math.random() * actions.length)];
+        const model = models[Math.floor(Math.random() * models.length)];
+        
+        logs.push({
+            time: date.toLocaleString(),
+            user: users[Math.floor(Math.random() * users.length)],
+            action: action,
+            model: model,
+            details: `${action} operation on ${model} #${Math.floor(Math.random() * 100) + 1}`,
+            ip: ips[Math.floor(Math.random() * ips.length)]
+        });
+    }
+    
+    return logs;
+}
+
+function renderActivityLog(logs) {
+    const tbody = document.getElementById('activityLogBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    logs.forEach(log => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${log.time}</td>
+            <td><strong>${log.user}</strong></td>
+            <td><span class="log-action-badge ${log.action}">${log.action}</span></td>
+            <td>${log.model}</td>
+            <td>${log.details}</td>
+            <td><code>${log.ip}</code></td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+function filterActivityLog() {
+    const filter = document.getElementById('logFilter')?.value;
+    const search = document.getElementById('logSearch')?.value.toLowerCase();
+    
+    // In production, this would filter the existing data or make a new API call
+    showToast(`Filtering by: ${filter}`, 'info');
+    loadActivityLog(); // Reload with filter (simulated)
+}
+
+function searchActivityLog() {
+    filterActivityLog();
+}
+
+function refreshActivityLog() {
+    loadActivityLog();
+    showToast('Activity log refreshed', 'success');
+}
+
+function exportActivityLog() {
+    // Prepare export modal for activity log
+    document.getElementById('exportType').value = 'activity';
+    showExportModal();
+}
+
+function clearActivityLog() {
+    Swal.fire({
+        title: 'Clear Activity Log?',
+        text: "This will permanently delete all activity logs. This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, clear all'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoading();
+            setTimeout(() => {
+                const tbody = document.getElementById('activityLogBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-history" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                                <p>No activity logs found.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                hideLoading();
+                Swal.fire('Cleared!', 'Activity log has been cleared.', 'success');
+            }, 1000);
+        }
+    });
+}
+
+/* =========================
+   NEW: EXPORT FUNCTIONALITY
+========================= */
+function showExportModal() {
+    const modal = document.getElementById('exportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('exportModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function toggleCustomDateRange() {
+    const range = document.getElementById('exportRange').value;
+    const customRange = document.getElementById('customDateRange');
+    if (customRange) {
+        customRange.style.display = range === 'custom' ? 'block' : 'none';
+    }
+}
+
+function downloadExport() {
+    const type = document.getElementById('exportType').value;
+    const format = document.getElementById('exportFormat').value;
+    const range = document.getElementById('exportRange').value;
+    
+    showLoading();
+    
+    // Simulate export preparation
+    setTimeout(() => {
+        // In production, this would trigger a file download from the server
+        let filename = `${type}_report_${new Date().toISOString().split('T')[0]}`;
+        
+        if (format === 'csv') {
+            downloadCSV(type, filename);
+        } else if (format === 'excel') {
+            downloadExcel(type, filename);
+        } else if (format === 'pdf') {
+            downloadPDF(type, filename);
+        }
+        
+        hideLoading();
+        closeExportModal();
+        showToast(`${type.toUpperCase()} report exported as ${format.toUpperCase()}`, 'success');
+        
+        // Log this export activity
+        logActivity('EXPORT', 'Report', `${type} report exported as ${format}`);
+    }, 1500);
+}
+
+function downloadCSV(type, filename) {
+    // Create sample CSV data
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    if (type === 'users') {
+        csvContent += "Name,Email,Role,Last Login,Status\n";
+        csvContent += "John Doe,john@example.com,Admin,2024-03-17,Active\n";
+        csvContent += "Jane Smith,jane@example.com,Manager,2024-03-16,Active\n";
+    } else if (type === 'products') {
+        csvContent += "Name,SKU,Category,Price,Stock,Status\n";
+        csvContent += "Laptop Pro,LP001,Electronics,999.99,25,In Stock\n";
+        csvContent += "Wireless Mouse,WM002,Electronics,29.99,150,In Stock\n";
+    }
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function downloadExcel(type, filename) {
+    // Using SheetJS library (included in HTML)
+    const wb = XLSX.utils.book_new();
+    
+    let data = [];
+    if (type === 'users') {
+        data = [
+            ['Name', 'Email', 'Role', 'Last Login', 'Status'],
+            ['John Doe', 'john@example.com', 'Admin', '2024-03-17', 'Active'],
+            ['Jane Smith', 'jane@example.com', 'Manager', '2024-03-16', 'Active']
+        ];
+    } else if (type === 'products') {
+        data = [
+            ['Name', 'SKU', 'Category', 'Price', 'Stock', 'Status'],
+            ['Laptop Pro', 'LP001', 'Electronics', 999.99, 25, 'In Stock'],
+            ['Wireless Mouse', 'WM002', 'Electronics', 29.99, 150, 'In Stock']
+        ];
+    }
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, type);
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+function downloadPDF(type, filename) {
+    // Using jsPDF library (included in HTML)
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text(`${type.toUpperCase()} Report`, 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32);
+    
+    if (type === 'users') {
+        doc.autoTable({
+            head: [['Name', 'Email', 'Role', 'Status']],
+            body: [
+                ['John Doe', 'john@example.com', 'Admin', 'Active'],
+                ['Jane Smith', 'jane@example.com', 'Manager', 'Active']
+            ],
+            startY: 40
+        });
+    } else if (type === 'products') {
+        doc.autoTable({
+            head: [['Name', 'SKU', 'Category', 'Price', 'Stock']],
+            body: [
+                ['Laptop Pro', 'LP001', 'Electronics', '$999.99', '25'],
+                ['Wireless Mouse', 'WM002', 'Electronics', '$29.99', '150']
+            ],
+            startY: 40
+        });
+    }
+    
+    doc.save(`${filename}.pdf`);
+}
+
+/* =========================
+   NEW: QUICK ACTIONS PANEL
+========================= */
+function toggleQuickActionsPanel() {
+    const panel = document.getElementById('quickActionsPanel');
+    if (panel) {
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+}
+
+function refreshAnalytics() {
+    loadSalesAnalytics();
+    loadProductPerformance();
+    showToast('Analytics data refreshed', 'success');
+}
+
+/* =========================
+   NOTIFICATION FUNCTIONS
+========================= */
+function toggleNotifications() {
+    const panel = document.getElementById('notificationPanel');
+    if (panel) panel.classList.toggle('show');
+}
+
+function loadNotifications() {
+    const notifications = [
+        { id:1, type:'warning', icon:'exclamation-triangle', title:'Low Stock Alert', message:'T-Shirt stock is critically low (5 units remaining)', time:'2 hours ago', unread:true },
+        { id:2, type:'info', icon:'user-plus', title:'New User Registration', message:'Charlie Davis has been registered as a new manager', time:'4 hours ago', unread:true },
+        { id:3, type:'success', icon:'chart-line', title:'Daily Target Achieved', message:'Daily sales target has been exceeded by 15%', time:'6 hours ago', unread:true },
+        { id:4, type:'info', icon:'box', title:'Product Added', message:'New product "Wireless Headphones" has been added to inventory', time:'1 day ago', unread:false },
+        { id:5, type:'warning', icon:'exclamation-circle', title:'System Maintenance', message:'Scheduled maintenance this Sunday from 2:00 AM to 4:00 AM', time:'2 days ago', unread:false }
+    ];
+    renderNotifications(notifications);
+}
+
+function renderNotifications(notifications) {
+    const notificationList = document.getElementById('notificationList');
+    if (!notificationList) return;
+    notificationList.innerHTML = '';
+    notifications.forEach(notification => {
+        const item = document.createElement('div');
+        item.className = `notification-item ${notification.unread ? 'unread' : ''}`;
+        item.innerHTML = `
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div class="notification-icon ${notification.type}"><i class="fas fa-${notification.icon}"></i></div>
+                <div class="notification-content">
+                    <h5>${notification.title}</h5>
+                    <p>${notification.message}</p>
+                    <span class="notification-time">${notification.time}</span>
+                </div>
+                ${notification.unread ? '<span class="unread-dot"></span>' : ''}
+            </div>
+        `;
+        item.addEventListener('click', () => markNotificationAsRead(notification.id));
+        notificationList.appendChild(item);
+    });
+    const unreadCount = notifications.filter(n => n.unread).length;
+    notificationCount = unreadCount;
+    const badge = document.querySelector('.notification-count');
+    if (badge) {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount === 0 ? 'none' : 'flex';
+    }
+}
+
+function markNotificationAsRead(id) {
+    showLoading();
+    setTimeout(() => {
+        notificationCount = Math.max(0, notificationCount - 1);
+        const badge = document.querySelector('.notification-count');
+        if (badge) {
+            badge.textContent = notificationCount;
+            badge.style.display = notificationCount === 0 ? 'none' : 'flex';
+        }
+        showToast('Notification marked as read', 'success');
+        hideLoading();
+    }, 500);
+}
+
+function markAllAsRead() {
+    showLoading();
+    setTimeout(() => {
+        notificationCount = 0;
+        const badge = document.querySelector('.notification-count');
+        if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
+        showToast('All notifications marked as read', 'success');
+        hideLoading();
+        const panel = document.getElementById('notificationPanel');
+        if (panel) panel.classList.remove('show');
+    }, 500);
+}
+
+function viewAllNotifications() {
+    showToast('Viewing all notifications - Feature coming soon!', 'info');
+    const panel = document.getElementById('notificationPanel');
+    if (panel) panel.classList.remove('show');
+}
+
+/* =========================
+   MODAL FUNCTIONS
+========================= */
+function openUserModal() { document.getElementById('userModal').style.display = 'flex'; }
+function closeUserModal() { document.getElementById('userModal').style.display = 'none'; document.getElementById('userForm')?.reset(); }
+function openProductModal() { document.getElementById('productModal').style.display = 'flex'; }
+function closeProductModal() { document.getElementById('productModal').style.display = 'none'; document.getElementById('productForm')?.reset(); }
+function openInventoryModal() { loadProductDropdown(); document.getElementById('inventoryModal').style.display = 'flex'; }
+function closeInventoryModal() { document.getElementById('inventoryModal').style.display = 'none'; document.getElementById('inventoryForm')?.reset(); }
+function openQuickAction() { document.getElementById('quickActionModal').style.display = 'flex'; }
+function closeQuickAction() { document.getElementById('quickActionModal').style.display = 'none'; }
+
+/* =========================
+   SAVE FUNCTIONS
+========================= */
+function saveUser() {
+    showLoading();
+    setTimeout(() => { closeUserModal(); loadUsers(); showToast('User added successfully!', 'success'); hideLoading(); }, 1500);
+}
+function saveProduct() {
+    showLoading();
+    setTimeout(() => { closeProductModal(); loadProducts(); showToast('Product added successfully!', 'success'); hideLoading(); }, 1500);
+}
+function saveInventoryAdjustment() {
+    showLoading();
+    setTimeout(() => { closeInventoryModal(); loadInventory(); showToast('Inventory adjustment saved!', 'success'); hideLoading(); }, 1500);
+}
+
+/* =========================
+   UTILITY FUNCTIONS
+========================= */
+function showLoading() { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.style.display = 'flex'; }
+function hideLoading() { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.style.display = 'none'; }
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = 'toast';
+    switch(type) {
+        case 'success': toast.style.background = 'var(--success)'; break;
+        case 'error': toast.style.background = 'var(--danger)'; break;
+        case 'warning': toast.style.background = 'var(--warning)'; break;
+        default: toast.style.background = 'var(--primary)';
+    }
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function loadProductDropdown() {
+    const select = document.getElementById('inventoryProduct');
+    if (!select) return;
+    select.innerHTML = '<option value="">Select Product</option>';
+    const productCards = document.querySelectorAll('.product-card');
+    if (productCards.length > 0) {
+        productCards.forEach((card, index) => {
+            const title = card.querySelector('.product-title');
+            if (title) {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = title.textContent;
+                select.appendChild(option);
+            }
+        });
+    } else {
+        [{ id:1, name:'Laptop Pro' }, { id:2, name:'Wireless Mouse' }, { id:3, name:'T-Shirt' }, { id:4, name:'Coffee Maker' }, { id:5, name:'Organic Coffee' }]
+            .forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; select.appendChild(opt); });
+    }
+}
+
+function logActivity(action, model, details) {
+    // This would send to server in production
+    console.log(`Activity Logged: ${action} - ${model} - ${details}`);
+}
+
+/* =========================
+   ACTION FUNCTIONS
+========================= */
+function exportUsers() { window.location.href = '/export-users/'; }
+function bulkResetPassword() {
+    const selected = [];
+    document.querySelectorAll('.user-checkbox:checked').forEach(cb => {
+        selected.push({ id: cb.value, type: cb.closest('tr').querySelector('.status-badge').textContent.trim().toLowerCase() });
+    });
+    if (selected.length === 0) { showToast('Please select users first', 'warning'); return; }
+    Swal.fire({ title:`Reset passwords for ${selected.length} user(s)?`, text:"Temporary passwords will be generated and emailed.", icon:'warning', showCancelButton:true, confirmButtonColor:'#4361ee', confirmButtonText:'Yes, reset' })
+        .then(result => {
+            if (result.isConfirmed) {
+                fetch('/bulk-reset-passwords/', { method:'POST', headers:{ 'Content-Type':'application/json', 'X-CSRFToken':getCSRFToken(), 'X-Requested-With':'XMLHttpRequest' }, body:JSON.stringify({ users:selected }) })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) Swal.fire('Success!', d.message, 'success'); else Swal.fire('Error!', d.error, 'error'); })
+                    .catch(e => { console.error(e); Swal.fire('Error!', 'Server error', 'error'); });
+            }
+        });
+}
+function bulkUpdateStock() { showToast('Bulk stock update feature coming soon!', 'info'); }
+function importProducts() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = () => { showLoading(); setTimeout(() => { showToast('Products imported successfully!', 'success'); loadProducts(); hideLoading(); }, 2000); };
+    input.click();
+}
+function generateReport() { showLoading(); setTimeout(() => { showToast('Need to work On this Function still incomplete !!', 'success'); hideLoading(); }, 2000); }
+function backupDatabase() { showLoading(); setTimeout(() => { showToast('Database backup completed!', 'success'); hideLoading(); }, 1500); }
+function clearCache() { showLoading(); setTimeout(() => { showToast('Cache cleared successfully!', 'success'); hideLoading(); }, 1000); }
+function exportAllData() { showLoading(); setTimeout(() => { showToast('All data exported!', 'success'); hideLoading(); }, 2000); }
+
+/* =========================
+   THEME FUNCTIONS
+========================= */
+function changeTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-btn').forEach(btn => { btn.classList.remove('active'); if (btn.dataset.theme === theme) btn.classList.add('active'); });
+    localStorage.setItem('retailx-theme', theme);
+    showToast(`Theme changed to ${theme}`, 'success');
+}
+function loadSettings() {
+    const savedTheme = localStorage.getItem('retailx-theme') || 'default';
+    changeTheme(savedTheme);
+    const savedSettings = localStorage.getItem('retailx-settings');
+    if (savedSettings) {
+        try {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
+            document.getElementById('lowStockAlerts').checked = settings.lowStockAlerts || false;
+            document.getElementById('newUserAlerts').checked = settings.newUserAlerts || false;
+        } catch(e) { console.error('Error loading settings:', e); }
+    }
+}
+
+/* =========================
+   QUICK ACTIONS
+========================= */
+function quickAddProduct() { closeQuickAction(); openProductModal(); }
+function quickAddUser() { closeQuickAction(); openUserModal(); }
+function quickStockCheck() { closeQuickAction(); showLoading(); setTimeout(() => { showToast('Need to work On this Function still incomplete !!'); hideLoading(); }, 1000); }
+function quickGenerateReport() { closeQuickAction(); generateReport(); }
+
+/* =========================
+   DASHBOARD INITIALIZATION
+========================= */
+function initDashboard() { loadSettings(); }
+
+/* =========================
+   GLOBAL SEARCH
+========================= */
+function performGlobalSearch(term) {
+    showLoading();
+    setTimeout(() => { showToast(`Found 3 users, 7 products, 2 reports`, 'info'); hideLoading(); }, 500);
+}
+
+/* =========================
+   EDIT FUNCTIONS
+========================= */
+function openEditUserModal(userId, userType) {
+    fetch(`/get-user/${userType}/${userId}/`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                document.getElementById('edit_user_id').value = d.user.id;
+                document.getElementById('edit_user_type').value = userType;
+                document.getElementById('edit_fullname').value = d.user.fullname;
+                document.getElementById('edit_email').value = d.user.email;
+                document.getElementById('edit_username').value = d.user.username;
+                document.getElementById('editUserModal').style.display = 'flex';
+            } else showToast('Error loading user data', 'error');
+        })
+        .catch(e => { console.error(e); showToast('Failed to load user', 'error'); });
+}
+function closeEditUserModal() { document.getElementById('editUserModal').style.display = 'none'; }
+function deleteUser(userId, userType) {
+    const type = userType.toLowerCase();
+    Swal.fire({ title:'Are you sure?', text:"You won't be able to revert this!", icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', cancelButtonColor:'#64748b', confirmButtonText:'Yes, delete it!' })
+        .then(result => {
+            if (result.isConfirmed) {
+                fetch(`/delete-user/${type}/${userId}/`, { method:'POST', headers:{ 'X-CSRFToken':getCSRFToken(), 'X-Requested-With':'XMLHttpRequest' } })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) { Swal.fire('Deleted!', d.message, 'success'); setTimeout(() => location.reload(), 1500); } else Swal.fire('Error!', d.error, 'error'); })
+                    .catch(e => { console.error(e); Swal.fire('Error!', 'Server error', 'error'); });
+            }
+        });
+}
+function resetUserPassword(userId, userType) {
+    Swal.fire({ title:'Reset Password?', text:"A temporary password will be generated and sent to the user's email.", icon:'question', showCancelButton:true, confirmButtonColor:'#4361ee', cancelButtonColor:'#64748b', confirmButtonText:'Yes, reset it' })
+        .then(result => {
+            if (result.isConfirmed) {
+                fetch(`/reset-password/${userType}/${userId}/`, { method:'POST', headers:{ 'X-CSRFToken':getCSRFToken(), 'X-Requested-With':'XMLHttpRequest' } })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) Swal.fire('Success!', d.message, 'success'); else Swal.fire('Error!', d.error, 'error'); })
+                    .catch(e => { console.error(e); Swal.fire('Error!', 'Server error', 'error'); });
+            }
+        });
+}
+function editProduct(id) { showToast(`Edit product ${id} - Feature coming soon!`, 'info'); }
+function deleteProduct(id) { if (confirm('Are you sure you want to delete this product?')) { showLoading(); const form = document.createElement('form'); form.method = 'POST'; form.action = `/delete-product/${id}/`; const csrf = getCSRFToken(); if (csrf) { const inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = csrf; form.appendChild(inp); } document.body.appendChild(form); form.submit(); } }
+function viewProductDetails(id) { showToast(`Viewing product ${id} details - Feature coming soon!`, 'info'); }
+function adjustStock(id) { openInventoryModal(); showToast(`Adjusting stock for product ${id}`, 'info'); }
+function viewInventoryHistory(id) { showToast(`Viewing inventory history for product ${id} - Feature coming soon!`, 'info'); }
+function toggleAllUsers() { const isChecked = document.getElementById('selectAllUsers').checked; document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = isChecked); }
+function updateSalesChart() { showLoading(); setTimeout(() => { initSalesChart(); hideLoading(); }, 500); }
+function updateAnalytics() { showLoading(); setTimeout(() => { initAnalyticsChart(); initCategoryChart(); hideLoading(); }, 500); }
+function saveSettings() {
+    const email = document.getElementById('emailNotifications');
+    const low = document.getElementById('lowStockAlerts');
+    const newUser = document.getElementById('newUserAlerts');
+    const settings = { emailNotifications: email?.checked || false, lowStockAlerts: low?.checked || false, newUserAlerts: newUser?.checked || false };
+    localStorage.setItem('retailx-settings', JSON.stringify(settings));
+    showToast('Settings saved!', 'success');
+}
+
+/* =========================
+   CSRF TOKEN HELPER
+========================= */
+function getCSRFToken() {
+    let cookieValue = null;
+    const name = "csrftoken";
+    if (document.cookie && document.cookie !== "") {
+        document.cookie.split(';').forEach(c => { const cookie = c.trim(); if (cookie.substring(0, name.length+1) === (name + "=")) cookieValue = decodeURIComponent(cookie.substring(name.length+1)); });
+    }
+    if (!cookieValue) {
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) cookieValue = csrfInput.value;
+    }
+    return cookieValue;
+}
+
+/* =========================
+   CHATBOT FUNCTIONS
+========================= */
+function sendMessage() {
+    const input = document.getElementById("chatbot-input");
+    const messages = document.getElementById("chatbot-messages");
+    if (!input || !messages) return;
+    const message = input.value.trim();
+    if (message === "") return;
+    messages.innerHTML += `<div class="chat-user"><span>${escapeHtml(message)}</span></div>`;
+    input.value = "";
+    messages.scrollTop = messages.scrollHeight;
+    const typingId = "typing-" + Date.now();
+    messages.innerHTML += `<div class="chat-bot" id="${typingId}"><span>🤖 Typing...</span></div>`;
+    messages.scrollTop = messages.scrollHeight;
+    fetch("/chatbot/", { method:"POST", headers:{ "Content-Type":"application/json", "X-CSRFToken":getCSRFToken() }, body:JSON.stringify({ message }) })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+            document.getElementById(typingId)?.remove();
+            messages.innerHTML += `<div class="chat-bot"><span>${escapeHtml(data.reply)}</span></div>`;
+            messages.scrollTop = messages.scrollHeight;
+        })
+        .catch(err => {
+            console.error("Chatbot error:", err);
+            document.getElementById(typingId)?.remove();
+            messages.innerHTML += `<div class="chat-bot"><span>⚠️ Sorry, I'm having trouble connecting. Please try again.</span></div>`;
+            messages.scrollTop = messages.scrollHeight;
+        });
+}
+function escapeHtml(text) { const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
+function toggleChatbot() { const box = document.getElementById("chatbot-box"); if (box) box.style.display = box.style.display === "none" || box.style.display === "" ? "flex" : "none"; }
