@@ -2804,6 +2804,7 @@ $(document).ready(function() {
     }
 });
 
+
 // Initialize modules when analysis page is opened
 $(document).on('click', '.menu-item[data-page="analysis"]', function() {
     setTimeout(() => {
@@ -2817,4 +2818,687 @@ $(document).on('click', '.menu-item[data-page="analysis"]', function() {
             RetailX.FestivalPrediction.init();
         }
     }, 200);
+});
+
+// ============================================
+// SUPPLIER CONNECTIVITY MODULE
+// Advanced Supplier Management with Real-time Chat
+// ============================================
+
+RetailX.SupplierConnectivity = {
+    // Static supplier database
+    suppliers: [
+        {
+            id: 1,
+            name: "Shree Enterprises",
+            location: "Khamgaon",
+            distance: 2.5,
+            rating: 4.8,
+            reviews: 156,
+            verified: true,
+            products: ["Whole Wheat Bread", "White Rice", "Toor Dal", "Wheat Flour"],
+            price: "Competitive",
+            deliveryTime: "24-48 hrs",
+            minOrder: 1000,
+            avatar: "SE",
+            phone: "+91 98765 43210",
+            email: "shree.enterprises@example.com",
+            responseTime: "< 1 hour",
+            established: "2015",
+            description: "Leading distributor of bakery and grain products"
+        },
+        {
+            id: 2,
+            name: "Krishna Dairy Farm",
+            location: "Akola",
+            distance: 15.8,
+            rating: 4.9,
+            reviews: 342,
+            verified: true,
+            products: ["Whole Milk", "Paneer", "Curd", "Butter", "Eggs"],
+            price: "₹2-5 above market",
+            deliveryTime: "12-24 hrs",
+            minOrder: 500,
+            avatar: "KD",
+            phone: "+91 98765 43211",
+            email: "krishna.dairy@example.com",
+            responseTime: "< 30 mins",
+            established: "2018",
+            description: "Fresh dairy products delivered daily"
+        },
+        {
+            id: 3,
+            name: "Green Valley Farms",
+            location: "Buldhana",
+            distance: 8.2,
+            rating: 4.7,
+            reviews: 89,
+            verified: true,
+            products: ["Tomatoes", "Onions", "Potatoes", "Spinach", "Capsicum"],
+            price: "10% below market",
+            deliveryTime: "24 hrs",
+            minOrder: 2000,
+            avatar: "GV",
+            phone: "+91 98765 43212",
+            email: "green.valley@example.com",
+            responseTime: "< 2 hours",
+            established: "2020",
+            description: "Organic vegetables directly from farm"
+        },
+        {
+            id: 4,
+            name: "Fresh Fruits Hub",
+            location: "Shegaon",
+            distance: 5.3,
+            rating: 4.6,
+            reviews: 67,
+            verified: false,
+            products: ["Bananas", "Apples", "Oranges", "Mangoes", "Grapes"],
+            price: "Market price",
+            deliveryTime: "36 hrs",
+            minOrder: 1500,
+            avatar: "FF",
+            phone: "+91 98765 43213",
+            email: "fresh.fruits@example.com",
+            responseTime: "< 3 hours",
+            established: "2021",
+            description: "Premium quality fruits from across India"
+        },
+        {
+            id: 5,
+            name: "Maharashtra Traders",
+            location: "Khamgaon",
+            distance: 1.8,
+            rating: 4.5,
+            reviews: 234,
+            verified: true,
+            products: ["Sunflower Oil", "Sugar", "Salt", "Spices", "Rice Flour"],
+            price: "Wholesale rates",
+            deliveryTime: "Same day",
+            minOrder: 3000,
+            avatar: "MT",
+            phone: "+91 98765 43214",
+            email: "maharashtra.traders@example.com",
+            responseTime: "< 15 mins",
+            established: "2010",
+            description: "Complete pantry solutions"
+        },
+        {
+            id: 6,
+            name: "City Beverages",
+            location: "Akola",
+            distance: 12.4,
+            rating: 4.4,
+            reviews: 112,
+            verified: true,
+            products: ["Tea", "Coffee", "Packaged Water", "Juice", "Soda"],
+            price: "5% above market",
+            deliveryTime: "48 hrs",
+            minOrder: 2500,
+            avatar: "CB",
+            phone: "+91 98765 43215",
+            email: "city.beverages@example.com",
+            responseTime: "< 4 hours",
+            established: "2017",
+            description: "All beverage needs under one roof"
+        },
+        {
+            id: 7,
+            name: "Snack World",
+            location: "Buldhana",
+            distance: 10.1,
+            rating: 4.3,
+            reviews: 78,
+            verified: false,
+            products: ["Biscuits", "Namkeen", "Maggi", "Chips", "Cookies"],
+            price: "Competitive",
+            deliveryTime: "36 hrs",
+            minOrder: 1200,
+            avatar: "SW",
+            phone: "+91 98765 43216",
+            email: "snack.world@example.com",
+            responseTime: "< 2 hours",
+            established: "2019",
+            description: "Largest snack distributor in region"
+        },
+        {
+            id: 8,
+            name: "Home Care Supplies",
+            location: "Shegaon",
+            distance: 6.7,
+            rating: 4.8,
+            reviews: 201,
+            verified: true,
+            products: ["Soap", "Shampoo", "Toothpaste", "Detergent", "Dish Soap"],
+            price: "12% below market",
+            deliveryTime: "24 hrs",
+            minOrder: 2000,
+            avatar: "HC",
+            phone: "+91 98765 43217",
+            email: "home.care@example.com",
+            responseTime: "< 1 hour",
+            established: "2016",
+            description: "Premium household products"
+        }
+    ],
+
+    // Available locations for suggestions
+    locations: [
+        "Khamgaon", "Akola", "Buldhana", "Shegaon", "Amravati", "Nagpur",
+        "Pune", "Mumbai", "Nashik", "Aurangabad", "Jalgaon", "Dhule",
+        "Nanded", "Latur", "Solapur", "Kolhapur", "Sangli", "Satara"
+    ],
+
+    currentChatSupplier: null,
+    chatMessages: [],
+
+    /**
+     * Initialize the Supplier Connectivity module
+     */
+    init: function() {
+        console.log('🚚 Initializing Supplier Connectivity Module...');
+        this.bindEvents();
+        this.initializeLocationAutocomplete();
+        this.loadQuickLocationTags();
+    },
+
+    /**
+     * Bind all event listeners
+     */
+    bindEvents: function() {
+        // Find suppliers button
+        $('#findSuppliersBtn').off('click').on('click', (e) => {
+            e.preventDefault();
+            this.findSuppliers();
+        });
+
+        // Quick location tags
+        $('.quick-location-tag').off('click').on('click', (e) => {
+            const location = $(e.currentTarget).data('location');
+            $('#supplierLocation').val(location);
+            this.findSuppliers();
+        });
+
+        // Filter chips
+        $('.filter-chip').off('click').on('click', (e) => {
+            $('.filter-chip').removeClass('active');
+            $(e.currentTarget).addClass('active');
+            this.filterSuppliers($(e.currentTarget).data('filter'));
+        });
+
+        // Reset search
+        $('#resetSearchBtn').off('click').on('click', () => {
+            this.resetSearch();
+        });
+
+        // Refresh suppliers
+        $('#refreshSuppliersBtn').off('click').on('click', (e) => {
+            $(e.currentTarget).find('i').addClass('fa-spin');
+            setTimeout(() => {
+                this.findSuppliers(true);
+                $(e.currentTarget).find('i').removeClass('fa-spin');
+            }, 500);
+        });
+
+        // View all suppliers
+        $('#viewAllSuppliersBtn').off('click').on('click', () => {
+            this.showAllSuppliers();
+        });
+
+        // Chat input
+        $('#sendMessageBtn').off('click').on('click', () => {
+            this.sendChatMessage();
+        });
+
+        $('#chatInput').off('keypress').on('keypress', (e) => {
+            if (e.which === 13) {
+                e.preventDefault();
+                this.sendChatMessage();
+            }
+        });
+
+        // Quick replies
+        $('.quick-reply').off('click').on('click', (e) => {
+            const message = $(e.currentTarget).text();
+            $('#chatInput').val(message);
+            this.sendChatMessage();
+        });
+
+        // Close chat
+        $('#closeChatBtn').off('click').on('click', () => {
+            $('#chatModal').removeClass('show');
+        });
+
+        // Click outside to close chat
+        $(window).off('click').on('click', (e) => {
+            if ($(e.target).hasClass('chat-modal')) {
+                $('#chatModal').removeClass('show');
+            }
+        });
+
+        // ESC key to close chat
+        $(document).off('keydown').on('keydown', (e) => {
+            if (e.key === 'Escape' && $('#chatModal').hasClass('show')) {
+                $('#chatModal').removeClass('show');
+            }
+        });
+    },
+
+    /**
+     * Initialize location autocomplete
+     */
+    initializeLocationAutocomplete: function() {
+        const input = $('#supplierLocation');
+        const suggestions = $('#locationSuggestions');
+
+        input.on('input', () => {
+            const value = input.val().toLowerCase();
+            if (value.length < 1) {
+                suggestions.removeClass('show');
+                return;
+            }
+
+            const matches = this.locations.filter(loc => 
+                loc.toLowerCase().includes(value)
+            ).slice(0, 5);
+
+            if (matches.length > 0) {
+                suggestions.empty();
+                matches.forEach(loc => {
+                    suggestions.append(`
+                        <div class="location-suggestion-item" data-location="${loc}">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${loc}</span>
+                            <small>nearby</small>
+                        </div>
+                    `);
+                });
+                suggestions.addClass('show');
+            } else {
+                suggestions.removeClass('show');
+            }
+        });
+
+        // Handle suggestion click
+        $(document).on('click', '.location-suggestion-item', (e) => {
+            const location = $(e.currentTarget).data('location');
+            input.val(location);
+            suggestions.removeClass('show');
+            this.findSuppliers();
+        });
+
+        // Hide suggestions when clicking outside
+        $(document).on('click', (e) => {
+            if (!$(e.target).closest('.location-input-wrapper').length) {
+                suggestions.removeClass('show');
+            }
+        });
+    },
+
+    /**
+     * Load quick location tags with animation
+     */
+    loadQuickLocationTags: function() {
+        $('.quick-location-tag').each(function(index) {
+            $(this).css({
+                'animation': `fadeIn 0.3s ease ${index * 0.1}s forwards`,
+                'opacity': '0'
+            });
+        });
+    },
+
+    /**
+     * Find suppliers based on selected product and location
+     */
+    findSuppliers: function(keepFilters = false) {
+        const product = $('#supplierProductSelect').val();
+        const location = $('#supplierLocation').val().trim();
+
+        if (!product) {
+            RetailX.showToast('Please select a product', 'warning');
+            $('#supplierProductSelect').focus();
+            return;
+        }
+
+        if (!location) {
+            RetailX.showToast('Please enter a location', 'warning');
+            $('#supplierLocation').focus();
+            return;
+        }
+
+        // Show loading state
+        $('#suppliersGrid').html(this.getLoadingCards(3));
+        $('#suppliersResults').show();
+        $('#noResultsState').hide();
+
+        // Simulate API call
+        setTimeout(() => {
+            // Filter suppliers that provide the selected product and are near the location
+            let filteredSuppliers = this.suppliers.filter(supplier => 
+                supplier.products.includes(product) && 
+                (supplier.location.toLowerCase() === location.toLowerCase() || 
+                 supplier.location.toLowerCase().includes(location.toLowerCase()))
+            );
+
+            // Sort by distance
+            filteredSuppliers.sort((a, b) => a.distance - b.distance);
+
+            if (filteredSuppliers.length > 0) {
+                this.displaySuppliers(filteredSuppliers);
+                $('#supplierCount').text(filteredSuppliers.length);
+                $('#noResultsState').hide();
+                
+                RetailX.showToast(`Found ${filteredSuppliers.length} suppliers`, 'success');
+            } else {
+                $('#suppliersResults').hide();
+                $('#noResultsState').show();
+                RetailX.showToast('No suppliers found for this combination', 'info');
+            }
+        }, 1000);
+    },
+
+    /**
+     * Generate loading cards
+     */
+    getLoadingCards: function(count) {
+        let html = '';
+        for (let i = 0; i < count; i++) {
+            html += `
+                <div class="supplier-card loading">
+                    <div class="supplier-card-header">
+                        <div class="supplier-avatar-large" style="background: #e2e8f0;"></div>
+                        <div class="supplier-info">
+                            <div style="height: 20px; background: #e2e8f0; width: 150px; border-radius: 4px;"></div>
+                            <div style="height: 15px; background: #e2e8f0; width: 100px; border-radius: 4px; margin-top: 8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
+    },
+
+    /**
+     * Display suppliers in the grid
+     */
+    displaySuppliers: function(suppliers) {
+        const grid = $('#suppliersGrid');
+        grid.empty();
+
+        suppliers.forEach(supplier => {
+            const stars = '★'.repeat(Math.floor(supplier.rating)) + '☆'.repeat(5 - Math.floor(supplier.rating));
+            const verifiedClass = supplier.verified ? 'verified' : '';
+            
+            const card = `
+                <div class="supplier-card ${verifiedClass}" data-supplier-id="${supplier.id}">
+                    <div class="supplier-card-header">
+                        <div class="supplier-avatar-large">
+                            <img src="https://ui-avatars.com/api/?name=${supplier.avatar}&background=667eea&color=fff&size=60" alt="${supplier.name}">
+                        </div>
+                        <div class="supplier-info">
+                            <h4>${supplier.name}</h4>
+                            <div class="supplier-rating">
+                                <span class="stars">${stars}</span>
+                                <span class="rating-count">(${supplier.reviews})</span>
+                            </div>
+                            <div class="supplier-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${supplier.location} • ${supplier.distance} km away</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="supplier-details">
+                        <div class="detail-item">
+                            <i class="fas fa-truck"></i>
+                            <span>${supplier.deliveryTime}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-rupee-sign"></i>
+                            <span>Min: ₹${supplier.minOrder}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span>${supplier.responseTime}</span>
+                        </div>
+                    </div>
+
+                    <div class="supplier-products">
+                        <small>Products available:</small>
+                        <div class="product-tags">
+                            ${supplier.products.map(p => `<span class="product-tag">${p}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="supplier-actions">
+                        <button class="dm-btn" onclick="RetailX.SupplierConnectivity.openChat(${supplier.id})">
+                            <i class="fas fa-comment-dots"></i> DM Supplier
+                        </button>
+                        <button class="contact-btn" onclick="RetailX.SupplierConnectivity.contactSupplier(${supplier.id})">
+                            <i class="fas fa-phone-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            grid.append(card);
+        });
+
+        // Animate cards
+        $('.supplier-card').each(function(index) {
+            $(this).css({
+                'animation': `fadeSlideUp 0.5s ease ${index * 0.1}s forwards`,
+                'opacity': '0'
+            });
+        });
+    },
+
+    /**
+     * Filter suppliers based on category
+     */
+    filterSuppliers: function(filter) {
+        const visibleCards = $('.supplier-card:visible');
+        
+        if (filter === 'all') {
+            visibleCards.show();
+        } else if (filter === 'nearby') {
+            visibleCards.each(function() {
+                const distanceText = $(this).find('.supplier-location span').text();
+                const distance = parseFloat(distanceText.split(' ')[0]);
+                $(this).toggle(distance <= 5);
+            });
+        } else if (filter === 'verified') {
+            visibleCards.each(function() {
+                $(this).toggle($(this).hasClass('verified'));
+            });
+        }
+    },
+
+    /**
+     * Open chat with supplier
+     */
+    openChat: function(supplierId) {
+        const supplier = this.suppliers.find(s => s.id === supplierId);
+        if (!supplier) return;
+
+        this.currentChatSupplier = supplier;
+        
+        // Update chat header
+        $('#chatSupplierName').text(supplier.name);
+        $('#chatSupplierLocation').html(`<i class="fas fa-map-marker-alt"></i> ${supplier.location}`);
+        $('#chatSupplierAvatar img').attr('src', 
+            `https://ui-avatars.com/api/?name=${supplier.avatar}&background=667eea&color=fff&size=40`
+        );
+
+        // Reset chat messages
+        this.chatMessages = [];
+        this.renderChatMessages();
+
+        // Show chat modal
+        $('#chatModal').addClass('show');
+        
+        // Focus on input
+        setTimeout(() => $('#chatInput').focus(), 300);
+    },
+
+    /**
+     * Contact supplier via phone
+     */
+    contactSupplier: function(supplierId) {
+        const supplier = this.suppliers.find(s => s.id === supplierId);
+        if (supplier) {
+            RetailX.showToast(`Calling ${supplier.name}...`, 'info');
+            // In a real app, you might trigger a phone call or show contact details
+        }
+    },
+
+    /**
+     * Send chat message
+     */
+    sendChatMessage: function() {
+        const input = $('#chatInput');
+        const message = input.val().trim();
+
+        if (!message) {
+            RetailX.showToast('Please enter a message', 'warning');
+            return;
+        }
+
+        // Add user message
+        this.chatMessages.push({
+            type: 'sent',
+            content: message,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        this.renderChatMessages();
+        input.val('');
+
+        // Simulate reply
+        setTimeout(() => {
+            const replies = [
+                "Thanks for reaching out! I'll check availability and get back to you.",
+                "Yes, we have that in stock. Would you like to place an order?",
+                "We can deliver by tomorrow. Minimum order is ₹1000.",
+                "I'll send you the price list right away.",
+                "Great choice! That's one of our bestselling products."
+            ];
+            
+            const randomReply = replies[Math.floor(Math.random() * replies.length)];
+            
+            this.chatMessages.push({
+                type: 'received',
+                content: randomReply,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            this.renderChatMessages();
+            
+            // Show typing indicator
+            $('#chatMessages').append(`
+                <div class="message received typing-indicator">
+                    <div class="message-avatar">
+                        <img src="https://ui-avatars.com/api/?name=${this.currentChatSupplier.avatar}&background=667eea&color=fff&size=30" alt="Supplier">
+                    </div>
+                    <div class="message-content">
+                        <p><i class="fas fa-ellipsis-h"></i> Typing...</p>
+                    </div>
+                </div>
+            `);
+            $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
+
+            setTimeout(() => {
+                $('.typing-indicator').remove();
+                this.renderChatMessages();
+            }, 1500);
+        }, 1000);
+    },
+
+    /**
+     * Render chat messages
+     */
+    renderChatMessages: function() {
+        const container = $('#chatMessages');
+        container.empty();
+
+        // Add welcome message
+        container.append(`
+            <div class="message welcome-message">
+                <div class="message-avatar">
+                    <img src="https://ui-avatars.com/api/?name=System&background=10b981&color=fff&size=30" alt="System">
+                </div>
+                <div class="message-content">
+                    <p>👋 Connected with ${this.currentChatSupplier?.name || 'Supplier'}. How can I help you?</p>
+                    <span class="message-time">Just now</span>
+                </div>
+            </div>
+        `);
+
+        // Add all messages
+        this.chatMessages.forEach(msg => {
+            container.append(`
+                <div class="message ${msg.type}">
+                    <div class="message-avatar">
+                        <img src="https://ui-avatars.com/api/?name=${msg.type === 'sent' ? 'Me' : this.currentChatSupplier?.avatar}&background=${msg.type === 'sent' ? '764ba2' : '667eea'}&color=fff&size=30" alt="User">
+                    </div>
+                    <div class="message-content">
+                        <p>${this.escapeHtml(msg.content)}</p>
+                        <span class="message-time">${msg.time}</span>
+                    </div>
+                </div>
+            `);
+        });
+
+        // Scroll to bottom
+        container.scrollTop(container[0].scrollHeight);
+    },
+
+    /**
+     * Show all suppliers (reset filters)
+     */
+    showAllSuppliers: function() {
+        $('#supplierProductSelect').val('');
+        $('#supplierLocation').val('Khamgaon');
+        this.displaySuppliers(this.suppliers);
+        $('#suppliersResults').show();
+        $('#noResultsState').hide();
+        $('#supplierCount').text(this.suppliers.length);
+        $('.filter-chip').removeClass('active').first().addClass('active');
+    },
+
+    /**
+     * Reset search form
+     */
+    resetSearch: function() {
+        $('#supplierProductSelect').val('');
+        $('#supplierLocation').val('');
+        $('#suppliersResults').hide();
+        $('#noResultsState').hide();
+        $('#supplierProductSelect').focus();
+    },
+
+    /**
+     * Escape HTML for security
+     */
+    escapeHtml: function(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+};
+
+// Initialize module when supplier page is opened
+$(document).on('click', '.menu-item[data-page="supplier"]', function() {
+    setTimeout(() => {
+        if (typeof RetailX.SupplierConnectivity !== 'undefined') {
+            RetailX.SupplierConnectivity.init();
+        }
+    }, 200);
+});
+
+// Update navigation to replace store overview with supplier
+$(document).ready(function() {
+    // Replace the menu item
+    $('.menu-item[data-page="overview"]').attr('data-page', 'supplier');
+    $('.menu-item[data-page="supplier"] span').text('Supplier Connectivity');
 });
