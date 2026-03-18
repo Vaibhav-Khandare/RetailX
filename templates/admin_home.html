@@ -17,6 +17,167 @@
     <link rel="stylesheet" href="{% static 'css/admin_home.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Additional Notification Panel Styles -->
+    <style>
+        /* Enhanced Notification Panel */
+        .notification-panel {
+            width: 360px;
+            max-height: 480px;
+            right: 0;
+            left: auto;
+            transform: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-light);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .notification-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .mark-all-read {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .mark-all-read:hover {
+            background: var(--hover-bg);
+        }
+        
+        .notification-list {
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        
+        .notification-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .notification-item:hover {
+            background: var(--hover-bg);
+        }
+        
+        .notification-item.unread {
+            background: rgba(67, 97, 238, 0.05);
+        }
+        
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .notification-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        
+        .notification-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+        }
+        
+        .reorder-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .reorder-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .notification-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+        }
+        
+        .notification-footer a {
+            color: var(--primary);
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        
+        .notification-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Scrollbar styling */
+        .notification-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .notification-list::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        .notification-list::-webkit-scrollbar-thumb {
+            background: var(--border-dark);
+            border-radius: 3px;
+        }
+        
+        .notification-list::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
+        }
+    </style>
+    
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -123,18 +284,18 @@
                     <div class="notification-container">
                         <button class="notification-btn" onclick="toggleNotifications()">
                             <i class="fas fa-bell"></i>
-                            <span class="notification-count">3</span>
+                            <span class="notification-count">0</span>
                         </button>
                         <div class="notification-panel" id="notificationPanel">
                             <div class="notification-header">
-                                <h4><i class="fas fa-bell" style="color: var(--primary); margin-right: 8px;"></i>Notifications</h4>
+                                <h4><i class="fas fa-bell" style="color: var(--primary); margin-right: 8px;"></i>Low Stock Alerts</h4>
                                 <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
                             </div>
                             <div class="notification-list" id="notificationList">
                                 <!-- Notifications loaded via AJAX -->
                             </div>
                             <div class="notification-footer">
-                                <a href="#" onclick="viewAllNotifications()">View all notifications</a>
+                                <!-- <a href="#" onclick="viewAllNotifications()">View all low stock items</a> -->
                             </div>
                         </div>
                     </div>
@@ -295,7 +456,7 @@
                 <div class="action-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="userSearch" placeholder="Search by name, email or username...">
+                        <input type="text" id="userSearch" placeholder="Search by name, email or username..." onkeyup="searchUsers()">
                     </div>
                     <div class="filter-options">
                         <select id="userFilter" class="filter-select" onchange="filterUsers()">
@@ -483,6 +644,144 @@
     <!-- ========== SCRIPTS ========== -->
     <script src="{% static 'js/admin_home.js' %}"></script>
     <script>
+        // Override loadNotifications to fetch low stock alerts from your backend
+        window.loadNotifications = function() {
+            fetch('/api/low-stock/')   // Use your exact endpoint
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('notificationList');
+                    const badge = document.querySelector('.notification-count');
+                    if (!list) return;
+                    
+                    list.innerHTML = '';
+                    
+                    // Handle error response
+                    if (!data.success) {
+                        list.innerHTML = `
+                            <div class="notification-item" style="justify-content: center; padding: 30px 20px;">
+                                <div style="text-align: center; color: var(--text-tertiary);">
+                                    <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                    <p>Unable to load alerts. Please try again later.</p>
+                                </div>
+                            </div>
+                        `;
+                        if (badge) {
+                            badge.textContent = '0';
+                            badge.style.display = 'none';
+                        }
+                        return;
+                    }
+                    
+                    const lowStock = data.low_stock || [];
+                    
+                    if (lowStock.length === 0) {
+                        // Empty state
+                        list.innerHTML = `
+                            <div class="notification-item" style="justify-content: center; padding: 30px 20px;">
+                                <div style="text-align: center;">
+                                    <i class="fas fa-check-circle" style="font-size: 2rem; color: #10b981; margin-bottom: 10px;"></i>
+                                    <p style="color: var(--text-secondary);">All products are well stocked!</p>
+                                </div>
+                            </div>
+                        `;
+                        if (badge) {
+                            badge.textContent = '0';
+                            badge.style.display = 'none';
+                        }
+                        return;
+                    }
+                    
+                    // Update badge
+                    if (badge) {
+                        badge.textContent = lowStock.length;
+                        badge.style.display = 'flex';
+                    }
+                    
+                    // Populate notifications
+                    lowStock.forEach(item => {
+                        const notification = document.createElement('div');
+                        notification.className = 'notification-item unread';
+                        notification.innerHTML = `
+                            <div class="notification-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">${escapeHtml(item.name)}</div>
+                                <div class="notification-desc">
+                                    Current stock: <strong>${item.stock}</strong> (Threshold: ${item.threshold})
+                                </div>
+                                <div class="notification-meta">
+                                    <span>Just now</span>
+                                    <button class="reorder-btn" onclick="reorderProduct('${escapeHtml(item.sku)}')">Reorder</button>
+                                </div>
+                            </div>
+                        `;
+                        list.appendChild(notification);
+                    });
+                })
+                .catch(error => {
+                    console.error('Failed to load low stock alerts:', error);
+                    const list = document.getElementById('notificationList');
+                    if (list) {
+                        list.innerHTML = `
+                            <div class="notification-item" style="justify-content: center; padding: 30px 20px;">
+                                <div style="text-align: center; color: var(--text-tertiary);">
+                                    <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                    <p>Unable to load alerts. Please try again later.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+        };
+
+        // Helper: escape HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Reorder placeholder (uses SKU as identifier)
+        window.reorderProduct = function(sku) {
+            console.log('Reorder product with SKU:', sku);
+            RetailX.showToast('Reorder initiated for product SKU: ' + sku, 'info');
+            // Implement your actual reorder logic here
+        };
+
+        // Mark all as read (just closes panel, alerts persist)
+        window.markAllAsRead = function() {
+            document.getElementById('notificationPanel')?.classList.remove('show');
+            RetailX.showToast('Low stock alerts are persistent until resolved', 'info');
+        };
+
+        // View all low stock (placeholder)
+        window.viewAllNotifications = function() {
+            document.getElementById('notificationPanel')?.classList.remove('show');
+            RetailX.showToast('View all low stock - feature coming soon', 'info');
+        };
+
+        // Load notifications on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (typeof window.loadNotifications === 'function') {
+                    window.loadNotifications();
+                }
+            }, 500);
+        });
+
+        // Auto-refresh low stock alerts every 60 seconds
+        setInterval(() => {
+            if (typeof window.loadNotifications === 'function') {
+                window.loadNotifications();
+            }
+        }, 60000);
+
+        // Existing festival form handler (unchanged)
         document.getElementById('festivalSearchForm')?.addEventListener('submit', function(e) {
             const selectValue = document.getElementById('festival_select').value;
             const dateValue = document.getElementById('festival_date').value;
@@ -499,121 +798,5 @@
         });
     </script>
 </body>
+
 </html>
-
-<!-- 
-<section id="analytics" class="content-section {% if detected_festival %}active{% endif %}">
-                 Hidden data elements for JavaScript
-                <div id="top-products-data" data-products='{{ top_products|safe }}' style="display: none;"></div>
-                <div id="least-products-data" data-products='{{ least_products|safe }}' style="display: none;"></div>
-                <div id="detected-festival" data-festival="{{ detected_festival|default:'' }}" style="display: none;"></div>
-
-                <div class="analytics-grid">
-                     FESTIVAL SEARCH CARD
-                    <div class="analytics-card glass">
-                        <div class="card-header">
-                            <h3><i class="fas fa-search"></i> Festival Sales Prediction</h3>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted">
-                                Choose a festival or enter a date to predict demand
-                            </p>
-
-                            <form method="get" action="" id="festivalSearchForm">
-                                 Festival Dropdown 
-                                <div class="form-group">
-                                    <label>Select Festival</label>
-                                    <div class="select-wrapper">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <select name="festival" id="festival_select" class="filter-select">
-                                            <option value="">-- Choose a festival --</option>
-                                            {% for festival in festival_choices %}
-                                                <option value="{{ festival }}" {% if detected_festival == festival %}selected{% endif %}>
-                                                    {{ festival }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                 OR Divider 
-                                <div class="or-divider">
-                                    <span>OR</span>
-                                </div>
-
-                                <!-- Date Input
-                                <div class="form-group">
-                                    <label>Enter Date</label>
-                                    <div class="input-with-icon">
-                                        <i class="fas fa-calendar"></i>
-                                        <input type="text" name="festival_date" id="festival_date"
-                                               placeholder="DD-MM-YYYY (e.g., 25-12-2025)"
-                                               class="filter-select">
-                                    </div>
-                                </div>
-
-                                <input type="hidden" name="festival" id="festival_hidden" value="{{ detected_festival|default:'' }}">
-
-                                <button type="submit" class="btn-primary" style="width: 100%;">
-                                    <i class="fas fa-search"></i> Predict Sales
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- FESTIVAL SALES FORECAST CARD 
-                    <div class="analytics-card full glass">
-                        <div class="card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Festival Sales Forecast</h3>
-                        </div>
-
-                        <div class="card-body">
-                            {% if festival_error %}
-                                <div class="ux-error">
-                                    <i class="fas fa-exclamation-triangle"></i> {{ festival_error }}
-                                </div>
-                            {% endif %}
-
-                            <!-- Festival Banner 
-                            <div class="festival-banner" id="festival-banner" style="{% if not detected_festival %}display: none;{% endif %}">
-                                <div class="banner-content">
-                                    <i class="fas fa-glass-cheers"></i>
-                                    <div>
-                                        <h2 id="festival-name">{{ detected_festival|default:'' }}</h2>
-                                        <p>Expected Sales Analysis</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Charts Grid 
-                            <div class="charts-grid" id="festival-charts" style="{% if not detected_festival %}display: none;{% endif %}">
-                                <div class="chart-card">
-                                    <h4 class="chart-title fire">
-                                        <i class="fas fa-fire"></i> Top Selling Products
-                                    </h4>
-                                    <div class="chart-container">
-                                        <canvas id="topSellingChart"></canvas>
-                                    </div>
-                                </div>
-
-                                <div class="chart-card">
-                                    <h4 class="chart-title cool">
-                                        <i class="fas fa-snowflake"></i> Least Selling Products
-                                    </h4>
-                                    <div class="chart-container">
-                                        <canvas id="leastSellingChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Empty State 
-                            <div class="empty-state" id="festival-empty" style="{% if detected_festival %}display: none;{% endif %}">
-                                <i class="fas fa-chart-pie"></i>
-                                <h4>No Prediction Yet</h4>
-                                <p>Select a festival or enter a date to view forecast</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-         -->
