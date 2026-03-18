@@ -117,17 +117,17 @@
             </div>
             <div class="top-nav-actions">
                 <!-- Quick Stats -->
+                <!-- Quick Stats - Update in top-nav-actions section -->
                 <div class="kpi-pills">
                     <div class="pill">
                         <span>Today's Revenue</span>
-                        <strong id="todayRevenue">₹4,290</strong>
+                        <strong id="todayRevenuePill">{{ formatted_today_revenue|default:'₹0.00' }}</strong>
                     </div>
                     <div class="pill">
-                        <span>Orders</span>
-                        <strong id="onlineOrders">127</strong>
+                        <span>Bills</span>
+                        <strong id="billsCountPill">{{ today_bill_count|default:'0' }}</strong>
                     </div>
-                </div>
-                <!-- Action Icons -->
+                </div>Action Icons -->
                 <div class="action-icons">
                     <button class="icon-btn" id="notificationsBtn">
                         <i class="fas fa-bell"></i>
@@ -153,14 +153,26 @@
             <div class="page active" id="dashboard-page">
                 <!-- KPI CARDS -->
                 <div class="kpi-container">
+                    <!-- KPI CARDS - Update the Total Revenue card -->
                     <div class="kpi-card">
                         <div class="kpi-header">
-                            <h3>Total Revenue</h3>
+                            <h3>Today's Revenue</h3>
                             <i class="fas fa-rupee-sign"></i>
                         </div>
-                        <div class="kpi-value" id="totalRevenue">₹156,780</div>
-                        <div class="kpi-trend positive">
-                            <i class="fas fa-arrow-up"></i> 12.5% from last month
+                        <div class="kpi-value" id="todayRevenue">
+                            {{ formatted_today_revenue|default:'₹0.00' }}
+                        </div>
+                        <div class="kpi-trend {{ revenue_trend_direction }}" id="revenueTrend">
+                            {% if revenue_trend > 0 %}
+                            <i class="fas fa-arrow-up"></i> {{ revenue_trend }}% from yesterday
+                            {% elif revenue_trend < 0 %} <i class="fas fa-arrow-down"></i> {{ revenue_trend|cut:'-' }}%
+                                from yesterday
+                                {% else %}
+                                <i class="fas fa-minus"></i> No change from yesterday
+                                {% endif %}
+                        </div>
+                        <div class="kpi-footer">
+                            <span id="billCount">{{ today_bill_count|default:'0' }}</span> bills today
                         </div>
                     </div>
 

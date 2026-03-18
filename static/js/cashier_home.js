@@ -2118,3 +2118,302 @@ $(document).ready(function () {
 if (document.readyState === 'complete') {
     setTimeout(RetailX.Utils.hideLoader, 500);
 }
+
+// ============================================
+// CASHIER POS - BILL SAVING FUNCTIONALITY
+// ============================================
+
+// This function should be called when the cashier completes a sale
+// and clicks the "Generate Bill" or "Complete Sale" button
+
+async function completeSaleAndSaveBill() {
+    
+    // Show loading indicator
+    showLoading('Saving bill...');
+    
+    try {
+        // Step 1: Get cart items from your POS cart
+        // Assuming you have a cart array in your POS
+        const cartItems = getCartItems(); // Your function to get cart items
+        
+        if (!cartItems || cartItems.length === 0) {
+            showError('Cart is empty');
+            return;
+        }
+        
+        // Step 2: Calculate total
+        const total = cartItems.reduce((sum, item) => sum + (item.subtotal || item.price * item.quantity), 0);
+        
+        // Step 3: Get payment details
+        const paymentMethod = document.getElementById('paymentMethod')?.value || 'cash';
+        const cashGiven = parseFloat(document.getElementById('cashGiven')?.value) || total;
+        const changeReturned = cashGiven - total;
+        
+        // Step 4: Prepare bill data
+        const billData = {
+            items: cartItems.map(item => ({
+                sku: item.sku || '',
+                name: item.name || item.product_name || 'Product',
+                quantity: item.quantity || 1,
+                price: parseFloat(item.price) || 0,
+                subtotal: parseFloat(item.subtotal) || (item.quantity * item.price) || 0
+            })),
+            total: total,
+            payment_method: paymentMethod,
+            cash_given: cashGiven,
+            change_returned: changeReturned
+        };
+        
+        console.log('Saving bill:', billData); // For debugging
+        
+        // Step 5: Send to server
+        const response = await fetch('/api/save-bill/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(), // Your function to get CSRF token
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(billData)
+        });
+        
+        // Step 6: Parse response
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to save bill');
+        }
+        
+        // Step 7: Handle successful bill save
+        console.log('Bill saved successfully:', result);
+        
+        // Hide loading
+        hideLoading();
+        
+        // Show success message
+        showSuccess('Bill saved successfully!');
+        
+        // Generate and show receipt
+        showReceipt(result.bill, result.receipt);
+        
+        // Clear the cart for next customer
+        clearCart();
+        
+        // Optional: Print receipt
+        printReceipt(result.bill, result.receipt);
+        
+        // Update local stats if needed
+        updateLocalStats(result.bill);
+        
+    } catch (error) {
+        console.error('Error saving bill:', error);
+        hideLoading();
+        showError('Failed to save bill: ' + error.message);
+    }
+}
+
+// Helper function to get cart items - IMPLEMENT THIS BASED ON YOUR POS STRUCTURE
+function getCartItems() {
+    // This depends on how you store cart items in your POS
+    // Example 1: If using an array
+    if (window.cartItems && window.cartItems.length > 0) {
+        return window.cartItems;
+    }
+    
+    // Example 2: If using DOM elements
+    const cartRows = document.querySelectorAll('#cart-table tbody tr');
+    if (cartRows.length > 0) {
+        const items = [];
+        cartRows.forEach(row => {
+            items.push({
+                sku: row.dataset.sku,
+                name: row.querySelector('.product-name')?.textContent,
+                quantity: parseInt(row.querySelector('.quantity')?.textContent),
+                price: parseFloat(row.querySelector('.price')?.textContent),
+                subtotal: parseFloat(row.querySelector('.subtotal')?.textContent)
+            });
+        });
+        return items;
+    }
+    
+    // Example 3: Mock data for testing
+    return [
+        {
+            sku: 'SPRT012',
+            name: 'Ab Roller',
+            quantity: 2,
+            price: 16.99,
+            subtotal: 33.98
+        }
+    ];
+}
+
+// Helper function to get CSRF token
+function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
+    }
+    
+    // Also check for CSRF token in meta tag
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) {
+        return meta.getAttribute('content');
+    }
+    
+    return '';
+}
+
+// UI Helper Functions
+function showLoading(message) {
+    // Create or show loading overlay
+    let loader = document.getElementById('bill-loader');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'bill-loader';
+        loader.className = 'loading-overlay';
+        loader.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-message"></div>
+        `;
+        document.body.appendChild(loader);
+    }
+    loader.querySelector('.loading-message').textContent = message || 'Processing...';
+    loader.style.display = 'flex';
+}
+
+function hideLoading() {
+    const loader = document.getElementById('bill-loader');
+    if (loader) {
+        loader.style.display = 'none';
+    }
+}
+
+function showSuccess(message) {
+    // Show toast or alert
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    } else {
+        alert('Success: ' + message);
+    }
+}
+
+function showError(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message
+        });
+    } else {
+        alert('Error: ' + message);
+    }
+}
+
+function showReceipt(bill, receipt) {
+    // Create receipt modal or print area
+    const receiptHTML = `
+        <div class="receipt-modal">
+            <div class="receipt-content">
+                <h2>${receipt.header}</h2>
+                <p>Bill #: ${bill.bill_number}</p>
+                <p>Date: ${bill.date} ${bill.time}</p>
+                <p>Cashier: ${bill.cashier}</p>
+                <hr>
+                <table class="receipt-items">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${receipt.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>₹${item.price.toFixed(2)}</td>
+                                <td>₹${item.subtotal.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <hr>
+                <h3>Total: ${bill.formatted_total}</h3>
+                <p>${receipt.footer}</p>
+                <button onclick="closeReceipt()">Close</button>
+                <button onclick="window.print()">Print</button>
+            </div>
+        </div>
+    `;
+    
+    let modal = document.getElementById('receipt-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'receipt-modal';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = receiptHTML;
+    modal.style.display = 'block';
+}
+
+function closeReceipt() {
+    const modal = document.getElementById('receipt-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function clearCart() {
+    // Clear your cart based on your implementation
+    if (window.cartItems) {
+        window.cartItems = [];
+    }
+    
+    // Clear cart table if exists
+    const cartBody = document.querySelector('#cart-table tbody');
+    if (cartBody) {
+        cartBody.innerHTML = '<tr><td colspan="5" class="empty-cart">Cart is empty</td></tr>';
+    }
+    
+    // Update total display
+    const totalDisplay = document.getElementById('cart-total');
+    if (totalDisplay) {
+        totalDisplay.textContent = '₹0.00';
+    }
+}
+
+function updateLocalStats(bill) {
+    // Update any local statistics
+    const todayTotal = localStorage.getItem('todayTotal') || '0';
+    const newTotal = parseFloat(todayTotal) + bill.total;
+    localStorage.setItem('todayTotal', newTotal.toFixed(2));
+}
+
+// Attach to your "Complete Sale" button
+document.addEventListener('DOMContentLoaded', function() {
+    const completeSaleBtn = document.getElementById('complete-sale-btn');
+    if (completeSaleBtn) {
+        completeSaleBtn.addEventListener('click', completeSaleAndSaveBill);
+    }
+    
+    // Also handle Enter key or other shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter or Cmd+Enter to complete sale
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            completeSaleAndSaveBill();
+        }
+    });
+});

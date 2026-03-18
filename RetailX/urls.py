@@ -110,5 +110,11 @@ urlpatterns = [
     path('api/update_stock/', views.update_stock, name='update_stock'),
     path('api/low-stock/', views.low_stock_alert, name='low-stock'),
     path('api/inventory-value/', views.get_inventory_value, name='get_inventory_value'),
+    path('api/save-bill/', views.save_bill, name='save_bill'),
+    path('api/today-revenue/', views.get_today_revenue, name='today_revenue'),
+    path('api/save-bill/', views.save_bill, name='save_bill'),
+    path('api/today-revenue/', views.get_today_revenue, name='today_revenue'),
+    path('api/today-bills/', views.get_today_bills, name='today_bills'),
+    path('api/inventory-value/', views.get_inventory_value, name='inventory_value'),
 
 ]

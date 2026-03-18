@@ -39,6 +39,8 @@ import numpy as np
 from prophet import Prophet
 import joblib
 
+from datetime import datetime, timedelta, date as date_type
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
@@ -62,6 +64,16 @@ from DatasetDB.models import Cashier_Product
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
+
+from DatasetDB.models import Bill, BillItem
+from django.utils import timezone
+import random
+import string
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+import logging
 
 # ============================================
 # CONSOLE COLOR CODES
@@ -115,6 +127,340 @@ def print_header(msg):
 print_banner()
 
 
+logger = logging.getLogger(__name__)
+
+# ============================================
+# BILL GENERATION AND REVENUE FUNCTIONS
+# ============================================
+
+def generate_bill_number():
+    """
+    Generate a unique bill number in format: BILL-YYYYMMDD-XXXX
+    Example: BILL-20240318-AB12
+    """
+    # Get current date in YYYYMMDD format
+    date_str = timezone.now().strftime('%Y%m%d')
+    
+    # Generate 4 random characters (uppercase letters and digits)
+    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    
+    # Combine to create unique bill number
+    bill_number = f"BILL-{date_str}-{random_str}"
+    
+    # Check if this bill number already exists (very rare but possible)
+    while Bill.objects.filter(bill_number=bill_number).exists():
+        random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        bill_number = f"BILL-{date_str}-{random_str}"
+    
+    return bill_number
+
+
+@csrf_exempt
+@require_POST
+def save_bill(request):
+    """
+    API endpoint to save a completed bill from cashier POS
+    
+    Expected JSON format:
+    {
+        "items": [
+            {
+                "sku": "SPRT012",
+                "name": "Ab Roller",
+                "quantity": 2,
+                "price": 16.99,
+                "subtotal": 33.98
+            },
+            {
+                "sku": "ELEC001",
+                "name": "Headphones",
+                "quantity": 1,
+                "price": 49.99,
+                "subtotal": 49.99
+            }
+        ],
+        "total": 83.97,
+        "payment_method": "cash",
+        "cash_given": 100.00,
+        "change_returned": 16.03
+    }
+    
+    Returns:
+        JSON response with bill details or error message
+    """
+    
+    # Log the request for debugging
+    logger.info(f"Save bill request received")
+    
+    try:
+        # Step 1: Parse the JSON data from request body
+        data = json.loads(request.body)
+        logger.debug(f"Bill data: {data}")
+        
+        # Step 2: Verify cashier is logged in
+        cashier_username = request.session.get('cashier_username')
+        if not cashier_username:
+            logger.warning("Unauthorized bill save attempt - no cashier in session")
+            return JsonResponse({
+                'success': False,
+                'error': 'Unauthorized. Please login as cashier.'
+            }, status=401)
+        
+        # Step 3: Validate required fields
+        required_fields = ['items', 'total', 'payment_method']
+        for field in required_fields:
+            if field not in data:
+                logger.error(f"Missing required field: {field}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }, status=400)
+        
+        # Step 4: Validate items
+        items = data.get('items', [])
+        if not items or len(items) == 0:
+            logger.error("No items in bill")
+            return JsonResponse({
+                'success': False,
+                'error': 'Bill must contain at least one item'
+            }, status=400)
+        
+        # Step 5: Calculate total from items to verify
+        calculated_total = sum(item.get('subtotal', 0) for item in items)
+        provided_total = float(data.get('total', 0))
+        
+        # Allow small floating point differences (1 paisa)
+        if abs(calculated_total - provided_total) > 0.01:
+            logger.error(f"Total mismatch: calculated={calculated_total}, provided={provided_total}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Total amount does not match sum of items'
+            }, status=400)
+        
+        # Step 6: Generate unique bill number
+        bill_number = generate_bill_number()
+        logger.info(f"Generated bill number: {bill_number}")
+        
+        # Step 7: Create the bill in database
+        bill = Bill.objects.create(
+            bill_number=bill_number,
+            cashier_username=cashier_username,
+            total_amount=provided_total,
+            item_count=len(items),
+            payment_method=data.get('payment_method', 'cash'),
+            created_at=timezone.now()
+        )
+        logger.info(f"Bill created with ID: {bill.id}")
+        
+        # Step 8: Save individual bill items
+        items_saved = 0
+        for item in items:
+            try:
+                BillItem.objects.create(
+                    bill=bill,
+                    product_name=item.get('name', 'Unknown Product'),
+                    sku=item.get('sku', ''),
+                    quantity=item.get('quantity', 1),
+                    price=float(item.get('price', 0)),
+                    subtotal=float(item.get('subtotal', 0))
+                )
+                items_saved += 1
+            except Exception as e:
+                logger.error(f"Error saving item {item}: {str(e)}")
+                # Continue saving other items even if one fails
+        
+        logger.info(f"Saved {items_saved} out of {len(items)} items")
+        
+        # Step 9: Update stock quantities (call your existing update_stock function)
+        try:
+            # Prepare stock update items
+            stock_items = []
+            for item in items:
+                if item.get('sku'):
+                    stock_items.append({
+                        'sku': item.get('sku'),
+                        'quantity': item.get('quantity', 1)
+                    })
+            
+            if stock_items:
+                # Create a mock request for update_stock
+                class MockRequest:
+                    def __init__(self, data):
+                        self.body = json.dumps({'items': data}).encode('utf-8')
+                
+                mock_req = MockRequest(stock_items)
+                
+                # Call your existing update_stock function
+                update_stock(mock_req)
+                logger.info(f"Stock updated successfully for {len(stock_items)} items")
+            
+        except Exception as e:
+            logger.error(f"Error updating stock: {str(e)}")
+            # Don't fail the bill save if stock update fails
+        
+        # Step 10: Prepare response data
+        response_data = {
+            'success': True,
+            'message': 'Bill saved successfully',
+            'bill': {
+                'bill_number': bill.bill_number,
+                'total': float(bill.total_amount),
+                'formatted_total': f"₹{bill.total_amount:,.2f}",
+                'item_count': bill.item_count,
+                'cashier': bill.cashier_username,
+                'time': bill.created_at.strftime('%H:%M:%S'),
+                'date': bill.created_at.strftime('%Y-%m-%d')
+            },
+            'receipt': {
+                'header': 'RETAILX STORE',
+                'footer': 'Thank you for shopping!',
+                'items': items
+            }
+        }
+        
+        logger.info(f"Bill {bill_number} saved successfully")
+        return JsonResponse(response_data)
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in request: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON format'
+        }, status=400)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error saving bill: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_GET
+def get_today_revenue(request):
+    """
+    Calculate total revenue from bills created today (12:00 AM to 11:59 PM)
+    """
+    try:
+        # Get today's date range
+        today = timezone.now().date()
+        
+        # Get all bills created today
+        today_bills = Bill.objects.filter(created_at__date=today)
+        
+        # Calculate totals
+        total_revenue = today_bills.aggregate(total=Sum('total_amount'))['total'] or 0
+        bill_count = today_bills.count()
+        
+        # Get yesterday's revenue for comparison
+        yesterday = today - timedelta(days=1)
+        yesterday_revenue = Bill.objects.filter(
+            created_at__date=yesterday
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        # Calculate trend percentage
+        if yesterday_revenue > 0:
+            trend = ((total_revenue - yesterday_revenue) / yesterday_revenue) * 100
+        else:
+            trend = 100 if total_revenue > 0 else 0
+        
+        # Get payment method breakdown
+        payment_methods = today_bills.values('payment_method').annotate(
+            total=Sum('total_amount')
+        )
+        
+        payment_breakdown = {}
+        for method in payment_methods:
+            payment_breakdown[method['payment_method']] = float(method['total'])
+        
+        # Get last 7 days trend for chart
+        last_7_days = []
+        for i in range(6, -1, -1):
+            date = today - timedelta(days=i)
+            day_revenue = Bill.objects.filter(
+                created_at__date=date
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            last_7_days.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'revenue': float(day_revenue)
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'today': {
+                'revenue': float(total_revenue),
+                'formatted_revenue': f"₹{total_revenue:,.2f}",
+                'bill_count': bill_count,
+                'average_bill_value': float(total_revenue / bill_count) if bill_count > 0 else 0,
+                'trend_percentage': round(trend, 1),
+                'trend_direction': 'up' if trend >= 0 else 'down'
+            },
+            'payment_breakdown': payment_breakdown,
+            'last_7_days': last_7_days
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_today_revenue: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_GET
+def get_today_bills(request):
+    """
+    API endpoint to get today's bills for the cashier dashboard
+    """
+    try:
+        today = timezone.now().date()
+        cashier_username = request.session.get('cashier_username')
+        
+        # Get today's bills
+        bills = Bill.objects.filter(
+            created_at__date=today
+        ).order_by('-created_at')
+        
+        # If cashier is specified, filter by cashier
+        if cashier_username:
+            bills = bills.filter(cashier_username=cashier_username)
+        
+        # Calculate totals
+        total_sales = bills.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_bills = bills.count()
+        total_items = bills.aggregate(total=Sum('item_count'))['total'] or 0
+        
+        # Prepare bills data
+        bills_data = []
+        for bill in bills[:10]:  # Last 10 bills
+            bills_data.append({
+                'bill_number': bill.bill_number,
+                'time': bill.created_at.strftime('%H:%M:%S'),
+                'total': float(bill.total_amount),
+                'formatted_total': f"₹{bill.total_amount:,.2f}",
+                'item_count': bill.item_count,
+                'payment_method': bill.payment_method
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'total_sales': float(total_sales),
+            'formatted_total_sales': f"₹{total_sales:,.2f}",
+            'total_bills': total_bills,
+            'total_items': total_items,
+            'recent_bills': bills_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_today_bills: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 @login_required
@@ -149,6 +495,7 @@ def get_inventory_value(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
 
 # ============================================
 # OTP STORAGES
@@ -1639,7 +1986,6 @@ def cashier_home(request):
     return render(request, 'cashier_home.html', context)
 
 
-@never_cache
 def manager_home(request):
     if not request.session.get('manager_username'):
         return redirect('/')

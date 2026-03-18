@@ -3887,3 +3887,108 @@ function showToast(message, type = 'info') {
         }, 3000);
     }
 }
+const RevenueManager = {
+    revenueElement: document.getElementById('todayRevenue'),
+    trendElement: document.querySelector('#revenueTrend'),
+    billCountElement: document.getElementById('billCount'),
+    
+    init: function() {
+        this.fetchTodayRevenue();
+        // Refresh every 30 seconds
+        setInterval(() => this.fetchTodayRevenue(), 30000);
+    },
+    
+    fetchTodayRevenue: function() {
+        fetch('/api/today-revenue/', {
+            headers: { 
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.updateRevenue(data);
+            }
+        })
+        .catch(error => console.error('Error fetching revenue:', error));
+    },
+    
+    updateRevenue: function(data) {
+        if (this.revenueElement) {
+            // Add animation class
+            this.revenueElement.classList.add('value-updated');
+            this.revenueElement.textContent = data.today.formatted_revenue;
+            
+            // Remove animation after it completes
+            setTimeout(() => {
+                this.revenueElement.classList.remove('value-updated');
+            }, 500);
+        }
+        
+        if (this.billCountElement) {
+            this.billCountElement.textContent = data.today.bill_count;
+        }
+        
+        if (this.trendElement) {
+            const trend = data.today.trend_percentage;
+            const direction = data.today.trend_direction;
+            this.trendElement.className = `kpi-trend ${direction === 'up' ? 'positive' : 'negative'}`;
+            this.trendElement.innerHTML = `
+                <i class="fas fa-arrow-${direction}"></i> 
+                ${Math.abs(trend)}% from yesterday
+            `;
+        }
+        
+        // Update top nav pill if it exists
+        const revenuePill = document.getElementById('todayRevenuePill');
+        if (revenuePill) {
+            revenuePill.textContent = data.today.formatted_revenue;
+        }
+        
+        const billsPill = document.getElementById('billsCountPill');
+        if (billsPill) {
+            billsPill.textContent = data.today.bill_count;
+        }
+    }
+};
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    RevenueManager.init();
+});
+
+// Add refresh button handler
+document.getElementById('refreshBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    RevenueManager.fetchTodayRevenue();
+    
+    // Show toast notification
+    showToast('Refreshing revenue data...', 'info');
+});
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.textContent = message;
+        toast.className = `toast toast-${type} show`;
+        setTimeout(() => {
+            toast.className = toast.className.replace('show', '');
+        }, 3000);
+    }
+}
+
+// Add CSS for value update animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes valuePulse {
+        0% { transform: scale(1); color: #4361ee; }
+        50% { transform: scale(1.05); color: #3a0ca3; }
+        100% { transform: scale(1); color: inherit; }
+    }
+    .value-updated {
+        animation: valuePulse 0.5s ease-in-out;
+    }
+`;
+document.head.appendChild(style);
