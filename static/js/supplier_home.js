@@ -1,4 +1,4 @@
-// ========== SUPPLIER DASHBOARD JAVASCRIPT ==========
+// ========== SUPPLIER DASHBOARD JAVASCRIPT (WITH MOCK DATA) ==========
 
 // ========== GLOBAL VARIABLES ==========
 let currentProductId = null;
@@ -21,6 +21,17 @@ const themeToggle = document.getElementById('themeToggle');
 const body = document.body;
 const logoutBtn = document.getElementById('logoutBtn');
 
+// ========== HELPER FUNCTION (ESCAPE HTML) ==========
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
     // Set current date
@@ -28,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Load initial data
+    // Load mock data
     loadDashboardStats();
     loadNotifications();
     loadManagers();
@@ -41,11 +52,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Theme
     initTheme();
 
-    // Refresh notifications every 30 seconds
-    setInterval(loadNotifications, 30000);
-    // Refresh messages every 10 seconds if a manager is selected
+    // Refresh mock data periodically (just for demo)
     setInterval(() => {
-        if (currentManagerId) loadMessages(currentManagerId);
+        if (document.getElementById('orders').classList.contains('active')) {
+            // In orders tab, maybe refresh messages
+            if (currentManagerId) loadMessages(currentManagerId);
+        }
     }, 10000);
 });
 
@@ -86,6 +98,17 @@ function setupEventListeners() {
     // Message form
     document.getElementById('messageForm')?.addEventListener('submit', sendMessage);
 
+    // Quick reply chips
+    document.querySelectorAll('.quick-reply-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            const message = this.getAttribute('data-message');
+            if (message) {
+                document.getElementById('messageText').value = message;
+                document.getElementById('sendMessageBtn').click();
+            }
+        });
+    });
+
     // Password change form
     document.getElementById('passwordForm')?.addEventListener('submit', changePassword);
 
@@ -122,7 +145,7 @@ function switchTab(tabId) {
         activeTab.classList.add('active');
         activePane.classList.add('active');
 
-        // Refresh data when switching tabs
+        // Refresh data when switching tabs (mock)
         if (tabId === 'orders') {
             loadManagers();
         } else if (tabId === 'products') {
@@ -164,7 +187,7 @@ function toggleTheme() {
     }
 }
 
-// ========== NOTIFICATIONS ==========
+// ========== NOTIFICATIONS (MOCK) ==========
 function toggleNotifications(e) {
     e.stopPropagation();
     const dropdown = document.getElementById('notificationDropdown');
@@ -183,15 +206,14 @@ function closeNotificationsOnClickOutside(e) {
 }
 
 async function loadNotifications() {
-    try {
-        const response = await fetch('/api/supplier/notifications/');
-        const data = await response.json();
-        notifications = data.notifications || [];
-        updateNotificationBadge(data.unread_count || 0);
-        renderNotifications(notifications);
-    } catch (error) {
-        console.error('Error loading notifications:', error);
-    }
+    // Mock notifications
+    notifications = [
+        { id: 1, title: 'New Order', message: 'You have a new order #1234', is_read: false, created_at: '2 min ago' },
+        { id: 2, title: 'Payment Received', message: 'Payment of ₹5,000 received', is_read: false, created_at: '1 hour ago' },
+        { id: 3, title: 'Product Approved', message: 'Your product "Tomatoes" is now live', is_read: true, created_at: 'yesterday' }
+    ];
+    updateNotificationBadge(notifications.filter(n => !n.is_read).length);
+    renderNotifications(notifications);
 }
 
 function updateNotificationBadge(count) {
@@ -215,54 +237,41 @@ function renderNotifications(notifications) {
         <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead(${n.id})">
             <div class="title">${n.title}</div>
             <div class="message">${n.message}</div>
-            <div class="time">${n.created_at || 'Just now'}</div>
+            <div class="time">${n.created_at}</div>
         </div>
     `).join('');
 }
 
 async function markNotificationRead(id) {
-    try {
-        await fetch(`/api/supplier/notifications/${id}/read/`, { method: 'POST' });
-        loadNotifications();
-    } catch (error) {
-        console.error('Error marking notification read:', error);
-    }
+    // Mock mark as read
+    const notif = notifications.find(n => n.id === id);
+    if (notif) notif.is_read = true;
+    loadNotifications();
+    showToast('Notification marked as read', 'success');
 }
 
 async function markAllNotificationsRead() {
-    try {
-        await fetch('/api/supplier/notifications/mark-all-read/', { method: 'POST' });
-        loadNotifications();
-        showToast('All notifications marked as read', 'success');
-    } catch (error) {
-        console.error('Error marking all as read:', error);
-    }
+    notifications.forEach(n => n.is_read = true);
+    loadNotifications();
+    showToast('All notifications marked as read', 'success');
 }
 
-// ========== DASHBOARD STATS ==========
+// ========== DASHBOARD STATS (MOCK) ==========
 async function loadDashboardStats() {
-    try {
-        const response = await fetch('/api/supplier/dashboard/stats/');
-        const data = await response.json();
-
-        document.getElementById('totalOrders').textContent = data.total_orders || 0;
-        document.getElementById('totalRevenue').textContent = `₹ ${(data.total_revenue || 0).toLocaleString()}`;
-        document.getElementById('activeProducts').textContent = data.active_products || 0;
-    } catch (error) {
-        console.error('Error loading stats:', error);
-    }
+    document.getElementById('totalOrders').textContent = '156';
+    document.getElementById('totalRevenue').textContent = '₹ 45,780';
+    document.getElementById('activeProducts').textContent = '23';
 }
 
-// ========== ORDERS TAB - MANAGER LIST ==========
+// ========== ORDERS TAB - MANAGER LIST (MOCK) ==========
 async function loadManagers() {
-    try {
-        const response = await fetch('/api/supplier/managers/');
-        const data = await response.json();
-        managers = data.managers || [];
-        renderManagers(managers);
-    } catch (error) {
-        console.error('Error loading managers:', error);
-    }
+    // Mock managers
+    managers = [
+        { id: 1, fullname: 'John Manager', email: 'john@retailx.com', unread_count: 2 },
+        { id: 2, fullname: 'Sarah Smith', email: 'sarah@retailx.com', unread_count: 0 },
+        { id: 3, fullname: 'Mike Johnson', email: 'mike@retailx.com', unread_count: 1 }
+    ];
+    renderManagers(managers);
 }
 
 function renderManagers(managers) {
@@ -275,10 +284,10 @@ function renderManagers(managers) {
     }
 
     list.innerHTML = managers.map(m => `
-        <div class="manager-item ${currentManagerId === m.id ? 'active' : ''}" onclick="selectManager(${m.id}, '${m.fullname}')">
+        <div class="manager-item ${currentManagerId === m.id ? 'active' : ''}" onclick="selectManager(${m.id}, '${escapeHtml(m.fullname)}')">
             <div class="manager-avatar">${m.fullname.charAt(0)}</div>
             <div class="manager-info">
-                <h4>${m.fullname}</h4>
+                <h4>${escapeHtml(m.fullname)}</h4>
                 <p>${m.email || 'Manager'}</p>
             </div>
             ${m.unread_count ? `<span class="manager-badge">${m.unread_count}</span>` : ''}
@@ -306,28 +315,39 @@ window.selectManager = function(managerId, managerName) {
     document.getElementById('chatManagerName').textContent = managerName;
     document.getElementById('chatManagerStatus').textContent = 'Online';
     document.getElementById('chatManagerAvatar').textContent = managerName.charAt(0);
+    
+    // Update status dot and text for WhatsApp style
+    const statusDot = document.getElementById('managerStatusDot');
+    const statusText = document.getElementById('chatManagerStatus');
+    if (statusDot) {
+        statusDot.className = 'status-dot online';
+    }
+    if (statusText) {
+        statusText.className = 'status-text online';
+        statusText.textContent = 'Online';
+    }
 
-    // Show message input area
+    // Show message input area and minimize button
     document.getElementById('messageInputArea').style.display = 'block';
+    document.getElementById('minimizeChatBtn').style.display = 'flex';
 
-    // Clear no selection message
+    // Clear no selection message with loading indicator
     const container = document.getElementById('messagesContainer');
-    container.innerHTML = '<div class="loading-managers">Loading messages...</div>';
+    container.innerHTML = '<div class="typing-indicator" id="loadingMessages"><span></span><span></span><span></span></div>';
 
     // Load messages
     loadMessages(managerId);
 };
 
-// ========== ORDERS TAB - MESSAGES ==========
+// ========== ORDERS TAB - MESSAGES (MOCK) ==========
 async function loadMessages(managerId) {
-    try {
-        const response = await fetch(`/api/supplier/messages/${managerId}/`);
-        const data = await response.json();
-        messages = data.messages || [];
-        renderMessages(messages);
-    } catch (error) {
-        console.error('Error loading messages:', error);
-    }
+    // Mock messages for the selected manager
+    messages = [
+        { id: 1, text: 'Hello, how can I help you today?', is_sent_by_supplier: false, created_at: new Date(Date.now() - 3600000) },
+        { id: 2, text: 'I need to check my order status', is_sent_by_supplier: true, created_at: new Date(Date.now() - 1800000) },
+        { id: 3, text: 'Sure, what is your order number?', is_sent_by_supplier: false, created_at: new Date(Date.now() - 900000) }
+    ];
+    renderMessages(messages);
 }
 
 function renderMessages(messages) {
@@ -339,17 +359,22 @@ function renderMessages(messages) {
         return;
     }
 
-    container.innerHTML = messages.map(m => `
-        <div class="message ${m.is_sent_by_supplier ? 'sent' : 'received'}">
-            <div class="message-content">${m.text}</div>
-            <div class="message-time">${formatTime(m.created_at)}</div>
-        </div>
-    `).join('');
+    container.innerHTML = messages.map(m => {
+        const messageClass = m.is_sent_by_supplier ? 'sent' : 'received';
+        const time = formatTime(m.created_at);
+        return `
+            <div class="message ${messageClass}">
+                <div class="message-content">${escapeHtml(m.text)}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+    }).join('');
 
     // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 }
 
+// Send message with optimistic UI and simulated reply
 async function sendMessage(e) {
     e.preventDefault();
 
@@ -363,42 +388,63 @@ async function sendMessage(e) {
 
     if (!text) return;
 
-    try {
-        const response = await fetch('/api/supplier/send-message/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                manager_id: currentManagerId,
-                message: text
-            })
-        });
+    // Add message to UI immediately (optimistic)
+    const container = document.getElementById('messagesContainer');
+    const tempId = 'temp-' + Date.now();
+    container.innerHTML += `
+        <div class="message sent" id="${tempId}">
+            <div class="message-content">${escapeHtml(text)}</div>
+            <div class="message-time">Just now</div>
+        </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+    messageInput.value = '';
 
-        const data = await response.json();
+    // Simulate reply after 2 seconds
+    setTimeout(() => {
+        // Remove temp ID (just a demo, we don't actually remove)
+        // Add a received message
+        container.innerHTML += `
+            <div class="message received">
+                <div class="message-content">Thanks for your message. I'll get back to you soon.</div>
+                <div class="message-time">Just now</div>
+            </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+    }, 2000);
 
-        if (data.success) {
-            messageInput.value = '';
-            loadMessages(currentManagerId);
-        } else {
-            showToast(data.error || 'Failed to send message', 'error');
-        }
-    } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('Failed to send message', 'error');
-    }
+    // In a real app, you'd send to server here
 }
 
-// ========== PRODUCTS TAB ==========
+// Typing indicator functions (for future use)
+function showTypingIndicator(managerId) {
+    if (currentManagerId !== managerId) return;
+    const container = document.getElementById('messagesContainer');
+    if (document.getElementById('typingIndicator')) return;
+    container.innerHTML += `
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span><span></span><span></span>
+        </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typingIndicator')?.remove();
+}
+
+// ========== PRODUCTS TAB (MOCK) ==========
 async function loadProducts() {
-    try {
-        const response = await fetch('/api/supplier/products/');
-        const data = await response.json();
-        products = data.products || [];
-        renderProducts(products);
-        updateCategoryFilter();
-        checkLowStock();
-    } catch (error) {
-        console.error('Error loading products:', error);
-    }
+    // Mock products
+    products = [
+        { id: 1, sku: 'P001', name: 'Whole Wheat Bread', category: 'Bakery', price: 45, stock_quantity: 50, unit: 'loaf', is_active: true, min_stock_level: 10 },
+        { id: 2, sku: 'P002', name: 'Fresh Milk', category: 'Dairy', price: 28, stock_quantity: 30, unit: 'litre', is_active: true, min_stock_level: 15 },
+        { id: 3, sku: 'P003', name: 'Tomatoes', category: 'Vegetables', price: 40, stock_quantity: 8, unit: 'kg', is_active: true, min_stock_level: 20 },
+        { id: 4, sku: 'P004', name: 'Rice', category: 'Grains', price: 220, stock_quantity: 15, unit: 'kg', is_active: false, min_stock_level: 10 }
+    ];
+    renderProducts(products);
+    updateCategoryFilter();
+    checkLowStock();
 }
 
 function renderProducts(products) {
@@ -413,8 +459,8 @@ function renderProducts(products) {
     tbody.innerHTML = products.map(p => `
         <tr>
             <td>${p.sku || 'N/A'}</td>
-            <td>${p.name}</td>
-            <td>${p.category}</td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${escapeHtml(p.category)}</td>
             <td>₹ ${p.price}</td>
             <td>${p.stock_quantity || 0} ${p.unit || 'pcs'}</td>
             <td><span class="status-badge ${p.is_active ? 'active' : 'inactive'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
@@ -472,58 +518,31 @@ function openAddProductModal() {
 }
 
 window.editProduct = async function(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
     currentProductId = id;
     document.getElementById('productModalTitle').textContent = 'Edit Product';
 
-    try {
-        const response = await fetch(`/api/supplier/products/${id}/`);
-        const data = await response.json();
-
-        if (data.success) {
-            const p = data.product;
-            document.getElementById('productId').value = p.id;
-            document.getElementById('productName').value = p.name;
-            document.getElementById('productSKU').value = p.sku || '';
-            document.getElementById('productCategory').value = p.category;
-            document.getElementById('productPrice').value = p.price;
-            document.getElementById('productStock').value = p.stock_quantity;
-            document.getElementById('productMinStock').value = p.min_stock_level || 10;
-            document.getElementById('productUnit').value = p.unit || 'pcs';
-            document.getElementById('productDescription').value = p.description || '';
-            document.getElementById('productActive').value = p.is_active ? 'true' : 'false';
-            document.getElementById('productModal').classList.add('show');
-        }
-    } catch (error) {
-        console.error('Error loading product details:', error);
-        showToast('Failed to load product details', 'error');
-    }
+    document.getElementById('productId').value = product.id;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productSKU').value = product.sku || '';
+    document.getElementById('productCategory').value = product.category;
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productStock').value = product.stock_quantity;
+    document.getElementById('productMinStock').value = product.min_stock_level || 10;
+    document.getElementById('productUnit').value = product.unit || 'pcs';
+    document.getElementById('productDescription').value = product.description || '';
+    document.getElementById('productActive').value = product.is_active ? 'true' : 'false';
+    document.getElementById('productModal').classList.add('show');
 };
 
 async function saveProduct(e) {
     e.preventDefault();
-
-    const formData = new FormData(document.getElementById('productForm'));
-    const url = currentProductId ? `/api/supplier/products/${currentProductId}/update/` : '/api/supplier/products/add/';
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            showToast(data.message, 'success');
-            closeAllModals();
-            loadProducts();
-        } else {
-            showToast(data.error || 'Failed to save product', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving product:', error);
-        showToast('Failed to save product', 'error');
-    }
+    // Mock save
+    showToast('Product saved (mock)', 'success');
+    closeAllModals();
+    loadProducts();
 }
 
 window.deleteProduct = async function(id) {
@@ -537,108 +556,59 @@ window.deleteProduct = async function(id) {
     });
 
     if (result.isConfirmed) {
-        try {
-            const response = await fetch(`/api/supplier/products/${id}/delete/`, { method: 'DELETE' });
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(data.message, 'success');
-                loadProducts();
-            } else {
-                showToast(data.error, 'error');
-            }
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            showToast('Failed to delete product', 'error');
-        }
+        // Mock delete
+        showToast('Product deleted (mock)', 'success');
+        loadProducts();
     }
 };
 
-// ========== PROFILE TAB ==========
+// ========== PROFILE TAB (MOCK) ==========
 async function loadProfile() {
-    try {
-        const response = await fetch('/api/supplier/profile/');
-        const data = await response.json();
-        const profile = data.profile;
+    // Mock profile
+    const profile = {
+        fullname: 'Supplier Name',
+        email: 'supplier@example.com',
+        username: 'supplier1',
+        location: 'Mumbai',
+        contact: '+91 9876543210',
+        category: 'Grocery'
+    };
 
-        // Update profile info grid
-        const infoGrid = document.getElementById('profileInfo');
-        if (infoGrid) {
-            infoGrid.innerHTML = `
-                <div class="info-item"><label>Full Name</label><p>${profile.fullname}</p></div>
-                <div class="info-item"><label>Email</label><p>${profile.email}</p></div>
-                <div class="info-item"><label>Username</label><p>${profile.username}</p></div>
-                <div class="info-item"><label>Location</label><p>${profile.location || 'Not provided'}</p></div>
-                <div class="info-item"><label>Contact</label><p>${profile.contact || 'Not provided'}</p></div>
-                <div class="info-item"><label>Category</label><p>${profile.category}</p></div>
-            `;
-        }
-
-        // Update profile name and category
-        document.getElementById('profileFullName').textContent = profile.fullname;
-        document.getElementById('profileCategory').textContent = `${profile.category} Supplier`;
-        document.getElementById('profileAvatar').textContent = profile.fullname.charAt(0);
-
-        // Load email notification preference
-        const emailPref = localStorage.getItem('emailNotifications') === 'true';
-        document.getElementById('emailNotifications').checked = emailPref;
-
-    } catch (error) {
-        console.error('Error loading profile:', error);
+    const infoGrid = document.getElementById('profileInfo');
+    if (infoGrid) {
+        infoGrid.innerHTML = `
+            <div class="info-item"><label>Full Name</label><p>${escapeHtml(profile.fullname)}</p></div>
+            <div class="info-item"><label>Email</label><p>${escapeHtml(profile.email)}</p></div>
+            <div class="info-item"><label>Username</label><p>${escapeHtml(profile.username)}</p></div>
+            <div class="info-item"><label>Location</label><p>${escapeHtml(profile.location) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Contact</label><p>${escapeHtml(profile.contact) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Category</label><p>${escapeHtml(profile.category)}</p></div>
+        `;
     }
+
+    document.getElementById('profileFullName').textContent = profile.fullname;
+    document.getElementById('profileCategory').textContent = `${profile.category} Supplier`;
+    document.getElementById('profileAvatar').textContent = profile.fullname.charAt(0);
+
+    const emailPref = localStorage.getItem('emailNotifications') === 'true';
+    document.getElementById('emailNotifications').checked = emailPref;
 }
 
 function openEditProfileModal() {
-    // Pre-fill form with current profile data
-    fetch('/api/supplier/profile/')
-        .then(res => res.json())
-        .then(data => {
-            const p = data.profile;
-            document.getElementById('editFullName').value = p.fullname;
-            document.getElementById('editEmail').value = p.email;
-            document.getElementById('editLocation').value = p.location || '';
-            document.getElementById('editContact').value = p.contact || '';
-            document.getElementById('editCategory').value = p.category;
-            document.getElementById('editProfileModal').classList.add('show');
-        })
-        .catch(error => console.error('Error loading profile for edit:', error));
+    // Pre-fill with current mock data
+    document.getElementById('editFullName').value = 'Supplier Name';
+    document.getElementById('editEmail').value = 'supplier@example.com';
+    document.getElementById('editLocation').value = 'Mumbai';
+    document.getElementById('editContact').value = '+91 9876543210';
+    document.getElementById('editCategory').value = 'Grocery';
+    document.getElementById('editProfileModal').classList.add('show');
 }
 
 async function updateProfile(e) {
     e.preventDefault();
-
-    const data = {
-        fullname: document.getElementById('editFullName').value,
-        email: document.getElementById('editEmail').value,
-        location: document.getElementById('editLocation').value,
-        contact: document.getElementById('editContact').value,
-        category: document.getElementById('editCategory').value
-    };
-
-    try {
-        const response = await fetch('/api/supplier/profile/update/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showToast('Profile updated successfully', 'success');
-            closeAllModals();
-            loadProfile();
-            
-            // Update header name
-            document.getElementById('supplierName').textContent = data.fullname;
-            document.getElementById('welcomeName').textContent = data.fullname;
-        } else {
-            showToast(result.error || 'Failed to update profile', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showToast('Failed to update profile', 'error');
-    }
+    showToast('Profile updated (mock)', 'success');
+    closeAllModals();
+    loadProfile();
 }
 
 function openPasswordModal() {
@@ -647,7 +617,6 @@ function openPasswordModal() {
 
 async function changePassword(e) {
     e.preventDefault();
-
     const newPass = document.getElementById('newPassword').value;
     const confirmPass = document.getElementById('confirmPassword').value;
 
@@ -655,33 +624,9 @@ async function changePassword(e) {
         showToast('New passwords do not match', 'error');
         return;
     }
-
-    const data = {
-        current_password: document.getElementById('currentPassword').value,
-        new_password: newPass,
-        confirm_password: confirmPass
-    };
-
-    try {
-        const response = await fetch('/api/supplier/change-password/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showToast('Password changed successfully', 'success');
-            closeAllModals();
-            document.getElementById('passwordForm').reset();
-        } else {
-            showToast(result.error || 'Failed to change password', 'error');
-        }
-    } catch (error) {
-        console.error('Error changing password:', error);
-        showToast('Failed to change password', 'error');
-    }
+    showToast('Password changed (mock)', 'success');
+    closeAllModals();
+    document.getElementById('passwordForm').reset();
 }
 
 function toggleEmailNotifications(e) {

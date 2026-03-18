@@ -99,7 +99,7 @@
             </div>
         </div>
 
-        <!-- Tabs Navigation (Only 3 Tabs) -->
+        <!-- Tabs Navigation -->
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="orders">
                 <i class="fas fa-shopping-cart"></i> Orders
@@ -112,7 +112,7 @@
             </button>
         </div>
 
-        <!-- ========== ORDERS TAB (Message-based Chat Layout) ========== -->
+        <!-- ========== ORDERS TAB (WhatsApp‑style Chat) ========== -->
         <div class="tab-pane active" id="orders">
             <div class="chat-container">
                 <!-- Left Sidebar - Manager List -->
@@ -125,43 +125,63 @@
                         </div>
                     </div>
                     <div class="manager-list" id="managerList">
-                        <!-- Will be populated by JS -->
+                        <!-- Populated by JS -->
                         <div class="loading-managers">Loading managers...</div>
                     </div>
                 </div>
 
-                <!-- Right Side - Chat Area -->
-                <div class="chat-area">
-                    <div class="chat-header" id="chatHeader">
-                        <div class="selected-manager-info">
-                            <div class="manager-avatar" id="chatManagerAvatar">M</div>
-                            <div class="manager-details">
-                                <h4 id="chatManagerName">Select a manager</h4>
-                                <p id="chatManagerStatus">Click on a manager to start chatting</p>
+                <!-- Right Side - WhatsApp‑style Chat Area -->
+                <div class="chat-area-whatsapp">
+                    <!-- Chat Header -->
+                    <div class="chat-header-whatsapp" id="chatHeader">
+                        <div class="chat-supplier-info">
+                            <div class="chat-supplier-avatar" id="chatManagerAvatar">M</div>
+                            <div class="chat-supplier-details">
+                                <h3 id="chatManagerName">Select a manager</h3>
+                                <div class="chat-supplier-status">
+                                    <span class="status-dot" id="managerStatusDot"></span>
+                                    <span class="status-text" id="chatManagerStatus">Click to start chatting</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="messages-container" id="messagesContainer">
-                        <div class="no-chat-selected">
-                            <i class="fas fa-comments"></i>
-                            <p>Select a manager to view messages</p>
+                        <div class="chat-header-actions">
+                            <button class="chat-action-btn" id="minimizeChatBtn" title="Minimize chat" style="display: none;">
+                                <i class="fas fa-minus"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="message-input-area" id="messageInputArea" style="display: none;">
+                    <!-- Chat Messages Area -->
+                    <div class="chat-messages-whatsapp" id="messagesContainer">
+                        <div class="no-chat-selected">
+                            <i class="fas fa-comments"></i>
+                            <p>Select a manager to start chatting</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Area with Quick Replies -->
+                    <div class="chat-input-whatsapp" id="messageInputArea" style="display: none;">
                         <form id="messageForm">
-                            <input type="text" id="messageText" placeholder="Type your message..." autocomplete="off">
-                            <button type="submit" id="sendMessageBtn">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
+                            <div class="input-wrapper-whatsapp">
+                                <input type="text" id="messageText" placeholder="Type a message..." autocomplete="off">
+                                <button type="submit" class="send-btn-whatsapp" id="sendMessageBtn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <!-- Quick Replies -->
+                            <div class="quick-replies-whatsapp">
+                                <span class="quick-reply-chip" data-message="Hello, I have a question about my order">Order question</span>
+                                <span class="quick-reply-chip" data-message="When will my order be delivered?">Delivery status</span>
+                                <span class="quick-reply-chip" data-message="I need to update my order">Update order</span>
+                                <span class="quick-reply-chip" data-message="Thank you for your help">Thank you</span>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ========== PRODUCTS TAB (Product Management) ========== -->
+        <!-- ========== PRODUCTS TAB ========== -->
         <div class="tab-pane" id="products">
             <div class="table-card">
                 <div class="table-header">
@@ -214,7 +234,7 @@
             </div>
         </div>
 
-        <!-- ========== PROFILE TAB (Supplier Information) ========== -->
+        <!-- ========== PROFILE TAB ========== -->
         <div class="tab-pane" id="profile">
             <div class="profile-card">
                 <div class="profile-avatar">
@@ -224,7 +244,7 @@
                 <p class="profile-category" id="profileCategory">{{ supplier_category }} Supplier</p>
 
                 <div class="profile-info-grid" id="profileInfo">
-                    <!-- Will be populated by JS -->
+                    <!-- Populated by JS -->
                 </div>
 
                 <!-- Settings -->
