@@ -57,6 +57,11 @@ from DatasetDB.models import Cashier_Product
 from django.db import models
 
 from .gemini_chat import ask_gemini
+from django.db.models import Sum, F
+from DatasetDB.models import Cashier_Product
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 
 # ============================================
 # CONSOLE COLOR CODES
@@ -108,6 +113,42 @@ def print_header(msg):
 
 # Print startup banner
 print_banner()
+
+
+
+
+@login_required
+@require_GET
+def get_inventory_value(request):
+    """
+    Calculate total inventory value by summing (stock * price) for all products
+    """
+    try:
+        # Method 1: Calculate in Python (more control)
+        products = Cashier_Product.objects.all()
+        total_value = 0
+        for product in products:
+            # Handle potential None values
+            stock = product.stock if product.stock else 0
+            price = product.price if product.price else 0
+            total_value += stock * price
+        
+        # Method 2: Using Django aggregation (more efficient)
+        # total_value = Cashier_Product.objects.aggregate(
+        #     total=Sum(F('stock') * F('price'), output_field=models.FloatField())
+        # )['total'] or 0
+        
+        return JsonResponse({
+            'success': True,
+            'total_inventory_value': float(total_value),
+            'formatted_value': f"₹{total_value:,.2f}"
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 # ============================================
 # OTP STORAGES
@@ -1606,6 +1647,15 @@ def manager_home(request):
     manager_username = request.session.get('manager_username')
     try:
         manager = Manager.objects.get(username=manager_username)
+
+        products = Cashier_Product.objects.all()
+        total_inventory_value = 0
+        for product in products:
+            stock = product.stock if product.stock else 0
+            price = product.price if product.price else 0
+            total_inventory_value += stock * price
+
+
         festival_input = (request.GET.get('festival') or '').strip()
         detected_festival = None
         top_products = []
@@ -1649,6 +1699,8 @@ def manager_home(request):
         context = {
             'manager_name': manager.fullname,
             'manager_username': manager.username,
+            'total_inventory_value': float(total_inventory_value),
+            'formatted_inventory_value': f"₹{total_inventory_value:,.2f}",
             'top_products': top_products_json,
             'least_products': least_products_json,
             'detected_festival': detected_festival,
@@ -1663,6 +1715,8 @@ def manager_home(request):
         context = {
             'manager_name': 'Manager',
             'manager_username': 'Unknown',
+            'total_inventory_value': 0,
+            'formatted_inventory_value': '₹0.00',
             'top_products': '[]',
             'least_products': '[]',
             'detected_festival': None,

@@ -3758,3 +3758,132 @@ $(document).on('click', '.menu-item[data-page="reports"]', function() {
         }
     }, 200);
 });
+
+// Inventory Value Management
+const InventoryManager = {
+    // Cache DOM elements
+    inventoryValueElement: document.getElementById('inventoryValue'),
+    inventoryTrendElement: document.querySelector('#inventoryTrend'),
+    
+    // Initialize
+    init: function() {
+        this.fetchInventoryValue();
+        // Set up auto-refresh every 5 minutes
+        setInterval(() => this.fetchInventoryValue(), 5 * 60 * 1000);
+    },
+    
+    // Fetch inventory value from API
+    fetchInventoryValue: function() {
+        // Show loading state
+        if (this.inventoryValueElement) {
+            this.inventoryValueElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        
+        fetch('/api/inventory-value/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.updateInventoryValue(data);
+            } else {
+                console.error('Failed to fetch inventory value:', data.error);
+                this.showError();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching inventory value:', error);
+            this.showError();
+        });
+    },
+    
+    // Update UI with new inventory value
+    updateInventoryValue: function(data) {
+        if (this.inventoryValueElement) {
+            // Add animation class
+            this.inventoryValueElement.classList.add('value-updated');
+            this.inventoryValueElement.textContent = data.formatted_value || `₹${data.total_inventory_value.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                this.inventoryValueElement.classList.remove('value-updated');
+            }, 500);
+        }
+        
+        // Update trend text if exists
+        if (this.inventoryTrendElement) {
+            // You could add a comparison with previous value here
+            // For now, just show the raw number
+            const countElement = document.getElementById('inventoryCount');
+            if (countElement) {
+                // Keep the count as is or update it
+            }
+        }
+        
+        // Also update any other places showing inventory value
+        this.updateOtherInstances(data);
+    },
+    
+    // Update other places that might show inventory value
+    updateOtherInstances: function(data) {
+        // Update in reports page if visible
+        const healthStockValue = document.getElementById('healthStockValue');
+        if (healthStockValue) {
+            healthStockValue.textContent = data.formatted_value || `₹${(data.total_inventory_value/1000).toFixed(1)}k`;
+        }
+        
+        // Update in any other cards
+        const inventoryValueCards = document.querySelectorAll('.inventory-value-display');
+        inventoryValueCards.forEach(card => {
+            card.textContent = data.formatted_value || `₹${data.total_inventory_value.toFixed(2)}`;
+        });
+    },
+    
+    // Show error state
+    showError: function() {
+        if (this.inventoryValueElement) {
+            this.inventoryValueElement.innerHTML = '₹<span class="error-text">Error</span>';
+            this.inventoryValueElement.classList.add('text-danger');
+        }
+    },
+    
+    // Manually refresh
+    refresh: function() {
+        this.fetchInventoryValue();
+    }
+};
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    InventoryManager.init();
+});
+
+// Add refresh button handler if exists
+document.getElementById('refreshBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    InventoryManager.refresh();
+    
+    // Show toast notification
+    showToast('Refreshing inventory value...', 'info');
+});
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.textContent = message;
+        toast.className = `toast toast-${type} show`;
+        setTimeout(() => {
+            toast.className = toast.className.replace('show', '');
+        }, 3000);
+    }
+}

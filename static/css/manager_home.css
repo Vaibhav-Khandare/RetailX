@@ -6748,3 +6748,70 @@ datalist {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Value update animation */
+@keyframes valuePulse {
+    0% {
+        transform: scale(1);
+        color: #4361ee;
+    }
+    50% {
+        transform: scale(1.05);
+        color: #3a0ca3;
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+    }
+}
+
+.value-updated {
+    animation: valuePulse 0.5s ease-in-out;
+}
+
+/* Error state */
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.error-text {
+    font-size: 14px;
+    color: #ef4444;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    color: #1e293b;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-success {
+    border-left: 4px solid #10b981;
+}
+
+.toast-error {
+    border-left: 4px solid #ef4444;
+}
+
+.toast-info {
+    border-left: 4px solid #3b82f6;
+}
+
+.toast-warning {
+    border-left: 4px solid #f59e0b;
+}

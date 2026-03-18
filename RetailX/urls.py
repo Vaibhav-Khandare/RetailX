@@ -109,4 +109,6 @@ urlpatterns = [
     path('api/age-segmentation-info/', views.get_age_segmentation_info, name='age_segmentation_info'),
     path('api/update_stock/', views.update_stock, name='update_stock'),
     path('api/low-stock/', views.low_stock_alert, name='low-stock'),
+    path('api/inventory-value/', views.get_inventory_value, name='get_inventory_value'),
+
 ]

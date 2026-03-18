@@ -1,21 +1,24 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RetailX - Manager Command Center</title>
-    
+
     <!-- CSS Files -->
     <link rel="stylesheet" href="{% static 'css/manager_home.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body data-manager="{{ manager_name }}">
 
     <!-- PRELOADER -->
@@ -38,7 +41,8 @@
             </button>
             <div class="user-profile">
                 <div class="avatar">
-                    <img src="https://ui-avatars.com/api/?name={{ manager_name|default:'Manager' }}&background=4361ee&color=fff&size=56" alt="Manager">
+                    <img src="https://ui-avatars.com/api/?name={{ manager_name|default:'Manager' }}&background=4361ee&color=fff&size=56"
+                        alt="Manager">
                     <span class="status-indicator online"></span>
                 </div>
                 <div class="user-info">
@@ -53,24 +57,32 @@
             <div class="nav-section">
                 <p class="nav-caption">MAIN</p>
                 <ul>
-                    <li><a href="#" class="menu-item active" data-page="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a></li>
-                    <li><a href="#" class="menu-item" data-page="overview"><i class="fas fa-store"></i><span>Store Overview</span></a></li>
-                    <li><a href="#" class="menu-item" data-page="inventory"><i class="fas fa-boxes"></i><span>Inventory</span></a></li>
-                    <li><a href="#" class="menu-item" data-page="staff"><i class="fas fa-users-cog"></i><span>Cashier Management</span></a></li>
+                    <li><a href="#" class="menu-item active" data-page="dashboard"><i
+                                class="fas fa-chart-pie"></i><span>Dashboard</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="overview"><i class="fas fa-store"></i><span>Store
+                                Overview</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="inventory"><i
+                                class="fas fa-boxes"></i><span>Inventory</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="staff"><i class="fas fa-users-cog"></i><span>Cashier
+                                Management</span></a></li>
                 </ul>
             </div>
             <div class="nav-section">
                 <p class="nav-caption">ANALYTICS</p>
                 <ul>
-                    <li><a href="#" class="menu-item" data-page="analysis"><i class="fas fa-chart-line"></i><span>Analysis</span></a></li>
-                    <li><a href="#" class="menu-item" data-page="reports"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="analysis"><i
+                                class="fas fa-chart-line"></i><span>Analysis</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="reports"><i
+                                class="fas fa-file-alt"></i><span>Reports</span></a></li>
                 </ul>
             </div>
             <div class="nav-section">
                 <p class="nav-caption">SYSTEM</p>
                 <ul>
-                    <li><a href="#" class="menu-item" data-page="settings"><i class="fas fa-sliders-h"></i><span>Settings</span></a></li>
-                    <li><a href="#" class="menu-item logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+                    <li><a href="#" class="menu-item" data-page="settings"><i
+                                class="fas fa-sliders-h"></i><span>Settings</span></a></li>
+                    <li><a href="#" class="menu-item logout" id="logoutBtn"><i
+                                class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
                 </ul>
             </div>
         </nav>
@@ -151,18 +163,21 @@
                             <i class="fas fa-arrow-up"></i> 12.5% from last month
                         </div>
                     </div>
-                    
+
+                    <!-- KPI CARDS - Update the Inventory Value card -->
                     <div class="kpi-card">
                         <div class="kpi-header">
                             <h3>Inventory Value</h3>
                             <i class="fas fa-boxes"></i>
                         </div>
-                        <div class="kpi-value" id="inventoryValue">₹82,340</div>
-                        <div class="kpi-trend negative">
-                            <i class="fas fa-arrow-down"></i> 3.2% from last month
+                        <div class="kpi-value" id="inventoryValue">
+                            {{ formatted_inventory_value|default:'₹0.00' }}
+                        </div>
+                        <div class="kpi-trend" id="inventoryTrend">
+                            <span id="inventoryCount">{{ total_products_count|default:'0' }}</span> total items
                         </div>
                     </div>
-                    
+
                     <div class="kpi-card">
                         <div class="kpi-header">
                             <h3>Active Cashiers</h3>
@@ -173,7 +188,7 @@
                             <i class="fas fa-arrow-up"></i> 2 new hires
                         </div>
                     </div>
-                    
+
                     <div class="kpi-card">
                         <div class="kpi-header">
                             <h3>Customer Satisfaction</h3>
@@ -226,7 +241,7 @@
                             <canvas id="revenueChart"></canvas>
                         </div>
                     </div>
-                    
+
                     <div class="chart-card">
                         <div class="chart-header">
                             <div>
@@ -246,202 +261,197 @@
                 </div>
             </div>
 
-<!-- ============================================
+            <!-- ============================================
      SUPPLIER CONNECTIVITY PAGE - WHATSAPP STYLE WITH EXPANDABLE CHAT
      ============================================ -->
-<div class="page" id="supplier-page">
-    <div class="supplier-container">
-        
-        <!-- Page Header -->
-        <div class="supplier-header">
-            <div class="header-title">
-                <h2><i class="fas fa-truck"></i> Supplier Connectivity</h2>
-                <p class="header-subtitle">Connect with trusted suppliers near you</p>
-            </div>
-            <div class="header-actions">
-                <button class="btn-outline" id="refreshSuppliersBtn">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button class="btn-primary" id="viewAllSuppliersBtn">
-                    <i class="fas fa-address-book"></i> All Suppliers
-                </button>
-            </div>
-        </div>
+            <div class="page" id="supplier-page">
+                <div class="supplier-container">
 
-        <!-- Main Search Card -->
-        <div class="supplier-search-card">
-            <div class="search-card-header">
-                <i class="fas fa-search-location"></i>
-                <h3>Find Suppliers</h3>
-                <span class="badge">Smart Search</span>
-            </div>
-            
-            <div class="search-form">
-                <!-- Product Selection -->
-                <div class="form-group enhanced">
-                    <label>
-                        <i class="fas fa-box"></i>
-                        Select Product
-                    </label>
-                    <div class="enhanced-select-wrapper">
-                        <select id="supplierProductSelect" class="enhanced-select">
-                            <option value="" disabled selected>Choose a product...</option>
-                            <!-- Bakery & Grains -->
-                            <optgroup label="🥖 Bakery & Grains">
-                                <option value="Whole Wheat Bread">Whole Wheat Bread (₹45/loaf)</option>
-                                <option value="White Rice">White Rice (₹220/5kg)</option>
-                                <option value="Toor Dal">Toor Dal (₹120/kg)</option>
-                            </optgroup>
-                            <!-- Dairy -->
-                            <optgroup label="🥛 Dairy">
-                                <option value="Whole Milk">Whole Milk (₹28/500ml)</option>
-                                <option value="Paneer">Paneer (₹60/200g)</option>
-                                <option value="Curd">Curd (₹30/400g)</option>
-                            </optgroup>
-                            <!-- Vegetables -->
-                            <optgroup label="🥬 Vegetables">
-                                <option value="Tomatoes">Tomatoes (₹40/kg)</option>
-                                <option value="Onions">Onions (₹35/kg)</option>
-                                <option value="Potatoes">Potatoes (₹30/kg)</option>
-                            </optgroup>
-                            <!-- Fruits -->
-                            <optgroup label="🍎 Fruits">
-                                <option value="Bananas">Bananas (₹36/dozen)</option>
-                                <option value="Apples">Apples (₹120/kg)</option>
-                                <option value="Oranges">Oranges (₹80/kg)</option>
-                            </optgroup>
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
-                    </div>
-                </div>
-
-                <!-- Location Selection -->
-                <div class="form-group enhanced">
-                    <label>
-                        <i class="fas fa-map-marker-alt"></i>
-                        Select Location
-                    </label>
-                    <div class="location-input-wrapper">
-                        <input type="text" 
-                               id="supplierLocation" 
-                               class="enhanced-input" 
-                               placeholder="Enter city name..."
-                               autocomplete="off"
-                               value="Khamgaon">
-                        <div class="location-suggestions" id="locationSuggestions"></div>
-                        <i class="fas fa-location-dot input-icon"></i>
-                    </div>
-                    <div class="quick-locations">
-                        <span class="quick-location-tag" data-location="Khamgaon">Khamgaon</span>
-                        <span class="quick-location-tag" data-location="Akola">Akola</span>
-                        <span class="quick-location-tag" data-location="Buldhana">Buldhana</span>
-                        <span class="quick-location-tag" data-location="Shegaon">Shegaon</span>
-                    </div>
-                </div>
-
-                <!-- Search Button -->
-                <button class="search-button" id="findSuppliersBtn">
-                    <i class="fas fa-search"></i>
-                    <span>Find Suppliers</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Split View: Suppliers List and Chat -->
-        <div class="supplier-split-view">
-            
-            <!-- LEFT SIDE: Suppliers List (minimizes when chat opens) -->
-            <div class="suppliers-list-section" id="suppliersListSection">
-                <div class="results-header">
-                    <div class="results-title">
-                        <i class="fas fa-truck-fast"></i>
-                        <h3>Available Suppliers <span id="supplierCount">0</span></h3>
-                    </div>
-                    <div class="results-filters">
-                        <button class="filter-chip active" data-filter="all">All</button>
-                        <button class="filter-chip" data-filter="nearby">Nearby</button>
-                        <button class="filter-chip" data-filter="verified">Verified</button>
-                    </div>
-                </div>
-
-                <!-- Suppliers Grid -->
-                <div class="suppliers-grid" id="suppliersGrid">
-                    <!-- Supplier cards will be dynamically inserted here -->
-                </div>
-
-                <!-- No Results State -->
-                <div class="no-results-state" id="noResultsState" style="display: none;">
-                    <i class="fas fa-store-slash"></i>
-                    <h3>No Suppliers Found</h3>
-                    <p>Try selecting a different product or location</p>
-                    <button class="btn-primary btn-sm" id="resetSearchBtn">
-                        <i class="fas fa-undo"></i> Reset Search
-                    </button>
-                </div>
-            </div>
-
-            <!-- RIGHT SIDE: WhatsApp Style Chat (expands when opened) -->
-            <div class="chat-section" id="chatSection" style="display: none;">
-                <!-- Chat Header -->
-                <div class="chat-header-whatsapp">
-                    <div class="chat-supplier-info">
-                        <button class="back-to-suppliers" id="backToSuppliersBtn" title="Back to suppliers">
-                            <i class="fas fa-arrow-left"></i>
-                        </button>
-                        <div class="chat-supplier-avatar">
-                            <img src="https://ui-avatars.com/api/?name=SE&background=25D366&color=fff&size=44" alt="Supplier" id="chatAvatar">
+                    <!-- Page Header -->
+                    <div class="supplier-header">
+                        <div class="header-title">
+                            <h2><i class="fas fa-truck"></i> Supplier Connectivity</h2>
+                            <p class="header-subtitle">Connect with trusted suppliers near you</p>
                         </div>
-                        <div class="chat-supplier-details">
-                            <h3 id="chatSupplierName">Shree Enterprises</h3>
-                            <div class="chat-supplier-status">
-                                <span class="status-dot"></span>
-                                <span id="chatSupplierLocation">Khamgaon</span>
-                                <span class="status-text">Online</span>
+                        <div class="header-actions">
+                            <button class="btn-outline" id="refreshSuppliersBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button class="btn-primary" id="viewAllSuppliersBtn">
+                                <i class="fas fa-address-book"></i> All Suppliers
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Search Card -->
+                    <div class="supplier-search-card">
+                        <div class="search-card-header">
+                            <i class="fas fa-search-location"></i>
+                            <h3>Find Suppliers</h3>
+                            <span class="badge">Smart Search</span>
+                        </div>
+
+                        <div class="search-form">
+                            <!-- Product Selection -->
+                            <div class="form-group enhanced">
+                                <label>
+                                    <i class="fas fa-box"></i>
+                                    Select Product
+                                </label>
+                                <div class="enhanced-select-wrapper">
+                                    <select id="supplierProductSelect" class="enhanced-select">
+                                        <option value="" disabled selected>Choose a product...</option>
+                                        <!-- Bakery & Grains -->
+                                        <optgroup label="🥖 Bakery & Grains">
+                                            <option value="Whole Wheat Bread">Whole Wheat Bread (₹45/loaf)</option>
+                                            <option value="White Rice">White Rice (₹220/5kg)</option>
+                                            <option value="Toor Dal">Toor Dal (₹120/kg)</option>
+                                        </optgroup>
+                                        <!-- Dairy -->
+                                        <optgroup label="🥛 Dairy">
+                                            <option value="Whole Milk">Whole Milk (₹28/500ml)</option>
+                                            <option value="Paneer">Paneer (₹60/200g)</option>
+                                            <option value="Curd">Curd (₹30/400g)</option>
+                                        </optgroup>
+                                        <!-- Vegetables -->
+                                        <optgroup label="🥬 Vegetables">
+                                            <option value="Tomatoes">Tomatoes (₹40/kg)</option>
+                                            <option value="Onions">Onions (₹35/kg)</option>
+                                            <option value="Potatoes">Potatoes (₹30/kg)</option>
+                                        </optgroup>
+                                        <!-- Fruits -->
+                                        <optgroup label="🍎 Fruits">
+                                            <option value="Bananas">Bananas (₹36/dozen)</option>
+                                            <option value="Apples">Apples (₹120/kg)</option>
+                                            <option value="Oranges">Oranges (₹80/kg)</option>
+                                        </optgroup>
+                                    </select>
+                                    <i class="fas fa-chevron-down select-arrow"></i>
+                                </div>
+                            </div>
+
+                            <!-- Location Selection -->
+                            <div class="form-group enhanced">
+                                <label>
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Select Location
+                                </label>
+                                <div class="location-input-wrapper">
+                                    <input type="text" id="supplierLocation" class="enhanced-input"
+                                        placeholder="Enter city name..." autocomplete="off" value="Khamgaon">
+                                    <div class="location-suggestions" id="locationSuggestions"></div>
+                                    <i class="fas fa-location-dot input-icon"></i>
+                                </div>
+                                <div class="quick-locations">
+                                    <span class="quick-location-tag" data-location="Khamgaon">Khamgaon</span>
+                                    <span class="quick-location-tag" data-location="Akola">Akola</span>
+                                    <span class="quick-location-tag" data-location="Buldhana">Buldhana</span>
+                                    <span class="quick-location-tag" data-location="Shegaon">Shegaon</span>
+                                </div>
+                            </div>
+
+                            <!-- Search Button -->
+                            <button class="search-button" id="findSuppliersBtn">
+                                <i class="fas fa-search"></i>
+                                <span>Find Suppliers</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Split View: Suppliers List and Chat -->
+                    <div class="supplier-split-view">
+
+                        <!-- LEFT SIDE: Suppliers List (minimizes when chat opens) -->
+                        <div class="suppliers-list-section" id="suppliersListSection">
+                            <div class="results-header">
+                                <div class="results-title">
+                                    <i class="fas fa-truck-fast"></i>
+                                    <h3>Available Suppliers <span id="supplierCount">0</span></h3>
+                                </div>
+                                <div class="results-filters">
+                                    <button class="filter-chip active" data-filter="all">All</button>
+                                    <button class="filter-chip" data-filter="nearby">Nearby</button>
+                                    <button class="filter-chip" data-filter="verified">Verified</button>
+                                </div>
+                            </div>
+
+                            <!-- Suppliers Grid -->
+                            <div class="suppliers-grid" id="suppliersGrid">
+                                <!-- Supplier cards will be dynamically inserted here -->
+                            </div>
+
+                            <!-- No Results State -->
+                            <div class="no-results-state" id="noResultsState" style="display: none;">
+                                <i class="fas fa-store-slash"></i>
+                                <h3>No Suppliers Found</h3>
+                                <p>Try selecting a different product or location</p>
+                                <button class="btn-primary btn-sm" id="resetSearchBtn">
+                                    <i class="fas fa-undo"></i> Reset Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT SIDE: WhatsApp Style Chat (expands when opened) -->
+                        <div class="chat-section" id="chatSection" style="display: none;">
+                            <!-- Chat Header -->
+                            <div class="chat-header-whatsapp">
+                                <div class="chat-supplier-info">
+                                    <button class="back-to-suppliers" id="backToSuppliersBtn" title="Back to suppliers">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                    <div class="chat-supplier-avatar">
+                                        <img src="https://ui-avatars.com/api/?name=SE&background=25D366&color=fff&size=44"
+                                            alt="Supplier" id="chatAvatar">
+                                    </div>
+                                    <div class="chat-supplier-details">
+                                        <h3 id="chatSupplierName">Shree Enterprises</h3>
+                                        <div class="chat-supplier-status">
+                                            <span class="status-dot"></span>
+                                            <span id="chatSupplierLocation">Khamgaon</span>
+                                            <span class="status-text">Online</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chat-header-actions">
+                                    <button class="chat-action-btn" id="minimizeChatBtn" title="Minimize chat">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Chat Messages Area - WhatsApp Style -->
+                            <div class="chat-messages-whatsapp" id="chatMessages">
+                                <!-- Messages will be dynamically inserted here -->
+                            </div>
+
+                            <!-- Chat Input Area - WhatsApp Style -->
+                            <div class="chat-input-whatsapp">
+                                <div class="input-wrapper-whatsapp">
+                                    <button class="emoji-btn">
+                                        <i class="far fa-smile"></i>
+                                    </button>
+                                    <input type="text" id="chatInput" placeholder="Type your message..."
+                                        autocomplete="off">
+                                    <button class="attach-btn-whatsapp">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <button class="send-btn-whatsapp" id="sendMessageBtn">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Quick Replies - WhatsApp Style -->
+                                <div class="quick-replies-whatsapp">
+                                    <span class="quick-reply-chip">Price quote</span>
+                                    <span class="quick-reply-chip">Delivery time</span>
+                                    <span class="quick-reply-chip">Minimum order</span>
+                                    <span class="quick-reply-chip">Sample available?</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="chat-header-actions">
-                        <button class="chat-action-btn" id="minimizeChatBtn" title="Minimize chat">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Chat Messages Area - WhatsApp Style -->
-                <div class="chat-messages-whatsapp" id="chatMessages">
-                    <!-- Messages will be dynamically inserted here -->
-                </div>
-
-                <!-- Chat Input Area - WhatsApp Style -->
-                <div class="chat-input-whatsapp">
-                    <div class="input-wrapper-whatsapp">
-                        <button class="emoji-btn">
-                            <i class="far fa-smile"></i>
-                        </button>
-                        <input type="text" 
-                               id="chatInput" 
-                               placeholder="Type your message..." 
-                               autocomplete="off">
-                        <button class="attach-btn-whatsapp">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                        <button class="send-btn-whatsapp" id="sendMessageBtn">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Quick Replies - WhatsApp Style -->
-                    <div class="quick-replies-whatsapp">
-                        <span class="quick-reply-chip">Price quote</span>
-                        <span class="quick-reply-chip">Delivery time</span>
-                        <span class="quick-reply-chip">Minimum order</span>
-                        <span class="quick-reply-chip">Sample available?</span>
-                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 
 
@@ -473,7 +483,8 @@
                     <!-- Inventory Stats Cards -->
                     <div class="inventory-stats-grid">
                         <div class="stat-card">
-                            <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #4361ee, #3a0ca3);">
+                            <div class="stat-icon-wrapper"
+                                style="background: linear-gradient(135deg, #4361ee, #3a0ca3);">
                                 <i class="fas fa-box"></i>
                             </div>
                             <div class="stat-content">
@@ -482,9 +493,10 @@
                                 <span class="stat-trend">Unique SKUs</span>
                             </div>
                         </div>
-                        
+
                         <div class="stat-card">
-                            <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <div class="stat-icon-wrapper"
+                                style="background: linear-gradient(135deg, #10b981, #059669);">
                                 <i class="fas fa-rupee-sign"></i>
                             </div>
                             <div class="stat-content">
@@ -493,9 +505,10 @@
                                 <span class="stat-trend">Total cost</span>
                             </div>
                         </div>
-                        
+
                         <div class="stat-card">
-                            <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                            <div class="stat-icon-wrapper"
+                                style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
                                 <i class="fas fa-tags"></i>
                             </div>
                             <div class="stat-content">
@@ -504,9 +517,10 @@
                                 <span class="stat-trend">Unique</span>
                             </div>
                         </div>
-                        
+
                         <div class="stat-card">
-                            <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <div class="stat-icon-wrapper"
+                                style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
                             <div class="stat-content">
@@ -527,12 +541,12 @@
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
-                            
+
                             <div class="filter-group">
                                 <select id="inventoryCategoryFilter" class="filter-select">
                                     <option value="all">All Categories</option>
                                 </select>
-                                
+
                                 <select id="inventorySortFilter" class="filter-select">
                                     <option value="name-asc">Name (A-Z)</option>
                                     <option value="name-desc">Name (Z-A)</option>
@@ -541,7 +555,7 @@
                                     <option value="quantity-asc">Quantity (Low to High)</option>
                                     <option value="quantity-desc">Quantity (High to Low)</option>
                                 </select>
-                                
+
                                 <select id="inventoryItemsPerPage" class="filter-select">
                                     <option value="10">10 per page</option>
                                     <option value="20" selected>20 per page</option>
@@ -550,7 +564,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="active-filters" id="activeFilters" style="display: none;">
                             <span>Active Filters:</span>
                             <div class="filter-tags" id="filterTags"></div>
@@ -583,7 +597,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                         <!-- Empty State -->
                         <div id="inventoryEmptyState" class="table-empty" style="display: none;">
                             <i class="fas fa-box-open"></i>
@@ -593,7 +607,7 @@
                                 <i class="fas fa-undo"></i> Reset Filters
                             </button>
                         </div>
-                        
+
                         <!-- Error State -->
                         <div id="inventoryErrorState" class="table-error" style="display: none;">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -608,7 +622,8 @@
                     <!-- Pagination -->
                     <div class="inventory-pagination-container">
                         <div class="pagination-info">
-                            Showing <span id="inventoryStartCount">0</span> to <span id="inventoryEndCount">0</span> of <span id="inventoryTotalCount">0</span> products
+                            Showing <span id="inventoryStartCount">0</span> to <span id="inventoryEndCount">0</span> of
+                            <span id="inventoryTotalCount">0</span> products
                         </div>
                         <div class="pagination-controls">
                             <button class="pagination-btn" id="prevInventoryPage" disabled>
@@ -669,7 +684,7 @@
                                 <span class="summary-trend" id="totalCashiersTrend">Registered in system</span>
                             </div>
                         </div>
-                        
+
                         <div class="summary-card" id="activeCashiersCard">
                             <div class="summary-icon-wrapper gradient-green">
                                 <i class="fas fa-user-check"></i>
@@ -680,7 +695,7 @@
                                 <span class="summary-trend positive" id="activeTrend">75% attendance</span>
                             </div>
                         </div>
-                        
+
                         <div class="summary-card" id="emailCard">
                             <div class="summary-icon-wrapper gradient-purple">
                                 <i class="fas fa-envelope"></i>
@@ -691,7 +706,7 @@
                                 <span class="summary-trend">Verified accounts</span>
                             </div>
                         </div>
-                        
+
                         <div class="summary-card" id="usernameCard">
                             <div class="summary-icon-wrapper gradient-orange">
                                 <i class="fas fa-user-tag"></i>
@@ -747,20 +762,20 @@
                             </thead>
                             <tbody id="staffTableBody"></tbody>
                         </table>
-                        
+
                         <!-- Loading State -->
                         <div id="staffTableLoading" class="table-loading" style="display: none;">
                             <div class="spinner"></div>
                             <span>Loading cashiers...</span>
                         </div>
-                        
+
                         <!-- Empty State -->
                         <div id="staffTableEmpty" class="table-empty" style="display: none;">
                             <i class="fas fa-users-slash"></i>
                             <h4>No Cashiers Found</h4>
                             <p>Click the "Add New Cashier" button to add your first cashier.</p>
                         </div>
-                        
+
                         <!-- Error State -->
                         <div id="staffTableError" class="table-error" style="display: none;">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -775,7 +790,8 @@
                     <!-- Pagination -->
                     <div class="pagination-container" id="pagination">
                         <div class="pagination-info">
-                            Showing <span id="startCount">0</span> to <span id="endCount">0</span> of <span id="totalCount">0</span> entries
+                            Showing <span id="startCount">0</span> to <span id="endCount">0</span> of <span
+                                id="totalCount">0</span> entries
                         </div>
                         <div class="pagination-controls">
                             <button class="pagination-btn" id="prevPage" disabled>
@@ -806,866 +822,939 @@
                 </div>
             </div>
 
-<!-- ============================================
+            <!-- ============================================
      ANALYSIS PAGE - WITH TWO MODULES
      ============================================
      Tab 1: Age Group Prediction (from Category + Brand) - KNN Model
      Tab 2: Age Segmentation (from Age) - Decision Tree Model
 -->
 
-<div class="page" id="analysis-page">
-    <div class="analysis-container" style="padding: 24px; max-width: 1000px; margin: 0 auto;">
-        
-        <!-- ===== PAGE HEADER ===== -->
-        <div style="background: linear-gradient(135deg, #4361ee, #3a0ca3); padding: 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);">
-            <h2 style="color: white; font-size: 24px; margin: 0; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-chart-line" style="font-size: 28px;"></i> 
-                Customer Analytics Dashboard
-            </h2>
-            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">
-                <i class="fas fa-info-circle"></i> Two powerful prediction modules for customer insights
-            </p>
-        </div>
+            <div class="page" id="analysis-page">
+                <div class="analysis-container" style="padding: 24px; max-width: 1000px; margin: 0 auto;">
 
-        <!-- Replace the existing tab navigation in analysis-page with this -->
-
-<!-- ===== TAB NAVIGATION ===== -->
-<div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap;">
-    <button id="tab1Btn" class="tab-btn active" 
-            style="padding: 12px 24px; background: #4361ee; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-magic"></i> Age Group (Category+Brand)
-    </button>
-    <button id="tab2Btn" class="tab-btn" 
-            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-users"></i> Age Segmentation
-    </button>
-    <button id="tab3Btn" class="tab-btn" 
-            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-calendar-alt"></i> Festival Sales
-    </button>
-</div>
-
-        <!-- ===== TAB 1: OLD MODULE (Category + Brand Prediction) ===== -->
-        <div id="tab1Content" style="display: block;">
-            <!-- Age Group Prediction Form Card -->
-            <div style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
-                <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-tag" style="color: #4361ee;"></i>
-                    Predict Age Group from Product Details
-                </h3>
-                
-                <form id="agePredictionForm" onsubmit="return false;">
-                    <!-- Category Dropdown -->
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
-                            Product Category <span style="color: #ef4444;">*</span>
-                        </label>
-                        <select id="productCategory" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
-                            <option value="">-- Select Category --</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Brand Dropdown -->
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
-                            Brand <span style="color: #ef4444;">*</span>
-                        </label>
-                        <select id="brand" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;" disabled>
-                            <option value="">-- First select a category --</option>
-                        </select>
+                    <!-- ===== PAGE HEADER ===== -->
+                    <div
+                        style="background: linear-gradient(135deg, #4361ee, #3a0ca3); padding: 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);">
+                        <h2
+                            style="color: white; font-size: 24px; margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-chart-line" style="font-size: 28px;"></i>
+                            Customer Analytics Dashboard
+                        </h2>
+                        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">
+                            <i class="fas fa-info-circle"></i> Two powerful prediction modules for customer insights
+                        </p>
                     </div>
 
-                    <!-- Buttons -->
-                    <div style="display: flex; gap: 12px;">
-                        <button type="submit" id="predictAgeBtn" class="btn-primary">
-                            <i class="fas fa-magic"></i> Predict Age Group
+                    <!-- Replace the existing tab navigation in analysis-page with this -->
+
+                    <!-- ===== TAB NAVIGATION ===== -->
+                    <div
+                        style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap;">
+                        <button id="tab1Btn" class="tab-btn active"
+                            style="padding: 12px 24px; background: #4361ee; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-magic"></i> Age Group (Category+Brand)
                         </button>
-                        <button type="button" id="resetPredictionForm" class="btn-outline">
-                            <i class="fas fa-undo"></i> Reset
+                        <button id="tab2Btn" class="tab-btn"
+                            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-users"></i> Age Segmentation
+                        </button>
+                        <button id="tab3Btn" class="tab-btn"
+                            style="padding: 12px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calendar-alt"></i> Festival Sales
                         </button>
                     </div>
-                </form>
-            </div>
 
-            <!-- Result Container for Old Module -->
-            <div id="agePredictionResult" style="display: none; background: linear-gradient(135deg, #4361ee, #3a0ca3); border-radius: 20px; padding: 30px; text-align: center; color: white; margin-top: 24px;">
-                <div style="background: rgba(255,255,255,0.2); width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-user-tag" style="font-size: 35px; color: white;"></i>
-                </div>
-                <h3 style="color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 5px;">Predicted Age Group</h3>
-                <p id="ageGroupResult" style="font-size: 48px; font-weight: 800; color: white; margin: 0;">-</p>
-                <p style="color: rgba(255,255,255,0.7); margin-top: 10px; font-size: 12px;">
-                    <i class="fas fa-robot"></i> K-Nearest Neighbors Model
-                </p>
-            </div>
-        </div>
+                    <!-- ===== TAB 1: OLD MODULE (Category + Brand Prediction) ===== -->
+                    <div id="tab1Content" style="display: block;">
+                        <!-- Age Group Prediction Form Card -->
+                        <div
+                            style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
+                            <h3
+                                style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-tag" style="color: #4361ee;"></i>
+                                Predict Age Group from Product Details
+                            </h3>
 
-        <!-- ===== TAB 2: NEW MODULE (Age Input + Preferences) ===== -->
-        <div id="tab2Content" style="display: none;">
-            <!-- Age Input Form Card -->
-            <div style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
-                <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-user" style="color: #4361ee;"></i>
-                    Age-Based Customer Segmentation
-                </h3>
-                
-                <form id="ageSegmentationForm" onsubmit="return false;">
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
-                            Customer Age <span style="color: #ef4444;">*</span>
-                        </label>
-                        <input type="number" id="customerAge" 
-                               style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"
-                               placeholder="Enter age (e.g., 24)" min="18" max="100" step="1">
-                        <small style="color: #64748b; margin-top: 4px; display: block;">Age must be between 18 and 100</small>
-                    </div>
+                            <form id="agePredictionForm" onsubmit="return false;">
+                                <!-- Category Dropdown -->
+                                <div style="margin-bottom: 20px;">
+                                    <label
+                                        style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                                        Product Category <span style="color: #ef4444;">*</span>
+                                    </label>
+                                    <select id="productCategory"
+                                        style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+                                        <option value="">-- Select Category --</option>
+                                    </select>
+                                </div>
 
-                    <div style="display: flex; gap: 12px;">
-                        <button type="submit" id="analyzeBtn" class="btn-primary">
-                            <i class="fas fa-search"></i> Analyze Customer
-                        </button>
-                        <button type="button" id="resetAnalysisBtn" class="btn-outline">
-                            <i class="fas fa-undo"></i> Reset
-                        </button>
-                    </div>
-                </form>
-            </div>
+                                <!-- Brand Dropdown -->
+                                <div style="margin-bottom: 24px;">
+                                    <label
+                                        style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                                        Brand <span style="color: #ef4444;">*</span>
+                                    </label>
+                                    <select id="brand"
+                                        style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;"
+                                        disabled>
+                                        <option value="">-- First select a category --</option>
+                                    </select>
+                                </div>
 
-            <!-- Results for New Module -->
-            <div id="analysisResults" style="display: none;">
-                <!-- Age Group Card -->
-                <div style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; padding: 20px; text-align: center; color: white; margin-bottom: 24px;">
-                    <h3 style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Age Group</h3>
-                    <p id="segmentationAgeGroupResult" style="font-size: 36px; font-weight: 700; color: white; margin: 0;">-</p>
-                </div>
-
-                <!-- Two Column Layout -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <!-- Products Card -->
-                    <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                            <i class="fas fa-shopping-bag" style="color: #4361ee;"></i>
-                            <h3 style="margin: 0; font-size: 16px;">Top Products</h3>
+                                <!-- Buttons -->
+                                <div style="display: flex; gap: 12px;">
+                                    <button type="submit" id="predictAgeBtn" class="btn-primary">
+                                        <i class="fas fa-magic"></i> Predict Age Group
+                                    </button>
+                                    <button type="button" id="resetPredictionForm" class="btn-outline">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <div id="productsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
-                    </div>
 
-                    <!-- Brands Card -->
-                    <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                            <i class="fas fa-tag" style="color: #4361ee;"></i>
-                            <h3 style="margin: 0; font-size: 16px;">Top Brands</h3>
+                        <!-- Result Container for Old Module -->
+                        <div id="agePredictionResult"
+                            style="display: none; background: linear-gradient(135deg, #4361ee, #3a0ca3); border-radius: 20px; padding: 30px; text-align: center; color: white; margin-top: 24px;">
+                            <div
+                                style="background: rgba(255,255,255,0.2); width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user-tag" style="font-size: 35px; color: white;"></i>
+                            </div>
+                            <h3 style="color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 5px;">Predicted Age
+                                Group</h3>
+                            <p id="ageGroupResult" style="font-size: 48px; font-weight: 800; color: white; margin: 0;">-
+                            </p>
+                            <p style="color: rgba(255,255,255,0.7); margin-top: 10px; font-size: 12px;">
+                                <i class="fas fa-robot"></i> K-Nearest Neighbors Model
+                            </p>
                         </div>
-                        <div id="brandsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    </div>
+
+                    <!-- ===== TAB 2: NEW MODULE (Age Input + Preferences) ===== -->
+                    <div id="tab2Content" style="display: none;">
+                        <!-- Age Input Form Card -->
+                        <div
+                            style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
+                            <h3
+                                style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-user" style="color: #4361ee;"></i>
+                                Age-Based Customer Segmentation
+                            </h3>
+
+                            <form id="ageSegmentationForm" onsubmit="return false;">
+                                <div style="margin-bottom: 24px;">
+                                    <label
+                                        style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                                        Customer Age <span style="color: #ef4444;">*</span>
+                                    </label>
+                                    <input type="number" id="customerAge"
+                                        style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"
+                                        placeholder="Enter age (e.g., 24)" min="18" max="100" step="1">
+                                    <small style="color: #64748b; margin-top: 4px; display: block;">Age must be between
+                                        18 and 100</small>
+                                </div>
+
+                                <div style="display: flex; gap: 12px;">
+                                    <button type="submit" id="analyzeBtn" class="btn-primary">
+                                        <i class="fas fa-search"></i> Analyze Customer
+                                    </button>
+                                    <button type="button" id="resetAnalysisBtn" class="btn-outline">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Results for New Module -->
+                        <div id="analysisResults" style="display: none;">
+                            <!-- Age Group Card -->
+                            <div
+                                style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; padding: 20px; text-align: center; color: white; margin-bottom: 24px;">
+                                <h3
+                                    style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">
+                                    Age Group</h3>
+                                <p id="segmentationAgeGroupResult"
+                                    style="font-size: 36px; font-weight: 700; color: white; margin: 0;">-</p>
+                            </div>
+
+                            <!-- Two Column Layout -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <!-- Products Card -->
+                                <div
+                                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                        <i class="fas fa-shopping-bag" style="color: #4361ee;"></i>
+                                        <h3 style="margin: 0; font-size: 16px;">Top Products</h3>
+                                    </div>
+                                    <div id="productsContainer"
+                                        style="display: flex; flex-direction: column; gap: 8px;"></div>
+                                </div>
+
+                                <!-- Brands Card -->
+                                <div
+                                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                        <i class="fas fa-tag" style="color: #4361ee;"></i>
+                                        <h3 style="margin: 0; font-size: 16px;">Top Brands</h3>
+                                    </div>
+                                    <div id="brandsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Model Info -->
+                            <div
+                                style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 20px; font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-robot"></i>
+                                <span>Decision Tree Classifier • 100% Accuracy • 10,000 customer records</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ===== TAB 3: Festival Sales Prediction ===== -->
+                    <div id="tab3Content" style="display: none;">
+                        <div
+                            style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
+                            <h3
+                                style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-calendar-alt" style="color: #4361ee;"></i>
+                                Festival Sales Prediction
+                            </h3>
+
+                            <!-- Hidden data elements for JavaScript -->
+                            <div id="festival-top-products-data" data-products='[]' style="display: none;"></div>
+                            <div id="festival-least-products-data" data-products='[]' style="display: none;"></div>
+                            <div id="festival-detected-festival" data-festival="" style="display: none;"></div>
+
+                            <!-- Festival Search Form -->
+                            <form id="festivalSearchForm" onsubmit="return false;">
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                    <!-- Festival Dropdown -->
+                                    <div>
+                                        <label
+                                            style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                                            <i class="fas fa-calendar-alt"
+                                                style="color: #4361ee; margin-right: 6px;"></i>
+                                            Select Festival
+                                        </label>
+                                        <select id="festival_select" class="filter-select"
+                                            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                                            <option value="">-- Choose a festival --</option>
+                                            {% for festival in festival_choices %}
+                                            <option value="{{ festival }}">{{ festival }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <!-- OR Divider -->
+                                    <div
+                                        style="position: relative; display: flex; align-items: center; justify-content: center;">
+                                        <div
+                                            style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed #e2e8f0;">
+                                        </div>
+                                        <span
+                                            style="background: white; padding: 0 15px; position: relative; color: #64748b; font-weight: 600; z-index: 1;">OR</span>
+                                    </div>
+
+                                    <!-- Date Input -->
+                                    <div>
+                                        <label
+                                            style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
+                                            <i class="fas fa-calendar" style="color: #4361ee; margin-right: 6px;"></i>
+                                            Enter Date (DD-MM-YYYY)
+                                        </label>
+                                        <input type="text" id="festival_date" class="filter-select"
+                                            placeholder="e.g., 25-12-2025"
+                                            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                                        <small style="color: #64748b; margin-top: 4px; display: block;">Leave blank if
+                                            using festival dropdown</small>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" id="festival_hidden" name="festival" value="">
+
+                                <button type="submit" id="predictFestivalBtn" class="btn-primary"
+                                    style="width: 100%; padding: 14px;">
+                                    <i class="fas fa-search"></i> Predict Festival Sales
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Results Container -->
+                        <div id="festivalResults" style="display: none;">
+                            <!-- Festival Banner -->
+                            <div id="festival-banner"
+                                style="background: linear-gradient(135deg, #4361ee, #3a0ca3); border-radius: 16px; padding: 24px; text-align: center; color: white; margin-bottom: 24px; display: none;">
+                                <i class="fas fa-glass-cheers" style="font-size: 32px; margin-right: 10px;"></i>
+                                <span id="festival-name-display" style="font-size: 24px; font-weight: 700;"></span>
+                                <p style="margin-top: 8px; opacity: 0.9;">Expected Sales Analysis</p>
+                            </div>
+
+                            <!-- Charts Grid -->
+                            <div id="festival-charts"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                <!-- Top Selling Products Chart -->
+                                <div
+                                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                        <i class="fas fa-fire" style="color: #e67e22;"></i>
+                                        <h3 style="margin: 0; font-size: 16px;">Top Selling Products</h3>
+                                    </div>
+                                    <div style="height: 300px; position: relative;">
+                                        <canvas id="festivalTopSellingChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Least Selling Products Chart -->
+                                <div
+                                    style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                        <i class="fas fa-snowflake" style="color: #3498db;"></i>
+                                        <h3 style="margin: 0; font-size: 16px;">Least Selling Products</h3>
+                                    </div>
+                                    <div style="height: 300px; position: relative;">
+                                        <canvas id="festivalLeastSellingChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Model Info -->
+                            <div
+                                style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Prophet Time Series Model • Historical sales patterns • Festival-based
+                                    prediction</span>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="festivalEmptyState"
+                            style="background: white; border-radius: 16px; padding: 60px 20px; text-align: center; color: #64748b; border: 2px dashed #e2e8f0;">
+                            <i class="fas fa-chart-pie"
+                                style="font-size: 48px; color: #94a3b8; margin-bottom: 15px;"></i>
+                            <h4 style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #1e293b;">No
+                                Prediction Yet</h4>
+                            <p style="margin-bottom: 10px;">Select a festival or enter a date to view sales forecast</p>
+                            <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Model Info -->
-                <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 20px; font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-robot"></i>
-                    <span>Decision Tree Classifier • 100% Accuracy • 10,000 customer records</span>
-                </div>
-            </div>
-        </div>
-        <!-- ===== TAB 3: Festival Sales Prediction ===== -->
-<div id="tab3Content" style="display: none;">
-    <div style="background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 24px; border: 1px solid #f0f0f0;">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-calendar-alt" style="color: #4361ee;"></i>
-            Festival Sales Prediction
-        </h3>
-        
-        <!-- Hidden data elements for JavaScript -->
-        <div id="festival-top-products-data" data-products='[]' style="display: none;"></div>
-        <div id="festival-least-products-data" data-products='[]' style="display: none;"></div>
-        <div id="festival-detected-festival" data-festival="" style="display: none;"></div>
-        
-        <!-- Festival Search Form -->
-        <form id="festivalSearchForm" onsubmit="return false;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                <!-- Festival Dropdown -->
-                <div>
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
-                        <i class="fas fa-calendar-alt" style="color: #4361ee; margin-right: 6px;"></i>
-                        Select Festival
-                    </label>
-                    <select id="festival_select" class="filter-select" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                        <option value="">-- Choose a festival --</option>
-                        {% for festival in festival_choices %}
-                            <option value="{{ festival }}">{{ festival }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- OR Divider -->
-                <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-                    <div style="position: absolute; top: 50%; left: 0; width: 100%; border-top: 2px dashed #e2e8f0;"></div>
-                    <span style="background: white; padding: 0 15px; position: relative; color: #64748b; font-weight: 600; z-index: 1;">OR</span>
-                </div>
-                
-                <!-- Date Input -->
-                <div>
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b;">
-                        <i class="fas fa-calendar" style="color: #4361ee; margin-right: 6px;"></i>
-                        Enter Date (DD-MM-YYYY)
-                    </label>
-                    <input type="text" id="festival_date" class="filter-select" 
-                           placeholder="e.g., 25-12-2025"
-                           style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                    <small style="color: #64748b; margin-top: 4px; display: block;">Leave blank if using festival dropdown</small>
-                </div>
-            </div>
-            
-            <input type="hidden" id="festival_hidden" name="festival" value="">
-            
-            <button type="submit" id="predictFestivalBtn" class="btn-primary" style="width: 100%; padding: 14px;">
-                <i class="fas fa-search"></i> Predict Festival Sales
-            </button>
-        </form>
-    </div>
-
-    <!-- Results Container -->
-    <div id="festivalResults" style="display: none;">
-        <!-- Festival Banner -->
-        <div id="festival-banner" style="background: linear-gradient(135deg, #4361ee, #3a0ca3); border-radius: 16px; padding: 24px; text-align: center; color: white; margin-bottom: 24px; display: none;">
-            <i class="fas fa-glass-cheers" style="font-size: 32px; margin-right: 10px;"></i>
-            <span id="festival-name-display" style="font-size: 24px; font-weight: 700;"></span>
-            <p style="margin-top: 8px; opacity: 0.9;">Expected Sales Analysis</p>
-        </div>
-
-        <!-- Charts Grid -->
-        <div id="festival-charts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Top Selling Products Chart -->
-            <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                    <i class="fas fa-fire" style="color: #e67e22;"></i>
-                    <h3 style="margin: 0; font-size: 16px;">Top Selling Products</h3>
-                </div>
-                <div style="height: 300px; position: relative;">
-                    <canvas id="festivalTopSellingChart"></canvas>
-                </div>
             </div>
 
-            <!-- Least Selling Products Chart -->
-            <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                    <i class="fas fa-snowflake" style="color: #3498db;"></i>
-                    <h3 style="margin: 0; font-size: 16px;">Least Selling Products</h3>
-                </div>
-                <div style="height: 300px; position: relative;">
-                    <canvas id="festivalLeastSellingChart"></canvas>
-                </div>
-            </div>
-        </div>
+            <!-- CSS for tabs and buttons -->
+            <style>
+                .tab-btn {
+                    transition: all 0.3s ease;
+                }
 
-        <!-- Model Info -->
-        <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-chart-line"></i>
-            <span>Prophet Time Series Model • Historical sales patterns • Festival-based prediction</span>
-        </div>
-    </div>
+                .tab-btn:hover {
+                    transform: translateY(-2px);
+                }
 
-    <!-- Empty State -->
-    <div id="festivalEmptyState" style="background: white; border-radius: 16px; padding: 60px 20px; text-align: center; color: #64748b; border: 2px dashed #e2e8f0;">
-        <i class="fas fa-chart-pie" style="font-size: 48px; color: #94a3b8; margin-bottom: 15px;"></i>
-        <h4 style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #1e293b;">No Prediction Yet</h4>
-        <p style="margin-bottom: 10px;">Select a festival or enter a date to view sales forecast</p>
-        <small>Supported: Diwali, Christmas, Holi, Eid, New Year, Valentine & more</small>
-    </div>
-</div>
-    </div>
-</div>
+                .tab-btn.active {
+                    background: #4361ee !important;
+                    color: white !important;
+                    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+                }
 
-<!-- CSS for tabs and buttons -->
-<style>
-.tab-btn {
-    transition: all 0.3s ease;
-}
-.tab-btn:hover {
-    transform: translateY(-2px);
-}
-.tab-btn.active {
-    background: #4361ee !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-.btn-primary {
-    background: linear-gradient(135deg, #4361ee, #3a0ca3);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-.btn-outline {
-    background: #f1f5f9;
-    color: #475569;
-    border: 2px solid #e2e8f0;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-.btn-outline:hover {
-    background: #e2e8f0;
-}
+                .btn-primary {
+                    background: linear-gradient(135deg, #4361ee, #3a0ca3);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+                }
 
-.category-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: #f8fafc;
-    border-radius: 6px;
-    font-size: 13px;
-}
-.category-name {
-    font-weight: 600;
-    color: #1e293b;
-}
-.category-value {
-    color: #4361ee;
-    font-weight: 600;
-}
-</style>
+                .btn-primary:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+                }
 
-<!-- ===== CUSTOM CSS ANIMATIONS ===== -->
-<!-- Pulse animation for the result icon -->
-<!-- Focus effects for dropdowns -->
-<!-- Hover effects for buttons -->
-<!-- Slide-up animation for result card -->
-<style>
-/* Pulse animation for the result icon */
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255,255,255,0.7);
-    }
-    70% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 15px rgba(255,255,255,0);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255,255,255,0);
-    }
-}
+                .btn-outline {
+                    background: #f1f5f9;
+                    color: #475569;
+                    border: 2px solid #e2e8f0;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+                }
 
-/* Focus styles for dropdowns */
-#productCategory:focus, #brand:focus {
-    outline: none;
-    border-color: #4361ee !important;
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-}
+                .btn-outline:hover {
+                    background: #e2e8f0;
+                }
 
-/* Hover effect for predict button */
-#predictAgeBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
-}
+                .category-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: #f8fafc;
+                    border-radius: 6px;
+                    font-size: 13px;
+                }
 
-/* Hover effect for reset button */
-#resetPredictionForm:hover {
-    background: #e2e8f0;
-    border-color: #cbd5e1;
-}
+                .category-name {
+                    font-weight: 600;
+                    color: #1e293b;
+                }
 
-/* Slide-up animation for result card */
-#agePredictionResult {
-    animation: slideUp 0.5s ease-out;
-}
+                .category-value {
+                    color: #4361ee;
+                    font-weight: 600;
+                }
+            </style>
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-</style>
-<!-- ============================================
+            <!-- ===== CUSTOM CSS ANIMATIONS ===== -->
+            <!-- Pulse animation for the result icon -->
+            <!-- Focus effects for dropdowns -->
+            <!-- Hover effects for buttons -->
+            <!-- Slide-up animation for result card -->
+            <style>
+                /* Pulse animation for the result icon */
+                @keyframes pulse {
+                    0% {
+                        transform: scale(1);
+                        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+                    }
+
+                    70% {
+                        transform: scale(1.05);
+                        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+                    }
+
+                    100% {
+                        transform: scale(1);
+                        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+                    }
+                }
+
+                /* Focus styles for dropdowns */
+                #productCategory:focus,
+                #brand:focus {
+                    outline: none;
+                    border-color: #4361ee !important;
+                    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+                }
+
+                /* Hover effect for predict button */
+                #predictAgeBtn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+                }
+
+                /* Hover effect for reset button */
+                #resetPredictionForm:hover {
+                    background: #e2e8f0;
+                    border-color: #cbd5e1;
+                }
+
+                /* Slide-up animation for result card */
+                #agePredictionResult {
+                    animation: slideUp 0.5s ease-out;
+                }
+
+                @keyframes slideUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            </style>
+            <!-- ============================================
      REPORTS PAGE - ADVANCED ANALYTICS DASHBOARD
      ============================================ -->
-<div class="page" id="reports-page">
-    <div class="reports-container">
-        
-        <!-- Animated Header with Particle Effect -->
-        <div class="reports-header-modern">
-            <div class="header-particles">
-                <div class="particle"></div>
-                <div class="particle"></div>
-                <div class="particle"></div>
-                <div class="particle"></div>
-                <div class="particle"></div>
-            </div>
-            <div class="header-content">
-                <div class="header-left">
-                    <h1 class="gradient-text">
-                        <i class="fas fa-chart-pie"></i> 
-                        Analytics & Reports
-                    </h1>
-                    <p class="header-subtitle">Data-driven insights for smart decisions</p>
-                </div>
-                <div class="header-right">
-                    <div class="date-range-picker-modern">
-                        <i class="fas fa-calendar-alt"></i>
-                        <input type="text" id="dateRangePicker" placeholder="Select Date Range" value="Last 30 days">
-                    </div>
-                    <button class="btn-primary btn-glow" id="exportAllReportsBtn">
-                        <i class="fas fa-download"></i> Export All
-                    </button>
-                </div>
-            </div>
-            
-            <!-- KPI Cards with Counters -->
-            <div class="kpi-strip">
-                <div class="kpi-item" id="totalRevenueKpi">
-                    <div class="kpi-icon"><i class="fas fa-rupee-sign"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-label">Total Revenue</span>
-                        <span class="kpi-value" data-target="156780">₹0</span>
-                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 12.5%</span>
-                    </div>
-                </div>
-                <div class="kpi-item" id="totalOrdersKpi">
-                    <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-label">Total Orders</span>
-                        <span class="kpi-value" data-target="1284">0</span>
-                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 8.2%</span>
-                    </div>
-                </div>
-                <div class="kpi-item" id="avgOrderKpi">
-                    <div class="kpi-icon"><i class="fas fa-calculator"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-label">Avg. Order Value</span>
-                        <span class="kpi-value" data-target="122">₹0</span>
-                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 5.3%</span>
-                    </div>
-                </div>
-                <div class="kpi-item" id="profitMarginKpi">
-                    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-label">Profit Margin</span>
-                        <span class="kpi-value" data-target="23.5">0%</span>
-                        <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 2.1%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <div class="page" id="reports-page">
+                <div class="reports-container">
 
-        <!-- Quick Action Tiles -->
-        <div class="quick-actions-grid">
-            <div class="action-tile" onclick="RetailX.Reports.generateReport('daily-sales')">
-                <div class="tile-icon pulse"><i class="fas fa-sun"></i></div>
-                <div class="tile-content">
-                    <h4>Daily Sales</h4>
-                    <p>Today's performance</p>
-                </div>
-                <div class="tile-glow"></div>
-            </div>
-            <div class="action-tile" onclick="RetailX.Reports.generateReport('weekly-summary')">
-                <div class="tile-icon pulse" style="animation-delay: 0.2s"><i class="fas fa-calendar-week"></i></div>
-                <div class="tile-content">
-                    <h4>Weekly Summary</h4>
-                    <p>Week over week</p>
-                </div>
-            </div>
-            <div class="action-tile" onclick="RetailX.Reports.generateReport('monthly-review')">
-                <div class="tile-icon pulse" style="animation-delay: 0.4s"><i class="fas fa-calendar-alt"></i></div>
-                <div class="tile-content">
-                    <h4>Monthly Review</h4>
-                    <p>Complete analysis</p>
-                </div>
-            </div>
-            <div class="action-tile" onclick="RetailX.Reports.scheduleReport()">
-                <div class="tile-icon"><i class="fas fa-clock"></i></div>
-                <div class="tile-content">
-                    <h4>Schedule Reports</h4>
-                    <p>Automate delivery</p>
-                </div>
-            </div>
-        </div>
+                    <!-- Animated Header with Particle Effect -->
+                    <div class="reports-header-modern">
+                        <div class="header-particles">
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                        </div>
+                        <div class="header-content">
+                            <div class="header-left">
+                                <h1 class="gradient-text">
+                                    <i class="fas fa-chart-pie"></i>
+                                    Analytics & Reports
+                                </h1>
+                                <p class="header-subtitle">Data-driven insights for smart decisions</p>
+                            </div>
+                            <div class="header-right">
+                                <div class="date-range-picker-modern">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <input type="text" id="dateRangePicker" placeholder="Select Date Range"
+                                        value="Last 30 days">
+                                </div>
+                                <button class="btn-primary btn-glow" id="exportAllReportsBtn">
+                                    <i class="fas fa-download"></i> Export All
+                                </button>
+                            </div>
+                        </div>
 
-        <!-- Main Reports Grid -->
-        <div class="reports-grid">
-            
-            <!-- Left Column - Primary Reports -->
-            <div class="reports-left">
-                
-                <!-- 1. Low Stock Alert with Supplier Suggestions -->
-                <div class="report-card glass-effect" id="lowStockReport">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
-                            <h3>Low Stock Alert <span class="badge urgent" id="lowStockCount">0</span></h3>
-                        </div>
-                        <div class="header-actions">
-                            <button class="btn-icon" onclick="RetailX.Reports.refreshLowStock()"><i class="fas fa-sync-alt"></i></button>
-                            <button class="btn-icon" onclick="RetailX.Reports.exportLowStock()"><i class="fas fa-download"></i></button>
+                        <!-- KPI Cards with Counters -->
+                        <div class="kpi-strip">
+                            <div class="kpi-item" id="totalRevenueKpi">
+                                <div class="kpi-icon"><i class="fas fa-rupee-sign"></i></div>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">Total Revenue</span>
+                                    <span class="kpi-value" data-target="156780">₹0</span>
+                                    <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 12.5%</span>
+                                </div>
+                            </div>
+                            <div class="kpi-item" id="totalOrdersKpi">
+                                <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">Total Orders</span>
+                                    <span class="kpi-value" data-target="1284">0</span>
+                                    <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 8.2%</span>
+                                </div>
+                            </div>
+                            <div class="kpi-item" id="avgOrderKpi">
+                                <div class="kpi-icon"><i class="fas fa-calculator"></i></div>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">Avg. Order Value</span>
+                                    <span class="kpi-value" data-target="122">₹0</span>
+                                    <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 5.3%</span>
+                                </div>
+                            </div>
+                            <div class="kpi-item" id="profitMarginKpi">
+                                <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">Profit Margin</span>
+                                    <span class="kpi-value" data-target="23.5">0%</span>
+                                    <span class="kpi-trend positive"><i class="fas fa-arrow-up"></i> 2.1%</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="report-body">
-                        <div class="low-stock-list" id="lowStockList">
-                            <!-- Dynamic content will be inserted here -->
-                        </div>
-                        
-                        <div class="view-all-link">
-                            <a href="#" onclick="RetailX.Reports.viewAllLowStock()">View All <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                    
-                    <div class="card-footer">
-                        <div class="insight-badge">
-                            <i class="fas fa-lightbulb"></i>
-                            <span>Restock cost: ₹<span id="restockCost">0</span></span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 2. Top 10 & Bottom 10 Products -->
-                <div class="report-card glass-effect" id="productPerformance">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-trophy" style="color: #fbbf24;"></i>
-                            <h3>Product Performance</h3>
+                    <!-- Quick Action Tiles -->
+                    <div class="quick-actions-grid">
+                        <div class="action-tile" onclick="RetailX.Reports.generateReport('daily-sales')">
+                            <div class="tile-icon pulse"><i class="fas fa-sun"></i></div>
+                            <div class="tile-content">
+                                <h4>Daily Sales</h4>
+                                <p>Today's performance</p>
+                            </div>
+                            <div class="tile-glow"></div>
                         </div>
-                        <div class="header-tabs">
-                            <button class="tab-btn-small active" data-tab="top">Top 10</button>
-                            <button class="tab-btn-small" data-tab="bottom">Bottom 10</button>
-                        </div>
-                    </div>
-                    
-                    <div class="report-body">
-                        <!-- Top Products Tab -->
-                        <div class="tab-content active" id="topProductsTab">
-                            <div class="product-list" id="topProductsList">
-                                <!-- Dynamic content -->
+                        <div class="action-tile" onclick="RetailX.Reports.generateReport('weekly-summary')">
+                            <div class="tile-icon pulse" style="animation-delay: 0.2s"><i
+                                    class="fas fa-calendar-week"></i></div>
+                            <div class="tile-content">
+                                <h4>Weekly Summary</h4>
+                                <p>Week over week</p>
                             </div>
                         </div>
-                        
-                        <!-- Bottom Products Tab -->
-                        <div class="tab-content" id="bottomProductsTab">
-                            <div class="product-list" id="bottomProductsList">
-                                <!-- Dynamic content -->
+                        <div class="action-tile" onclick="RetailX.Reports.generateReport('monthly-review')">
+                            <div class="tile-icon pulse" style="animation-delay: 0.4s"><i
+                                    class="fas fa-calendar-alt"></i></div>
+                            <div class="tile-content">
+                                <h4>Monthly Review</h4>
+                                <p>Complete analysis</p>
+                            </div>
+                        </div>
+                        <div class="action-tile" onclick="RetailX.Reports.scheduleReport()">
+                            <div class="tile-icon"><i class="fas fa-clock"></i></div>
+                            <div class="tile-content">
+                                <h4>Schedule Reports</h4>
+                                <p>Automate delivery</p>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 3. Profit & Loss Snapshot -->
-                <div class="report-card glass-effect" id="profitLoss">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-chart-line" style="color: #10b981;"></i>
-                            <h3>Profit & Loss Snapshot</h3>
-                        </div>
-                        <div class="period-selector">
-                            <select id="plPeriod" class="mini-select">
-                                <option value="daily">Daily</option>
-                                <option value="weekly" selected>Weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="report-body">
-                        <div class="pl-summary">
-                            <div class="pl-item">
-                                <span>Revenue</span>
-                                <strong class="revenue">₹<span id="plRevenue">156,780</span></strong>
-                            </div>
-                            <div class="pl-item">
-                                <span>COGS</span>
-                                <strong class="cogs">₹<span id="plCogs">98,450</span></strong>
-                            </div>
-                            <div class="pl-divider"></div>
-                            <div class="pl-item gross">
-                                <span>Gross Profit</span>
-                                <strong>₹<span id="plGross">58,330</span></strong>
-                            </div>
-                            <div class="pl-item">
-                                <span>Expenses</span>
-                                <strong class="expenses">₹<span id="plExpenses">12,500</span></strong>
-                            </div>
-                            <div class="pl-divider"></div>
-                            <div class="pl-item net">
-                                <span>Net Profit</span>
-                                <strong>₹<span id="plNet">45,830</span></strong>
-                            </div>
-                        </div>
-                        
-                        <!-- Mini Chart -->
-                        <div class="mini-chart-container">
-                            <canvas id="plMiniChart"></canvas>
-                        </div>
-                        
-                        <div class="pl-margin">
-                            <div class="margin-bar">
-                                <div class="margin-fill" style="width: 29%"></div>
-                            </div>
-                            <span>Profit Margin: 29%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    <!-- Main Reports Grid -->
+                    <div class="reports-grid">
 
-            <!-- Right Column - Secondary Reports -->
-            <div class="reports-right">
-                
-                <!-- 4. Inventory Health Dashboard -->
-                <div class="report-card glass-effect" id="inventoryHealth">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-heartbeat" style="color: #ef4444;"></i>
-                            <h3>Inventory Health</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="report-body">
-                        <!-- Health Gauge -->
-                        <div class="health-gauge-container">
-                            <canvas id="healthGauge" width="200" height="100"></canvas>
-                            <div class="gauge-value" id="healthValue">82%</div>
-                        </div>
-                        
-                        <!-- Health Stats -->
-                        <div class="health-stats">
-                            <div class="stat-row">
-                                <span>Total Items</span>
-                                <strong id="healthTotalItems">1,284</strong>
-                            </div>
-                            <div class="stat-row">
-                                <span>Categories</span>
-                                <strong id="healthCategories">24</strong>
-                            </div>
-                            <div class="stat-row">
-                                <span>Stock Value</span>
-                                <strong id="healthStockValue">₹82.3k</strong>
-                            </div>
-                            <div class="stat-row warning">
-                                <span>Low Stock</span>
-                                <strong id="healthLowStock">12</strong>
-                            </div>
-                            <div class="stat-row danger">
-                                <span>Overstock</span>
-                                <strong id="healthOverstock">8</strong>
-                            </div>
-                        </div>
-                        
-                        <!-- Stock Distribution -->
-                        <div class="stock-distribution">
-                            <h4>Stock by Category</h4>
-                            <div id="categoryDistribution" class="distribution-bars">
-                                <!-- Dynamic bars -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        <!-- Left Column - Primary Reports -->
+                        <div class="reports-left">
 
-                <!-- 5. Supplier Performance Scorecard -->
-                <div class="report-card glass-effect" id="supplierScorecard">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-truck" style="color: #3b82f6;"></i>
-                            <h3>Supplier Scorecard</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="report-body">
-                        <div class="supplier-list" id="supplierScoreList">
-                            <!-- Dynamic supplier cards -->
-                        </div>
-                        
-                        <div class="scorecard-summary">
-                            <div class="summary-item">
-                                <span>Top Performer</span>
-                                <strong>Shree Enterprises</strong>
-                            </div>
-                            <div class="summary-item">
-                                <span>Avg. Response</span>
-                                <strong>2.4 hours</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. Scheduled Reports -->
-                <div class="report-card glass-effect" id="scheduledReports">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-clock" style="color: #8b5cf6;"></i>
-                            <h3>Scheduled Reports</h3>
-                        </div>
-                        <button class="btn-icon" onclick="RetailX.Reports.addSchedule()">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="report-body">
-                        <div class="schedule-list" id="scheduleList">
-                            <div class="schedule-item">
-                                <div class="schedule-info">
-                                    <i class="fas fa-file-pdf"></i>
-                                    <div>
-                                        <strong>Weekly Summary</strong>
-                                        <span>Every Monday, 8:00 AM</span>
+                            <!-- 1. Low Stock Alert with Supplier Suggestions -->
+                            <div class="report-card glass-effect" id="lowStockReport">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                                        <h3>Low Stock Alert <span class="badge urgent" id="lowStockCount">0</span></h3>
+                                    </div>
+                                    <div class="header-actions">
+                                        <button class="btn-icon" onclick="RetailX.Reports.refreshLowStock()"><i
+                                                class="fas fa-sync-alt"></i></button>
+                                        <button class="btn-icon" onclick="RetailX.Reports.exportLowStock()"><i
+                                                class="fas fa-download"></i></button>
                                     </div>
                                 </div>
-                                <div class="schedule-actions">
-                                    <button class="btn-icon small"><i class="fas fa-edit"></i></button>
-                                    <button class="btn-icon small"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <div class="schedule-item">
-                                <div class="schedule-info">
-                                    <i class="fas fa-file-excel"></i>
-                                    <div>
-                                        <strong>Monthly Review</strong>
-                                        <span>1st of month, 9:00 AM</span>
+
+                                <div class="report-body">
+                                    <div class="low-stock-list" id="lowStockList">
+                                        <!-- Dynamic content will be inserted here -->
+                                    </div>
+
+                                    <div class="view-all-link">
+                                        <a href="#" onclick="RetailX.Reports.viewAllLowStock()">View All <i
+                                                class="fas fa-arrow-right"></i></a>
                                     </div>
                                 </div>
-                                <div class="schedule-actions">
-                                    <button class="btn-icon small"><i class="fas fa-edit"></i></button>
-                                    <button class="btn-icon small"><i class="fas fa-trash"></i></button>
+
+                                <div class="card-footer">
+                                    <div class="insight-badge">
+                                        <i class="fas fa-lightbulb"></i>
+                                        <span>Restock cost: ₹<span id="restockCost">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Top 10 & Bottom 10 Products -->
+                            <div class="report-card glass-effect" id="productPerformance">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-trophy" style="color: #fbbf24;"></i>
+                                        <h3>Product Performance</h3>
+                                    </div>
+                                    <div class="header-tabs">
+                                        <button class="tab-btn-small active" data-tab="top">Top 10</button>
+                                        <button class="tab-btn-small" data-tab="bottom">Bottom 10</button>
+                                    </div>
+                                </div>
+
+                                <div class="report-body">
+                                    <!-- Top Products Tab -->
+                                    <div class="tab-content active" id="topProductsTab">
+                                        <div class="product-list" id="topProductsList">
+                                            <!-- Dynamic content -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom Products Tab -->
+                                    <div class="tab-content" id="bottomProductsTab">
+                                        <div class="product-list" id="bottomProductsList">
+                                            <!-- Dynamic content -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Profit & Loss Snapshot -->
+                            <div class="report-card glass-effect" id="profitLoss">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-chart-line" style="color: #10b981;"></i>
+                                        <h3>Profit & Loss Snapshot</h3>
+                                    </div>
+                                    <div class="period-selector">
+                                        <select id="plPeriod" class="mini-select">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly" selected>Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="report-body">
+                                    <div class="pl-summary">
+                                        <div class="pl-item">
+                                            <span>Revenue</span>
+                                            <strong class="revenue">₹<span id="plRevenue">156,780</span></strong>
+                                        </div>
+                                        <div class="pl-item">
+                                            <span>COGS</span>
+                                            <strong class="cogs">₹<span id="plCogs">98,450</span></strong>
+                                        </div>
+                                        <div class="pl-divider"></div>
+                                        <div class="pl-item gross">
+                                            <span>Gross Profit</span>
+                                            <strong>₹<span id="plGross">58,330</span></strong>
+                                        </div>
+                                        <div class="pl-item">
+                                            <span>Expenses</span>
+                                            <strong class="expenses">₹<span id="plExpenses">12,500</span></strong>
+                                        </div>
+                                        <div class="pl-divider"></div>
+                                        <div class="pl-item net">
+                                            <span>Net Profit</span>
+                                            <strong>₹<span id="plNet">45,830</span></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mini Chart -->
+                                    <div class="mini-chart-container">
+                                        <canvas id="plMiniChart"></canvas>
+                                    </div>
+
+                                    <div class="pl-margin">
+                                        <div class="margin-bar">
+                                            <div class="margin-fill" style="width: 29%"></div>
+                                        </div>
+                                        <span>Profit Margin: 29%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column - Secondary Reports -->
+                        <div class="reports-right">
+
+                            <!-- 4. Inventory Health Dashboard -->
+                            <div class="report-card glass-effect" id="inventoryHealth">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-heartbeat" style="color: #ef4444;"></i>
+                                        <h3>Inventory Health</h3>
+                                    </div>
+                                </div>
+
+                                <div class="report-body">
+                                    <!-- Health Gauge -->
+                                    <div class="health-gauge-container">
+                                        <canvas id="healthGauge" width="200" height="100"></canvas>
+                                        <div class="gauge-value" id="healthValue">82%</div>
+                                    </div>
+
+                                    <!-- Health Stats -->
+                                    <div class="health-stats">
+                                        <div class="stat-row">
+                                            <span>Total Items</span>
+                                            <strong id="healthTotalItems">1,284</strong>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span>Categories</span>
+                                            <strong id="healthCategories">24</strong>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span>Stock Value</span>
+                                            <strong id="healthStockValue">₹82.3k</strong>
+                                        </div>
+                                        <div class="stat-row warning">
+                                            <span>Low Stock</span>
+                                            <strong id="healthLowStock">12</strong>
+                                        </div>
+                                        <div class="stat-row danger">
+                                            <span>Overstock</span>
+                                            <strong id="healthOverstock">8</strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stock Distribution -->
+                                    <div class="stock-distribution">
+                                        <h4>Stock by Category</h4>
+                                        <div id="categoryDistribution" class="distribution-bars">
+                                            <!-- Dynamic bars -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 5. Supplier Performance Scorecard -->
+                            <div class="report-card glass-effect" id="supplierScorecard">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-truck" style="color: #3b82f6;"></i>
+                                        <h3>Supplier Scorecard</h3>
+                                    </div>
+                                </div>
+
+                                <div class="report-body">
+                                    <div class="supplier-list" id="supplierScoreList">
+                                        <!-- Dynamic supplier cards -->
+                                    </div>
+
+                                    <div class="scorecard-summary">
+                                        <div class="summary-item">
+                                            <span>Top Performer</span>
+                                            <strong>Shree Enterprises</strong>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span>Avg. Response</span>
+                                            <strong>2.4 hours</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 6. Scheduled Reports -->
+                            <div class="report-card glass-effect" id="scheduledReports">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-clock" style="color: #8b5cf6;"></i>
+                                        <h3>Scheduled Reports</h3>
+                                    </div>
+                                    <button class="btn-icon" onclick="RetailX.Reports.addSchedule()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <div class="report-body">
+                                    <div class="schedule-list" id="scheduleList">
+                                        <div class="schedule-item">
+                                            <div class="schedule-info">
+                                                <i class="fas fa-file-pdf"></i>
+                                                <div>
+                                                    <strong>Weekly Summary</strong>
+                                                    <span>Every Monday, 8:00 AM</span>
+                                                </div>
+                                            </div>
+                                            <div class="schedule-actions">
+                                                <button class="btn-icon small"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon small"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="schedule-item">
+                                            <div class="schedule-info">
+                                                <i class="fas fa-file-excel"></i>
+                                                <div>
+                                                    <strong>Monthly Review</strong>
+                                                    <span>1st of month, 9:00 AM</span>
+                                                </div>
+                                            </div>
+                                            <div class="schedule-actions">
+                                                <button class="btn-icon small"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon small"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 7. AI Insights -->
+                            <div class="report-card glass-effect ai-insights" id="aiInsights">
+                                <div class="card-header">
+                                    <div class="header-title">
+                                        <i class="fas fa-robot" style="color: #10b981;"></i>
+                                        <h3 style="color: black;">AI Insights</h3>
+                                    </div>
+                                    <span class="badge live">LIVE</span>
+                                </div>
+
+                                <div class="report-body">
+                                    <div class="insight-carousel">
+                                        <div class="insight-item active">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <p style="color: black;">Tomatoes are selling 40% faster this week. Consider
+                                                increasing order by 30%.</p>
+                                        </div>
+                                        <div class="insight-item">
+                                            <i class="fas fa-exclamation"></i>
+                                            <p style="color: black;">5 products haven't sold in 30 days. Consider
+                                                discounting.</p>
+                                        </div>
+                                        <div class="insight-item">
+                                            <i class="fas fa-chart-line"></i>
+                                            <p style="color: black;">Diwali sales predicted to be 25% higher than last
+                                                year.</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-dots">
+                                        <span class="dot active"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Generation Modal -->
+                    <div class="modal" id="reportGenerationModal">
+                        <div class="modal-dialog modal-md">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3><i class="fas fa-file-export"></i> Generate Report</h3>
+                                    <button class="modal-close"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="report-preview">
+                                        <div class="preview-loading">
+                                            <div class="spinner"></div>
+                                            <p>Generating your report...</p>
+                                        </div>
+                                        <div class="preview-complete" style="display: none;">
+                                            <i class="fas fa-check-circle" style="color: #10b981; font-size: 48px;"></i>
+                                            <h4>Report Ready!</h4>
+                                            <div class="report-actions">
+                                                <button class="btn-primary"><i class="fas fa-download"></i> Download
+                                                    PDF</button>
+                                                <button class="btn-outline"><i class="fas fa-file-excel"></i>
+                                                    Excel</button>
+                                                <button class="btn-outline"><i class="fas fa-envelope"></i>
+                                                    Email</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Report Modal -->
+                    <div class="modal" id="scheduleModal">
+                        <div class="modal-dialog modal-sm">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3><i class="fas fa-clock"></i> Schedule Report</h3>
+                                    <button class="modal-close"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="scheduleForm">
+                                        <div class="form-group">
+                                            <label>Report Type</label>
+                                            <select class="form-control">
+                                                <option>Daily Sales Summary</option>
+                                                <option>Weekly Performance</option>
+                                                <option>Monthly Review</option>
+                                                <option>Low Stock Alert</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Frequency</label>
+                                            <select class="form-control">
+                                                <option>Daily</option>
+                                                <option>Weekly</option>
+                                                <option>Monthly</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Time</label>
+                                            <input type="time" class="form-control" value="08:00">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Email</label>
+                                            <input type="email" class="form-control" placeholder="manager@retailx.com">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Format</label>
+                                            <div class="radio-group">
+                                                <label><input type="radio" name="format" checked> PDF</label>
+                                                <label><input type="radio" name="format"> Excel</label>
+                                                <label><input type="radio" name="format"> CSV</label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn-primary btn-block">Save Schedule</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- 7. AI Insights -->
-                <div class="report-card glass-effect ai-insights" id="aiInsights">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-robot" style="color: #10b981;"></i>
-                            <h3 style="color: black;">AI Insights</h3>
-                        </div>
-                        <span class="badge live">LIVE</span>
-                    </div>
-                    
-                    <div class="report-body">
-                        <div class="insight-carousel">
-                            <div class="insight-item active">
-                                <i class="fas fa-lightbulb"></i>
-                                <p style="color: black;">Tomatoes are selling 40% faster this week. Consider increasing order by 30%.</p>
-                            </div>
-                            <div class="insight-item">
-                                <i class="fas fa-exclamation"></i>
-                                <p style="color: black;">5 products haven't sold in 30 days. Consider discounting.</p>
-                            </div>
-                            <div class="insight-item">
-                                <i class="fas fa-chart-line"></i>
-                                <p style="color: black;">Diwali sales predicted to be 25% higher than last year.</p>
-                            </div>
-                        </div>
-                        <div class="carousel-dots">
-                            <span class="dot active"></span>
-                            <span class="dot"></span>
-                            <span class="dot"></span>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>
-
-        <!-- Report Generation Modal -->
-        <div class="modal" id="reportGenerationModal">
-            <div class="modal-dialog modal-md">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-file-export"></i> Generate Report</h3>
-                        <button class="modal-close"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="report-preview">
-                            <div class="preview-loading">
-                                <div class="spinner"></div>
-                                <p>Generating your report...</p>
-                            </div>
-                            <div class="preview-complete" style="display: none;">
-                                <i class="fas fa-check-circle" style="color: #10b981; font-size: 48px;"></i>
-                                <h4>Report Ready!</h4>
-                                <div class="report-actions">
-                                    <button class="btn-primary"><i class="fas fa-download"></i> Download PDF</button>
-                                    <button class="btn-outline"><i class="fas fa-file-excel"></i> Excel</button>
-                                    <button class="btn-outline"><i class="fas fa-envelope"></i> Email</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schedule Report Modal -->
-        <div class="modal" id="scheduleModal">
-            <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-clock"></i> Schedule Report</h3>
-                        <button class="modal-close"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="scheduleForm">
-                            <div class="form-group">
-                                <label>Report Type</label>
-                                <select class="form-control">
-                                    <option>Daily Sales Summary</option>
-                                    <option>Weekly Performance</option>
-                                    <option>Monthly Review</option>
-                                    <option>Low Stock Alert</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Frequency</label>
-                                <select class="form-control">
-                                    <option>Daily</option>
-                                    <option>Weekly</option>
-                                    <option>Monthly</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Time</label>
-                                <input type="time" class="form-control" value="08:00">
-                            </div>
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" class="form-control" placeholder="manager@retailx.com">
-                            </div>
-                            <div class="form-group">
-                                <label>Format</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="format" checked> PDF</label>
-                                    <label><input type="radio" name="format"> Excel</label>
-                                    <label><input type="radio" name="format"> CSV</label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary btn-block">Save Schedule</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
             <!-- SETTINGS PAGE -->
             <div class="page" id="settings-page">
@@ -1759,7 +1848,7 @@
                     <form id="staffForm" autocomplete="off">
                         <input type="hidden" id="staffId" value="">
                         <input type="hidden" id="formAction" value="add">
-                        
+
                         <!-- Progress Steps -->
                         <div class="form-progress">
                             <div class="progress-step active" data-step="1">1. Basic Info</div>
@@ -1773,25 +1862,28 @@
                                 <h4 class="form-section-title">
                                     <i class="fas fa-user-circle"></i> Basic Information
                                 </h4>
-                                
+
                                 <div class="form-group">
                                     <label>Full Name <span class="required">*</span></label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-user"></i>
-                                        <input type="text" id="staffFullName" class="form-control" placeholder="Enter full name" required>
+                                        <input type="text" id="staffFullName" class="form-control"
+                                            placeholder="Enter full name" required>
                                     </div>
                                     <div class="error-message" id="fullNameError"></div>
                                     <small class="help-text">Enter the cashier's complete name</small>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>Email Address <span class="required">*</span></label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-envelope"></i>
-                                        <input type="email" id="staffEmail" class="form-control" placeholder="cashier@example.com" required>
+                                        <input type="email" id="staffEmail" class="form-control"
+                                            placeholder="cashier@example.com" required>
                                     </div>
                                     <div class="error-message" id="emailError"></div>
-                                    <small class="help-text">Will be used for notifications and password recovery</small>
+                                    <small class="help-text">Will be used for notifications and password
+                                        recovery</small>
                                 </div>
                             </div>
                             <div class="step-navigation">
@@ -1807,22 +1899,25 @@
                                 <h4 class="form-section-title">
                                     <i class="fas fa-lock"></i> Account Details
                                 </h4>
-                                
+
                                 <div class="form-group">
                                     <label>Username <span class="required">*</span></label>
                                     <div class="input-with-icon">
                                         <i class="fas fa-at"></i>
-                                        <input type="text" id="staffUsername" class="form-control" placeholder="Enter username" required>
+                                        <input type="text" id="staffUsername" class="form-control"
+                                            placeholder="Enter username" required>
                                     </div>
                                     <div class="error-message" id="usernameError"></div>
                                     <small class="help-text">Must be unique, minimum 3 characters</small>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>Password <span class="required">*</span></label>
                                     <div class="password-field">
-                                        <input type="password" id="staffPassword" class="form-control" placeholder="Enter password" required>
-                                        <button type="button" class="toggle-password" onclick="togglePassword('staffPassword')">
+                                        <input type="password" id="staffPassword" class="form-control"
+                                            placeholder="Enter password" required>
+                                        <button type="button" class="toggle-password"
+                                            onclick="togglePassword('staffPassword')">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </div>
@@ -1832,12 +1927,14 @@
                                     <div class="error-message" id="passwordError"></div>
                                     <small class="help-text">Minimum 6 characters, include numbers and letters</small>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>Confirm Password <span class="required">*</span></label>
                                     <div class="password-field">
-                                        <input type="password" id="staffConfirmPassword" class="form-control" placeholder="Confirm password" required>
-                                        <button type="button" class="toggle-password" onclick="togglePassword('staffConfirmPassword')">
+                                        <input type="password" id="staffConfirmPassword" class="form-control"
+                                            placeholder="Confirm password" required>
+                                        <button type="button" class="toggle-password"
+                                            onclick="togglePassword('staffConfirmPassword')">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </div>
@@ -1861,7 +1958,7 @@
                                 <h4 class="form-section-title">
                                     <i class="fas fa-check-circle"></i> Review & Confirm
                                 </h4>
-                                
+
                                 <div class="review-card">
                                     <h5>Basic Information</h5>
                                     <div class="review-item">
@@ -1873,7 +1970,7 @@
                                         <span class="review-value" id="reviewEmail">-</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="review-card">
                                     <h5>Account Details</h5>
                                     <div class="review-item">
@@ -1885,7 +1982,7 @@
                                         <span class="review-value">••••••••</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="terms-checkbox">
                                     <input type="checkbox" id="agreeTerms" checked>
                                     <label for="agreeTerms">I confirm that all information provided is correct</label>
@@ -1917,14 +2014,15 @@
                 <div class="modal-body">
                     <div class="staff-profile-header">
                         <div class="profile-avatar-large">
-                            <img src="https://ui-avatars.com/api/?name=John+Doe&background=4361ee&color=fff&size=80" alt="Avatar" id="viewStaffAvatar">
+                            <img src="https://ui-avatars.com/api/?name=John+Doe&background=4361ee&color=fff&size=80"
+                                alt="Avatar" id="viewStaffAvatar">
                         </div>
                         <div class="profile-title">
                             <h2 id="viewStaffFullName">John Doe</h2>
                             <span class="profile-badge">Cashier</span>
                         </div>
                     </div>
-                    
+
                     <div class="info-grid">
                         <div class="info-item">
                             <span class="info-label"><i class="fas fa-id-badge"></i> ID:</span>
@@ -1944,7 +2042,8 @@
                         </div>
                         <div class="info-item">
                             <span class="info-label"><i class="fas fa-tag"></i> Status:</span>
-                            <span class="info-value"><span class="status-badge active" id="viewStaffStatus">Active</span></span>
+                            <span class="info-value"><span class="status-badge active"
+                                    id="viewStaffStatus">Active</span></span>
                         </div>
                     </div>
 
@@ -1956,7 +2055,7 @@
                             <i class="fas fa-key"></i> Reset Password
                         </button>
                     </div>
-                    
+
                     <div class="modal-footer-actions">
                         <button class="btn-outline" id="closeViewModal">Close</button>
                         <button class="btn-primary" id="editFromViewBtn">
@@ -1987,7 +2086,7 @@
                         </div>
                         <p class="delete-warning-text">All data associated with this cashier will be lost.</p>
                     </div>
-                    
+
                     <div class="delete-actions">
                         <button class="btn-outline" id="cancelDeleteBtn">Cancel</button>
                         <button class="btn-danger" id="confirmDeleteBtn">
@@ -2021,7 +2120,8 @@
     <div id="chatbot-box">
         <div id="chatbot-header">
             <span>🤖 RetailX Assistant</span>
-            <span style="cursor: pointer;" onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
+            <span style="cursor: pointer;"
+                onclick="document.getElementById('chatbot-box').style.display='none'">×</span>
         </div>
         <div id="chatbot-messages">
             <div class="chat-bot">
@@ -2038,16 +2138,14 @@
     <div class="toast-container" id="toast"></div>
 
     <!-- Hidden data for JavaScript -->
-    <div id="staff-data" 
-         data-cashiers='{{ cashiers|safe }}'
-         data-total="{{ total_cashiers }}"
-         style="display: none;"></div>
+    <div id="staff-data" data-cashiers='{{ cashiers|safe }}' data-total="{{ total_cashiers }}" style="display: none;">
+    </div>
 
     <!-- JavaScript File -->
     <script src="{% static 'js/manager_home.js' %}"></script>
     <script>
         // Fullscreen toggle
-        document.getElementById('fullscreenBtn')?.addEventListener('click', function() {
+        document.getElementById('fullscreenBtn')?.addEventListener('click', function () {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
             } else {
@@ -2058,4 +2156,5 @@
         });
     </script>
 </body>
+
 </html>
