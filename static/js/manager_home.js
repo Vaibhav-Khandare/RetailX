@@ -141,22 +141,20 @@ RetailX.SidebarManager = {
 };
 
 // ============================================
-// NOTIFICATION MANAGER
+// NOTIFICATION MANAGER (with low stock alerts)
 // ============================================
 RetailX.NotificationManager = {
-    notifications: [
-        { id: 1, type: 'info', title: 'Welcome to RetailX Manager Dashboard', time: 'Just now', read: false },
-        { id: 2, type: 'success', title: 'Cashier John Smith was added successfully', time: '5 min ago', read: false },
-        { id: 3, type: 'warning', title: '3 cashiers have incomplete profiles', time: '1 hour ago', read: false },
-        { id: 4, type: 'info', title: 'System update scheduled for tonight', time: '3 hours ago', read: true },
-        { id: 5, type: 'success', title: 'Weekly report is ready for download', time: '5 hours ago', read: true }
-    ],
+    notifications: [],  // ab empty – sirf low stock aayenge
+
+    lowStockProducts: [],  // raw data from backend
 
     init: function() {
         console.log('🔔 Initializing Notification Manager...');
-        this.updateBadge();
         this.bindEvents();
-        this.renderNotifications();
+        // Load low stock alerts
+        this.loadLowStockAlerts();
+        // Refresh every 5 minutes
+        setInterval(() => this.loadLowStockAlerts(), 300000);
     },
 
     bindEvents: function() {
@@ -206,6 +204,45 @@ RetailX.NotificationManager = {
 
     hidePopup: function() {
         $('#notificationPopup').removeClass('show');
+    },
+
+    loadLowStockAlerts: function() {
+        $.ajax({
+            url: '/api/low-stock/',
+            method: 'GET',
+            success: (response) => {
+                if (response.success && response.low_stock) {
+                    this.lowStockProducts = response.low_stock;
+                    this.updateLowStockNotifications();
+                }
+            },
+            error: (xhr) => {
+                console.error('Failed to load low stock alerts:', xhr);
+            }
+        });
+    },
+
+    updateLowStockNotifications: function() {
+        // Purani notifications hatao aur low stock se nayi banao
+        this.notifications = [];
+        this.lowStockProducts.forEach(p => {
+            this.notifications.push({
+                id: 'lowstock_' + p.sku,
+                type: 'warning',
+                title: `⚠️ Low stock: ${p.name} (${p.stock} left, threshold ${p.threshold})`,
+                time: 'Just now',
+                read: false,
+                isLowStock: true
+            });
+        });
+
+        // Sirf 20 tak rakho
+        if (this.notifications.length > 20) {
+            this.notifications = this.notifications.slice(0, 20);
+        }
+
+        this.renderNotifications();
+        this.updateBadge();
     },
 
     renderNotifications: function() {
@@ -268,7 +305,7 @@ RetailX.NotificationManager = {
     },
 
     markAsRead: function(id) {
-        const notification = this.notifications.find(n => n.id === id);
+        const notification = this.notifications.find(n => n.id == id);
         if (notification && !notification.read) {
             notification.read = true;
             this.renderNotifications();
@@ -314,7 +351,7 @@ RetailX.NotificationManager = {
 
     addNotification: function(title, type = 'info') {
         const newNotification = {
-            id: this.notifications.length + 1,
+            id: 'dyn_' + Date.now(),
             type: type,
             title: title,
             time: 'Just now',
@@ -331,7 +368,7 @@ RetailX.NotificationManager = {
         this.updateBadge();
         
         if (!$('#notificationPopup').hasClass('show')) {
-            this.showPopup();
+            this.togglePopup();
             setTimeout(() => this.hidePopup(), 3000);
         }
         

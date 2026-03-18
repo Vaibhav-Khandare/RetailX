@@ -54,6 +54,7 @@ from django.contrib.auth.decorators import login_required
 from AccountsDB.models import Admin, Cashier, Manager, Supplier
 from productsDB.models import Product
 from DatasetDB.models import Cashier_Product
+from django.db import models
 
 from .gemini_chat import ask_gemini
 
@@ -2375,3 +2376,20 @@ def update_stock(request):
     except Exception as e:
         logger.exception("Unexpected error in update_stock")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+# ================== LOW STOCK ALERT API ==================
+
+@require_GET
+def low_stock_alert(request):
+    """
+    Returns a list of products where stock is below threshold.
+    Used by manager dashboard to display low stock notifications.
+    """
+    try:
+        low_stock_products = Cashier_Product.objects.filter(stock__lt=models.F('threshold')).values(
+            'sku', 'name', 'stock', 'threshold'
+        )
+        return JsonResponse({'success': True, 'low_stock': list(low_stock_products)})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
