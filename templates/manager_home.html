@@ -1199,78 +1199,7 @@
     }
 }
 </style>
-
-<!-- Simple JavaScript for Testing -->
-<!-- <script>
-$(document).ready(function() {
-    console.log('✅ Analysis page script loaded');
-    
-    // Test buttons (add these temporarily)
-    $('body').append(`
-        <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-            <button onclick="document.getElementById('predictionResult').style.display='block'; document.getElementById('ageGroupResult').innerText='26-35';" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 5px; cursor: pointer;">
-                Show Result
-            </button>
-            <button onclick="document.getElementById('predictionResult').style.display='none';" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                Hide Result
-            </button>
-        </div>
-    `);
-
-    // Handle form submission
-    $('#agePredictionForm').on('submit', function(e) {
-        e.preventDefault();
-        console.log('Form submitted');
-        
-        const btn = $('#predictAgeBtn');
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Predicting...');
-        
-        const data = {
-            product_category: $('#productCategory').val(),
-            brand: $('#brand').val(),
-            income: parseFloat($('#income').val()),
-            purchase_frequency: parseFloat($('#purchaseFrequency').val()),
-            purchase_amount: parseFloat($('#purchaseAmount').val())
-        };
-        
-        $.ajax({
-            url: '/api/predict-age/',
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCSRFToken() },
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                console.log('Success:', response);
-                
-                // Update and show result
-                $('#ageGroupResult').text(response.age_group);
-                $('#predictionResult').css('display', 'block');
-                
-                // Scroll to result
-                $('html, body').animate({
-                    scrollTop: $('#predictionResult').offset().top - 50
-                }, 500);
-            },
-            error: function(xhr) {
-                console.error('Error:', xhr);
-                alert('Error: ' + (xhr.responseJSON?.error || 'Unknown error'));
-            },
-            complete: function() {
-                btn.prop('disabled', false).html('<i class="fas fa-magic"></i> Predict Age Group');
-            }
-        });
-    });
-
-    // Reset button
-    $('#resetPredictionForm').on('click', function() {
-        $('#productCategory, #brand, #income, #purchaseFrequency, #purchaseAmount').val('');
-        $('#ageGroupResult').text('-');
-        // Don't hide result on reset
-    });
-});
-</script> -->
-
-            <!-- ============================================
+<!-- ============================================
      REPORTS PAGE - ADVANCED ANALYTICS DASHBOARD
      ============================================ -->
 <div class="page" id="reports-page">
