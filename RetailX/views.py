@@ -52,6 +52,14 @@ from django.db import IntegrityError
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib.auth.decorators import login_required
 
+from django.db import models
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from datetime import datetime
+from AccountsDB.models import Manager, Supplier, ChatRoom, Message
+
 # ================== MODELS ==================
 from AccountsDB.models import Admin, Cashier, Manager, Supplier
 from productsDB.models import Product
@@ -126,6 +134,762 @@ def print_header(msg):
 # Print startup banner
 print_banner()
 
+
+# ============================================
+# CHAT API VIEWS - MANAGER & SUPPLIER CHAT
+# ============================================
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from AccountsDB.models import Manager, Supplier, ChatRoom
+
+@require_GET
+def check_managers(request):
+    """
+    Debug endpoint to check managers in database
+    URL: /api/check-managers/
+    """
+    print("🔍 check_managers called")
+    
+    # Check if supplier is logged in
+    if not request.session.get('supplier_username'):
+        return JsonResponse({'error': 'Not logged in'}, status=401)
+    
+    try:
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        all_managers = Manager.objects.all().values('id', 'fullname', 'email', 'username')
+        
+        # Get chat rooms for this supplier
+        chat_rooms = ChatRoom.objects.filter(supplier=supplier).values('id', 'manager_id')
+        
+        # Also get messages count
+        from AccountsDB.models import Message
+        message_counts = {}
+        for room in chat_rooms:
+            count = Message.objects.filter(chat_room_id=room['id']).count()
+            message_counts[room['id']] = count
+        
+        return JsonResponse({
+            'success': True,
+            'supplier': {
+                'id': supplier.id,
+                'name': supplier.fullname,
+                'username': supplier.username
+            },
+            'total_managers': all_managers.count(),
+            'managers': list(all_managers),
+            'existing_chat_rooms': list(chat_rooms),
+            'message_counts': message_counts
+        })
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error in check_managers: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@require_GET
+def get_suppliers_for_manager(request):
+    """
+    API 1: Manager sees ALL suppliers from database with unread counts
+    URL: /api/suppliers-for-manager/
+    Method: GET
+    Session Required: manager_username
+    """
+    # Check if manager is logged in
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Please login as manager'}, status=401)
+    
+    try:
+        # Get the logged-in manager
+        manager = Manager.objects.get(username=request.session['manager_username'])
+        
+        # Get ALL suppliers from database
+        all_suppliers = Supplier.objects.all().values(
+            'id', 'fullname', 'email', 'location', 'contact', 'category'
+        )
+        
+        suppliers_list = []
+        
+        # For each supplier, get or create chat room and count unread messages
+        for supplier_data in all_suppliers:
+            supplier_id = supplier_data['id']
+            
+            # Get or create chat room for this manager-supplier pair
+            chat_room, created = ChatRoom.objects.get_or_create(
+                manager=manager,
+                supplier_id=supplier_id
+            )
+            
+            # Count unread messages FROM this supplier TO this manager
+            unread_count = Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='supplier',
+                sender_id=supplier_id,
+                is_read=False
+            ).count()
+            
+            # Get last message for preview
+            last_message = Message.objects.filter(chat_room=chat_room).last()
+            
+            # Prepare supplier data
+            supplier_dict = dict(supplier_data)
+            supplier_dict.update({
+                'unread_count': unread_count,
+                'avatar': supplier_data['fullname'][0].upper(),  # First letter for avatar
+                'chat_room_id': chat_room.id,
+                'last_message': last_message.content[:50] + '...' if last_message and len(last_message.content) > 50 else (last_message.content if last_message else ''),
+                'last_message_time': last_message.created_at.strftime('%H:%M') if last_message else ''
+            })
+            
+            suppliers_list.append(supplier_dict)
+        
+        return JsonResponse({
+            'success': True,
+            'suppliers': suppliers_list,
+            'total': len(suppliers_list)
+        })
+        
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_suppliers_for_manager: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_managers_for_supplier(request):
+    """
+    API 2: Supplier sees ALL managers they can chat with
+    URL: /api/managers-for-supplier/
+    """
+    print("🔍 get_managers_for_supplier called")
+    
+    # Check if supplier is logged in
+    if not request.session.get('supplier_username'):
+        print("❌ No supplier in session")
+        return JsonResponse({'error': 'Please login as supplier'}, status=401)
+    
+    try:
+        # Get the logged-in supplier
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        print(f"✅ Supplier found: {supplier.fullname} (ID: {supplier.id})")
+        
+        # Get ALL managers from database (not just existing chat rooms)
+        all_managers = Manager.objects.all()
+        print(f"📊 Total managers in database: {all_managers.count()}")
+        
+        managers_list = []
+        
+        for manager in all_managers:
+            print(f"📝 Processing manager: {manager.fullname} (ID: {manager.id})")
+            
+            # Get or create chat room for this manager-supplier pair
+            chat_room, created = ChatRoom.objects.get_or_create(
+                manager=manager,
+                supplier=supplier
+            )
+            print(f"   Chat room: {'Created' if created else 'Exists'} (ID: {chat_room.id})")
+            
+            # Count unread messages FROM this manager TO this supplier
+            unread_count = Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='manager',
+                sender_id=manager.id,
+                is_read=False
+            ).count()
+            
+            # Get last message for preview
+            last_message = Message.objects.filter(chat_room=chat_room).last()
+            
+            managers_list.append({
+                'id': manager.id,
+                'fullname': manager.fullname,
+                'email': manager.email,
+                'unread_count': unread_count,
+                'avatar': manager.fullname[0].upper(),
+                'chat_room_id': chat_room.id,
+                'last_message': last_message.content[:50] + '...' if last_message and len(last_message.content) > 50 else (last_message.content if last_message else ''),
+                'last_message_time': last_message.created_at.strftime('%H:%M') if last_message else ''
+            })
+        
+        print(f"✅ Returning {len(managers_list)} managers to supplier")
+        return JsonResponse({
+            'success': True,
+            'managers': managers_list,
+            'total': len(managers_list)
+        })
+        
+    except Supplier.DoesNotExist:
+        print(f"❌ Supplier not found with username: {request.session.get('supplier_username')}")
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error in get_managers_for_supplier: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    """
+    API 2: Supplier sees managers they have chat rooms with
+    URL: /api/managers-for-supplier/
+    Method: GET
+    Session Required: supplier_username
+    """
+    # Check if supplier is logged in
+    if not request.session.get('supplier_username'):
+        return JsonResponse({'error': 'Please login as supplier'}, status=401)
+    
+    try:
+        # Get the logged-in supplier
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        
+        # Get all chat rooms for this supplier
+        chat_rooms = ChatRoom.objects.filter(supplier=supplier).select_related('manager')
+        
+        managers_list = []
+        
+        for room in chat_rooms:
+            manager = room.manager
+            
+            # Count unread messages FROM this manager TO this supplier
+            unread_count = Message.objects.filter(
+                chat_room=room,
+                sender_type='manager',
+                sender_id=manager.id,
+                is_read=False
+            ).count()
+            
+            # Get last message for preview
+            last_message = Message.objects.filter(chat_room=room).last()
+            
+            managers_list.append({
+                'id': manager.id,
+                'fullname': manager.fullname,
+                'email': manager.email,
+                'unread_count': unread_count,
+                'avatar': manager.fullname[0].upper(),
+                'chat_room_id': room.id,
+                'last_message': last_message.content[:50] + '...' if last_message and len(last_message.content) > 50 else (last_message.content if last_message else ''),
+                'last_message_time': last_message.created_at.strftime('%H:%M') if last_message else ''
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'managers': managers_list
+        })
+        
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_managers_for_supplier: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_or_create_chat_room_for_manager(request, supplier_id):
+    """
+    API for MANAGER to get or create a chat room with a supplier
+    URL: /api/chat/room/for-manager/<int:supplier_id>/
+    """
+    print(f"🔍 get_or_create_chat_room_for_manager called with supplier_id: {supplier_id}")
+    
+    # Check if manager is logged in
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Please login as manager'}, status=401)
+    
+    try:
+        # Get the logged-in manager
+        manager = Manager.objects.get(username=request.session['manager_username'])
+        print(f"✅ Manager found: {manager.fullname}")
+        
+        # Get the supplier
+        supplier = Supplier.objects.get(id=supplier_id)
+        print(f"✅ Supplier found: {supplier.fullname}")
+        
+        # Get or create chat room
+        chat_room, created = ChatRoom.objects.get_or_create(
+            manager=manager,
+            supplier=supplier
+        )
+        
+        print(f"✅ Chat room: {'Created' if created else 'Exists'} (ID: {chat_room.id})")
+        
+        return JsonResponse({
+            'success': True,
+            'chat_room_id': chat_room.id,
+            'created': created,
+            'manager_name': manager.fullname,
+            'supplier_name': supplier.fullname
+        })
+        
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_or_create_chat_room_for_supplier(request, manager_id):
+    """
+    API for SUPPLIER to get or create a chat room with a manager
+    URL: /api/chat/room/for-supplier/<int:manager_id>/
+    """
+    print(f"🔍 get_or_create_chat_room_for_supplier called with manager_id: {manager_id}")
+    
+    # Check if supplier is logged in
+    if not request.session.get('supplier_username'):
+        return JsonResponse({'error': 'Please login as supplier'}, status=401)
+    
+    try:
+        # Get the logged-in supplier
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        print(f"✅ Supplier found: {supplier.fullname}")
+        
+        # Get the manager
+        manager = Manager.objects.get(id=manager_id)
+        print(f"✅ Manager found: {manager.fullname}")
+        
+        # Get or create chat room
+        chat_room, created = ChatRoom.objects.get_or_create(
+            manager=manager,
+            supplier=supplier
+        )
+        
+        print(f"✅ Chat room: {'Created' if created else 'Exists'} (ID: {chat_room.id})")
+        
+        return JsonResponse({
+            'success': True,
+            'chat_room_id': chat_room.id,
+            'created': created,
+            'manager_name': manager.fullname,
+            'supplier_name': supplier.fullname
+        })
+        
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+    """
+    Get or create a chat room between logged-in supplier and a manager
+    URL: /api/chat/room/<int:manager_id>/
+    """
+    print(f"🔍 get_or_create_chat_room called for manager_id: {manager_id}")
+    
+    # Check if supplier is logged in
+    if not request.session.get('supplier_username'):
+        return JsonResponse({'error': 'Please login as supplier'}, status=401)
+    
+    try:
+        # Get the logged-in supplier
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        print(f"✅ Supplier found: {supplier.fullname}")
+        
+        # Get the manager
+        manager = Manager.objects.get(id=manager_id)
+        print(f"✅ Manager found: {manager.fullname}")
+        
+        # Get or create chat room
+        chat_room, created = ChatRoom.objects.get_or_create(
+            manager=manager,
+            supplier=supplier
+        )
+        
+        print(f"✅ Chat room: {'Created' if created else 'Exists'} (ID: {chat_room.id})")
+        
+        return JsonResponse({
+            'success': True,
+            'chat_room_id': chat_room.id,
+            'created': created,
+            'manager_name': manager.fullname,
+            'supplier_name': supplier.fullname
+        })
+        
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+    """
+    API 3: Get or create a chat room between logged-in manager and a supplier
+    URL: /api/chat/room/<int:supplier_id>/
+    Method: GET
+    Session Required: manager_username
+    """
+    # Check if manager is logged in
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Please login as manager'}, status=401)
+    
+    try:
+        # Get the logged-in manager
+        manager = Manager.objects.get(username=request.session['manager_username'])
+        
+        # Get the supplier
+        supplier = Supplier.objects.get(id=supplier_id)
+        
+        # Get or create chat room
+        chat_room, created = ChatRoom.objects.get_or_create(
+            manager=manager,
+            supplier=supplier
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'chat_room_id': chat_room.id,
+            'created': created,
+            'manager_name': manager.fullname,
+            'supplier_name': supplier.fullname
+        })
+        
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_or_create_chat_room: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def check_managers(request):
+    """Debug endpoint to check managers in database"""
+    if not request.session.get('supplier_username'):
+        return JsonResponse({'error': 'Not logged in'}, status=401)
+    
+    try:
+        supplier = Supplier.objects.get(username=request.session['supplier_username'])
+        managers = Manager.objects.all().values('id', 'fullname', 'email', 'username')
+        
+        # Get chat rooms for this supplier
+        chat_rooms = ChatRoom.objects.filter(supplier=supplier).values('id', 'manager_id')
+        
+        return JsonResponse({
+            'success': True,
+            'supplier': {
+                'id': supplier.id,
+                'name': supplier.fullname,
+                'username': supplier.username
+            },
+            'total_managers': managers.count(),
+            'managers': list(managers),
+            'existing_chat_rooms': list(chat_rooms)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_POST
+def send_message(request):
+    """
+    API 4: Send a message (works for both manager and supplier)
+    URL: /api/chat/send/
+    Method: POST
+    Body: JSON with chat_room_id, content, sender_type
+    Session Required: Based on sender_type
+    """
+    try:
+        # Parse JSON request body
+        data = json.loads(request.body)
+        chat_room_id = data.get('chat_room_id')
+        content = data.get('content')
+        sender_type = data.get('sender_type')  # 'manager' or 'supplier'
+        
+        # Validate required fields
+        if not all([chat_room_id, content, sender_type]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        if sender_type not in ['manager', 'supplier']:
+            return JsonResponse({'error': 'Invalid sender_type'}, status=400)
+        
+        # Verify session based on sender type
+        if sender_type == 'manager':
+            if not request.session.get('manager_username'):
+                return JsonResponse({'error': 'Please login as manager'}, status=401)
+            sender = Manager.objects.get(username=request.session['manager_username'])
+            sender_id = sender.id
+        else:  # supplier
+            if not request.session.get('supplier_username'):
+                return JsonResponse({'error': 'Please login as supplier'}, status=401)
+            sender = Supplier.objects.get(username=request.session['supplier_username'])
+            sender_id = sender.id
+        
+        # Get the chat room
+        try:
+            chat_room = ChatRoom.objects.get(id=chat_room_id)
+        except ChatRoom.DoesNotExist:
+            return JsonResponse({'error': 'Chat room not found'}, status=404)
+        
+        # Verify that the sender is part of this chat room
+        if sender_type == 'manager' and chat_room.manager.id != sender_id:
+            return JsonResponse({'error': 'You are not authorized to send messages in this chat'}, status=403)
+        if sender_type == 'supplier' and chat_room.supplier.id != sender_id:
+            return JsonResponse({'error': 'You are not authorized to send messages in this chat'}, status=403)
+        
+        # Create the message
+        message = Message.objects.create(
+            chat_room=chat_room,
+            sender_type=sender_type,
+            sender_id=sender_id,
+            content=content
+        )
+        
+        # Update chat room's updated_at timestamp
+        chat_room.save()  # This will auto-update updated_at
+        
+        # Prepare response
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'content': message.content,
+                'created_at': message.created_at.strftime('%H:%M'),
+                'sender_type': message.sender_type,
+                'is_read': message.is_read
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"Error in send_message: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_messages(request, chat_room_id):
+    """
+    API 5: Get all messages in a chat room and mark them as read
+    URL: /api/chat/messages/<int:chat_room_id>/
+    Method: GET
+    Session Required: Either manager or supplier (must be part of chat)
+    """
+    try:
+        # Get the chat room
+        chat_room = ChatRoom.objects.get(id=chat_room_id)
+        
+        # Determine who is requesting
+        is_manager = bool(request.session.get('manager_username'))
+        is_supplier = bool(request.session.get('supplier_username'))
+        
+        print(f"🔍 get_messages called - is_manager: {is_manager}, is_supplier: {is_supplier}")  # Debug log
+        
+        if not (is_manager or is_supplier):
+            return JsonResponse({'error': 'Please login first'}, status=401)
+        
+        # Verify that the requester is part of this chat
+        if is_manager:
+            try:
+                manager = Manager.objects.get(username=request.session['manager_username'])
+                if chat_room.manager.id != manager.id:
+                    return JsonResponse({'error': 'You are not authorized to view this chat'}, status=403)
+                
+                # Mark all supplier messages as read
+                Message.objects.filter(
+                    chat_room=chat_room,
+                    sender_type='supplier',
+                    is_read=False
+                ).update(is_read=True)
+                
+            except Manager.DoesNotExist:
+                return JsonResponse({'error': 'Manager not found'}, status=404)
+                
+        elif is_supplier:
+            try:
+                supplier = Supplier.objects.get(username=request.session['supplier_username'])
+                print(f"✅ Supplier authenticated: {supplier.fullname} (ID: {supplier.id})")  # Debug
+                print(f"Chat room supplier ID: {chat_room.supplier.id}")  # Debug
+                
+                if chat_room.supplier.id != supplier.id:
+                    return JsonResponse({'error': 'You are not authorized to view this chat'}, status=403)
+                
+                # Mark all manager messages as read
+                updated = Message.objects.filter(
+                    chat_room=chat_room,
+                    sender_type='manager',
+                    is_read=False
+                ).update(is_read=True)
+                print(f"✅ Marked {updated} messages as read")  # Debug
+                
+            except Supplier.DoesNotExist:
+                return JsonResponse({'error': 'Supplier not found'}, status=404)
+        
+        # Get all messages - FIX: Don't filter by sender_type here, get ALL messages
+        messages = Message.objects.filter(chat_room=chat_room).order_by('created_at')
+        
+        print(f"📨 Found {messages.count()} total messages in chat room {chat_room_id}")  # Debug
+        
+        message_list = []
+        for msg in messages:
+            # Get sender name for display
+            sender_name = ''
+            if msg.sender_type == 'manager':
+                sender_name = chat_room.manager.fullname
+            else:
+                sender_name = chat_room.supplier.fullname
+            
+            message_list.append({
+                'id': msg.id,
+                'content': msg.content,
+                'created_at': msg.created_at.strftime('%I:%M %p'),  # Format: 02:30 PM
+                'sender_type': msg.sender_type,
+                'sender_name': sender_name,
+                'is_read': msg.is_read
+            })
+        
+        print(f"✅ Returning {len(message_list)} messages to {'supplier' if is_supplier else 'manager'}")  # Debug
+        
+        return JsonResponse({
+            'success': True,
+            'messages': message_list,
+            'chat_room_id': chat_room_id
+        })
+        
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({'error': 'Chat room not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error in get_messages: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    """
+    API 5: Get all messages in a chat room and mark them as read
+    URL: /api/chat/messages/<int:chat_room_id>/
+    Method: GET
+    Session Required: Either manager or supplier (must be part of chat)
+    """
+    try:
+        # Get the chat room
+        chat_room = ChatRoom.objects.get(id=chat_room_id)
+        
+        # Determine who is requesting
+        is_manager = bool(request.session.get('manager_username'))
+        is_supplier = bool(request.session.get('supplier_username'))
+        
+        if not (is_manager or is_supplier):
+            return JsonResponse({'error': 'Please login first'}, status=401)
+        
+        # Verify that the requester is part of this chat
+        if is_manager:
+            manager = Manager.objects.get(username=request.session['manager_username'])
+            if chat_room.manager.id != manager.id:
+                return JsonResponse({'error': 'You are not authorized to view this chat'}, status=403)
+            
+            # Mark all supplier messages as read
+            Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='supplier',
+                is_read=False
+            ).update(is_read=True)
+            
+        elif is_supplier:
+            supplier = Supplier.objects.get(username=request.session['supplier_username'])
+            if chat_room.supplier.id != supplier.id:
+                return JsonResponse({'error': 'You are not authorized to view this chat'}, status=403)
+            
+            # Mark all manager messages as read
+            Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='manager',
+                is_read=False
+            ).update(is_read=True)
+        
+        # Get all messages
+        messages = Message.objects.filter(chat_room=chat_room).order_by('created_at')
+        
+        message_list = []
+        for msg in messages:
+            # Get sender name for display
+            sender_name = ''
+            if msg.sender_type == 'manager':
+                sender_name = chat_room.manager.fullname
+            else:
+                sender_name = chat_room.supplier.fullname
+            
+            message_list.append({
+                'id': msg.id,
+                'content': msg.content,
+                'created_at': msg.created_at.strftime('%I:%M %p'),  # Format: 02:30 PM
+                'sender_type': msg.sender_type,
+                'sender_name': sender_name,
+                'is_read': msg.is_read
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'messages': message_list,
+            'chat_room_id': chat_room_id
+        })
+        
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({'error': 'Chat room not found'}, status=404)
+    except Manager.DoesNotExist:
+        return JsonResponse({'error': 'Manager not found'}, status=404)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'error': 'Supplier not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_messages: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Optional: Mark messages as read (can be called separately)
+@csrf_exempt
+@require_POST
+def mark_messages_read(request):
+    """
+    API 6: Mark messages as read (can be called when user opens chat)
+    URL: /api/chat/mark-read/
+    Method: POST
+    Body: {"chat_room_id": 1}
+    """
+    try:
+        data = json.loads(request.body)
+        chat_room_id = data.get('chat_room_id')
+        
+        if not chat_room_id:
+            return JsonResponse({'error': 'chat_room_id required'}, status=400)
+        
+        chat_room = ChatRoom.objects.get(id=chat_room_id)
+        
+        # Determine who is marking as read
+        is_manager = bool(request.session.get('manager_username'))
+        is_supplier = bool(request.session.get('supplier_username'))
+        
+        if not (is_manager or is_supplier):
+            return JsonResponse({'error': 'Please login first'}, status=401)
+        
+        if is_manager:
+            # Mark supplier messages as read
+            updated = Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='supplier',
+                is_read=False
+            ).update(is_read=True)
+        else:
+            # Mark manager messages as read
+            updated = Message.objects.filter(
+                chat_room=chat_room,
+                sender_type='manager',
+                is_read=False
+            ).update(is_read=True)
+        
+        return JsonResponse({
+            'success': True,
+            'marked_read_count': updated
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 logger = logging.getLogger(__name__)
 

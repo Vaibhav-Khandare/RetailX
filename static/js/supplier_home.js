@@ -8,6 +8,7 @@ let messages = [];
 let products = [];
 let notifications = [];
 
+
 // ========== PREVENT BACK AFTER LOGOUT ==========
 history.pushState(null, null, location.href);
 window.onpopstate = function() {

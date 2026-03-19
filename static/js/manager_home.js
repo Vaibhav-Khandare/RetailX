@@ -3930,6 +3930,7 @@ const RevenueManager = {
             this.billCountElement.textContent = data.today.bill_count;
         }
         
+        
         if (this.trendElement) {
             const trend = data.today.trend_percentage;
             const direction = data.today.trend_direction;

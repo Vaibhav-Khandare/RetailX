@@ -68,3 +68,47 @@ class Supplier(models.Model):
 
     class Meta:
         db_table = 'supplier'
+
+# ============================================
+# CHAT SYSTEM MODELS (Add this at the end of file)
+# ============================================
+
+class ChatRoom(models.Model):
+    """
+    Represents a chat room between a Manager and a Supplier
+    One chat room per manager-supplier pair
+    """
+    manager = models.ForeignKey('Manager', on_delete=models.CASCADE, related_name='chat_rooms')
+    supplier = models.ForeignKey('Supplier', on_delete=models.CASCADE, related_name='chat_rooms')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        # Ensure only one chat room per manager-supplier pair
+        unique_together = ('manager', 'supplier')
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"Chat: {self.manager.fullname} - {self.supplier.fullname}"
+
+class Message(models.Model):
+    """
+    Represents individual messages in a chat room
+    """
+    SENDER_CHOICES = (
+        ('manager', 'Manager'),
+        ('supplier', 'Supplier'),
+    )
+    
+    chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
+    sender_type = models.CharField(max_length=10, choices=SENDER_CHOICES)
+    sender_id = models.IntegerField()  # ID of the sender (manager_id or supplier_id)
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Message from {self.sender_type} at {self.created_at}"

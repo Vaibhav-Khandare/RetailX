@@ -21,6 +21,10 @@
 
 <body data-manager="{{ manager_name }}">
 
+    <!-- Add this near the top, after body tag -->
+    <div id="manager-data" data-manager-username="{{ manager_username }}" style="display: none;">
+    </div>
+
     <!-- PRELOADER -->
     <div id="global-loader" class="loader-wrapper">
         <div class="loader"></div>
@@ -101,6 +105,7 @@
             </div>
         </div>
     </aside>
+
 
     <!-- MAIN CONTENT -->
     <main class="main-content" id="mainContent">
@@ -2167,6 +2172,8 @@
             }
         });
     </script>
+    <!-- Add this before the closing body tag, after other scripts -->
+<script src="{% static 'js/chat_manager.js' %}"></script>
 </body>
 
 </html>

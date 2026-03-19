@@ -117,4 +117,16 @@ urlpatterns = [
     path('api/today-bills/', views.get_today_bills, name='today_bills'),
     path('api/inventory-value/', views.get_inventory_value, name='inventory_value'),
 
+    # ================== CHAT API ENDPOINTS ==================
+    path('api/suppliers-for-manager/', views.get_suppliers_for_manager, name='suppliers_for_manager'),
+    path('api/managers-for-supplier/', views.get_managers_for_supplier, name='managers_for_supplier'),
+    # For MANAGER to chat with supplier
+    path('api/chat/room/for-manager/<int:supplier_id>/', views.get_or_create_chat_room_for_manager, name='chat_room_for_manager'),
+
+# For SUPPLIER to chat with manager
+    path('api/chat/room/for-supplier/<int:manager_id>/', views.get_or_create_chat_room_for_supplier, name='chat_room_for_supplier'),
+    path('api/chat/messages/<int:chat_room_id>/', views.get_messages, name='get_messages'),
+    path('api/chat/send/', views.send_message, name='send_message'),
+    path('api/check-managers/', views.check_managers, name='check_managers'),
+
 ]
