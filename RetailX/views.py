@@ -2752,6 +2752,7 @@ def admin_home(request):
         factory = RequestFactory()
         api_request = factory.get('/api/today-revenue/')
         api_request.session = request.session
+        total_products = Cashier_Product.objects.count()
         
         # Import the revenue function
         from RetailX.views import get_today_revenue
@@ -2934,6 +2935,7 @@ def admin_home(request):
         'revenue_trend': round(revenue_trend, 1),
         'total_inventory_value': float(total_inventory_value),
         'formatted_inventory_value': formatted_inventory_value,
+        'total_products':total_products,
     }
 
     # ========== POST REQUESTS FOR CREATING USERS ==========
@@ -2988,7 +2990,7 @@ def admin_home(request):
             description=request.POST.get('productDescription')
         )
         return redirect('/admin_home')
-    print(formatted_inventory_value,total_inventory_value)
+    print(formatted_inventory_value,total_inventory_value,total_products)
     return render(request, 'admin_home.html', context)
 
 
