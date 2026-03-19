@@ -40,7 +40,6 @@
         /* Make product search modal body scrollable */
         #posSearchModal .modal-body {
             max-height: 60vh;
-
             overflow-y: auto;
         }
         /* Optional: improve product card grid */
@@ -161,10 +160,10 @@
                     <button class="icon-btn" id="openDrawerBtn" title="Open Cash Drawer">
                         <i class="fas fa-hdd"></i>
                     </button>
-                    <button class="icon-btn" id="notificationsBtn">
+                    <!-- <button class="icon-btn" id="notificationsBtn">
                         <i class="fas fa-bell"></i>
                         <span class="badge" id="notifBadge">2</span>
-                    </button>
+                    </button> -->
                     <button class="icon-btn" id="fullscreenBtn">
                         <i class="fas fa-expand"></i>
                     </button>
@@ -229,11 +228,11 @@
                                     <span>New Sale</span>
                                     <small>Start a new transaction</small>
                                 </button>
-                                <button class="op-btn warning" id="refundBtnDashboard">
+                                <!-- <button class="op-btn warning" id="refundBtnDashboard">
                                     <i class="fas fa-undo-alt"></i>
                                     <span>Return / Refund</span>
                                     <small>Process customer returns</small>
-                                </button>
+                                </button> -->
                                 <button class="op-btn info" id="reprintLastBtn">
                                     <i class="fas fa-print"></i>
                                     <span>Reprint Last Bill</span>
@@ -1182,8 +1181,6 @@
             ],
             // FIXED SEARCH FUNCTION – case‑insensitive and trimmed
             searchProducts: function (query) {
-                // If query is empty or just whitespace, return all products
-
                 if (!query || query.trim() === '') {
                     return this.products;
                 }
@@ -1193,7 +1190,6 @@
                     (p.sku && p.sku.toLowerCase().includes(q)) ||
                     (p.barcode && p.barcode.toLowerCase().includes(q)) ||
                     (p.category && p.category.toLowerCase().includes(q))
-
                 );
             },
 
@@ -1202,18 +1198,14 @@
             },
 
             getProductByQR: function (qrCode) {
-                
                 const cleanCode = qrCode.trim();
-
                 if (cleanCode.includes('product/')) {
                     const sku = cleanCode.split('/').pop();
                     return this.products.find(p => p.sku === sku);
                 }
-
                 if (cleanCode.startsWith('QR-')) {
                     return this.products.find(p => p.barcode === cleanCode);
                 }
-
                 return this.getProductByCode(cleanCode);
             }
         };
@@ -1222,7 +1214,6 @@
         // UTILITY & HELPER FUNCTIONS
         // ============================================
         RetailX.Utils = {
-
             getCookie: function(name) {
                 let cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
@@ -2402,7 +2393,7 @@
                     items: [...RetailX.State.cart],
                     totals: { ...totals },
                     tendered: paidAmount,
-                    change: 0
+                    change: RetailX.State.paymentMethod === 'cash' ? (paidAmount - totals.grandTotal) : 0
                 };
 
                 RetailX.State.shift.totalSales += totals.grandTotal;
@@ -2416,17 +2407,16 @@
 
                 RetailX.saveState();
 
-                // ===== NEW: Send item list to backend to update stock =====
+                // ===== Send item list to backend to update stock =====
                 const itemsForStock = transaction.items.map(item => ({
                     sku: item.sku,
                     quantity: item.qty
                 }));
 
-                // Get CSRF token for Django
                 const csrftoken = RetailX.Utils.getCookie('csrftoken');
 
                 $.ajax({
-                    url: '/api/update_stock/',   // 🔁 Change this to your actual endpoint
+                    url: '/api/update_stock/',
                     method: 'POST',
                     headers: { 'X-CSRFToken': csrftoken },
                     contentType: 'application/json',
@@ -2437,6 +2427,38 @@
                     error: function(xhr, status, error) {
                         console.error('Failed to update stock:', error);
                         RetailX.Utils.showToast('Stock Update Failed', 'Could not update product quantities', 'error');
+                    }
+                });
+
+                // ===== Save bill to database =====
+                const billData = {
+                    items: transaction.items.map(item => ({
+                        sku: item.sku,
+                        name: item.name,
+                        quantity: item.qty,
+                        price: item.price,
+                        subtotal: item.price * item.qty
+                    })),
+                    // Important: send subtotal (sum of item prices) – NOT grand total
+                    total: transaction.totals.subtotal,
+                    payment_method: transaction.method,
+                    cash_given: transaction.tendered,
+                    change_returned: transaction.change
+                };
+
+                $.ajax({
+                    url: '/api/save-bill/',
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken },
+                    contentType: 'application/json',
+                    data: JSON.stringify(billData),
+                    success: function(response) {
+                        console.log('Bill saved successfully:', response);
+                        // Optional: update receipt with server-generated bill number
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Failed to save bill:', error);
+                        RetailX.Utils.showToast('Bill Save Failed', 'Could not save bill to database', 'error');
                     }
                 });
 
