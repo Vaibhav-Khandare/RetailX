@@ -1003,7 +1003,7 @@ def mark_messages_read(request):
                 chat_room=chat_room,
                 sender_type='supplier',
                 is_read=False
-            ).update(is_read=True)
+            ).update(is_read=True) #bro
         else:
             # Mark manager messages as read
             updated = Message.objects.filter(
