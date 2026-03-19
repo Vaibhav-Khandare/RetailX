@@ -1235,9 +1235,13 @@ def save_bill(request):
 def get_today_revenue(request):
     """
     Calculate total revenue from bills created today (12:00 AM to 11:59 PM)
+    Now allows both managers AND admins
     """
-    # Session check
-    if not request.session.get('manager_username'):
+    # Check if user is authorized (manager OR admin)
+    is_manager = request.session.get('manager_username') is not None
+    is_admin = request.session.get('username') is not None  # Admin session
+    
+    if not (is_manager or is_admin):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     try:
@@ -1362,6 +1366,36 @@ def get_today_bills(request):
 
 # ---------- FIXED: Removed @login_required, added session check ----------
 def get_inventory_value(request):
+    """
+    Calculate total inventory value by summing (stock * price) for all products
+    Now allows both managers AND admins
+    """
+    # Check if user is authorized (manager OR admin)
+    is_manager = request.session.get('manager_username') is not None
+    is_admin = request.session.get('username') is not None  # Admin session
+    
+    if not (is_manager or is_admin):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    try:
+        products = Cashier_Product.objects.all()
+        total_value = 0
+        for product in products:
+            stock = product.stock if product.stock else 0
+            price = product.price if product.price else 0
+            total_value += stock * price
+        
+        return JsonResponse({
+            'success': True,
+            'total_inventory_value': float(total_value),
+            'formatted_value': f"₹{total_value:,.2f}"
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
     """
     Calculate total inventory value by summing (stock * price) for all products
     """
@@ -2692,12 +2726,107 @@ def admin_home(request):
     if not request.session.get('username'):
         return redirect('/admin_login')
 
+    # ========== PROPER IMPORTS ==========
+    from AccountsDB.models import Admin, Manager, Cashier
+    from productsDB.models import Product
+    from django.db import models
+    from django.utils import timezone
+    from datetime import timedelta, datetime
+    from django.contrib.auth.hashers import make_password
+    from django.http import JsonResponse
+    from django.shortcuts import render, redirect
+    import json
+    import requests
+
+    # ========== USER COUNTS ==========
     nadmin = Admin.objects.count()
     nmanager = Manager.objects.count()
     ncashier = Cashier.objects.count()
     totuser = nadmin + nmanager + ncashier
     totpro = Product.objects.count()
 
+    # ========== FETCH TODAY'S REVENUE USING API ==========
+    try:
+        # Create a mock request object for the API
+        from django.test.client import RequestFactory
+        factory = RequestFactory()
+        api_request = factory.get('/api/today-revenue/')
+        api_request.session = request.session
+        
+        # Import the revenue function
+        from RetailX.views import get_today_revenue
+        revenue_response = get_today_revenue(api_request)
+        
+        if revenue_response.status_code == 200:
+            revenue_data = json.loads(revenue_response.content)
+            if revenue_data.get('success'):
+                today_data = revenue_data.get('today', {})
+                today_total_revenue = today_data.get('revenue', 0)
+                formatted_today_revenue = today_data.get('formatted_revenue', '₹0.00')
+                today_bill_count = today_data.get('bill_count', 0)
+                revenue_trend = today_data.get('trend_percentage', 0)
+            else:
+                today_total_revenue = 0
+                formatted_today_revenue = '₹0.00'
+                today_bill_count = 0
+                revenue_trend = 0
+        else:
+            today_total_revenue = 0
+            formatted_today_revenue = '₹0.00'
+            today_bill_count = 0
+            revenue_trend = 0
+    except Exception as e:
+        print(f"Error fetching today's revenue: {e}")
+        today_total_revenue = 0
+        formatted_today_revenue = '₹0.00'
+        today_bill_count = 0
+        revenue_trend = 0
+
+    # ========== FETCH INVENTORY VALUE USING API ==========
+    try:
+        # Create a mock request object for the API
+        factory = RequestFactory()
+        api_request = factory.get('/api/inventory-value/')
+        api_request.session = request.session
+        
+        # Import the inventory function
+        from RetailX.views import get_inventory_value
+        inventory_response = get_inventory_value(api_request)
+        
+        if inventory_response.status_code == 200:
+            inventory_data = json.loads(inventory_response.content)
+            if inventory_data.get('success'):
+                total_inventory_value = inventory_data.get('total_inventory_value', 0)
+                formatted_inventory_value = inventory_data.get('formatted_value', '₹0.00')
+            else:
+                total_inventory_value = 0
+                formatted_inventory_value = '₹0.00'
+        else:
+            total_inventory_value = 0
+            formatted_inventory_value = '₹0.00'
+    except Exception as e:
+        print(f"Error fetching inventory value: {e}")
+        total_inventory_value = 0
+        formatted_inventory_value = '₹0.00'
+
+    # ========== FETCH LOW STOCK ALERTS USING API ==========
+    try:
+        from RetailX.views import low_stock_alert
+        low_stock_response = low_stock_alert(request)
+        
+        if low_stock_response.status_code == 200:
+            low_stock_data = json.loads(low_stock_response.content)
+            low_stock_products = low_stock_data.get('low_stock', [])
+            low_stock_count = len(low_stock_products)
+        else:
+            low_stock_count = 0
+            low_stock_products = []
+    except Exception as e:
+        print(f"Error fetching low stock alerts: {e}")
+        low_stock_count = 0
+        low_stock_products = []
+
+    # ========== GET ALL USERS ==========
     admins = Admin.objects.all()
     managers = Manager.objects.all()
     cashiers = Cashier.objects.all()
@@ -2737,11 +2866,14 @@ def admin_home(request):
             'last_login': cashier.last_login.strftime('%Y-%m-%d %H:%M') if cashier.last_login else 'Never'
         })
 
-    all_products = Product.objects.all().values(
+    # ========== GET PRODUCTS ==========
+    all_products_list = Product.objects.all().values(
         'id', 'name', 'category', 'price', 'in_stock', 'min_stock_level', 'sku'
     )
-    low_stock_count = Product.objects.filter(in_stock__lt=10).count()
 
+    # ========== FESTIVAL PREDICTION ==========
+    from RetailX.views import get_festival_from_date, get_festival_sales, FESTIVAL_CHOICES
+    
     festival_input = (request.GET.get('festival') or '').strip()
     detected_festival = None
     top_products = []
@@ -2767,6 +2899,7 @@ def admin_home(request):
             detected_festival = festival_result.get("festival")
             festival_error = festival_result.get("error")
 
+    # ========== AJAX RESPONSE ==========
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         response_data = {
             'detected_festival': detected_festival,
@@ -2776,25 +2909,34 @@ def admin_home(request):
         }
         return JsonResponse(response_data)
 
-    import json
     top_products_json = json.dumps(list(top_products)) if top_products else '[]'
     least_products_json = json.dumps(list(least_products)) if least_products else '[]'
 
+    # ========== CONTEXT FOR TEMPLATE ==========
     context = {
         'uname': request.session.get('username'),
         'email': request.session.get('email'),
         'totaluser': totuser,
         'totalpro': totpro,
         'users': all_users,
-        'products': list(all_products),
+        'products': list(all_products_list),
         'low_stock_count': low_stock_count,
+        'low_stock_products': low_stock_products,
         'top_products': top_products_json,
         'least_products': least_products_json,
         'detected_festival': detected_festival,
         'festival_error': festival_error,
         'festival_choices': FESTIVAL_CHOICES,
+        # DYNAMIC VALUES FROM APIS
+        'today_revenue': float(today_total_revenue),
+        'formatted_today_revenue': formatted_today_revenue,
+        'today_bill_count': today_bill_count,
+        'revenue_trend': round(revenue_trend, 1),
+        'total_inventory_value': float(total_inventory_value),
+        'formatted_inventory_value': formatted_inventory_value,
     }
 
+    # ========== POST REQUESTS FOR CREATING USERS ==========
     if request.method == 'POST' and request.POST.get('formType') == 'userModal':
         user_role = request.POST.get('userRole')
         fullname = request.POST.get('fullName')
@@ -2833,6 +2975,7 @@ def admin_home(request):
 
             return redirect('/admin_home')
 
+    # ========== POST REQUESTS FOR CREATING PRODUCTS ==========
     if request.method == 'POST' and request.POST.get('formType') == 'productModal':
         Product.objects.create(
             name=request.POST.get('productName'),
@@ -2845,7 +2988,7 @@ def admin_home(request):
             description=request.POST.get('productDescription')
         )
         return redirect('/admin_home')
-
+    print(formatted_inventory_value,total_inventory_value)
     return render(request, 'admin_home.html', context)
 
 
@@ -3685,13 +3828,19 @@ def update_stock(request):
 def low_stock_alert(request):
     """
     Returns a list of products where stock is below threshold.
-    Used by manager dashboard to display low stock notifications.
+    Now allows both managers AND admins.
     """
-    if not request.session.get('manager_username'):
+    # Check if user is authorized (manager OR admin)
+    is_manager = request.session.get('manager_username') is not None
+    is_admin = request.session.get('username') is not None  # Admin session
+    
+    if not (is_manager or is_admin):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
     try:
-        low_stock_products = Cashier_Product.objects.filter(stock__lt=models.F('threshold')).values(
-            'sku', 'name', 'stock', 'threshold'
+        from productsDB.models import Product
+        low_stock_products = Product.objects.filter(in_stock__lt=models.F('min_stock_level')).values(
+            'sku', 'name', 'in_stock', 'min_stock_level'
         )
         return JsonResponse({'success': True, 'low_stock': list(low_stock_products)})
     except Exception as e:
