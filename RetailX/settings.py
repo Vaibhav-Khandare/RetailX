@@ -27,7 +27,16 @@ SECRET_KEY = 'django-insecure-wdq6egm+5cbvktk^0+bh*f17bgylg6+cwbk6g%wt!@htt9746p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# In RetailX/settings.py
+# For testing ONLY (temporarily)
+ALLOWED_HOSTS = ['*']  # This allows ALL hosts
+# ADD THIS NEW LINE - Trusted origins for CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok-free.dev',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
 
 # Application definition

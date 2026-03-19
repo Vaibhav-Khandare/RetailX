@@ -6,3 +6,8 @@ pwd:RetailX@123
 
 insta id:retailx.connect
 pwd:RetailX@123
+
+Ngrok
+id:retailx.connect@gmail.com
+pwd:Retailx@123
+auth token:3BAsloO601uuQj8fC1jPWj9hJeU_3wiriqSLoxp4bQ8RoXZx8
