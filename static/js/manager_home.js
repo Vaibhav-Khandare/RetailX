@@ -1875,87 +1875,11 @@ RetailX.Inventory = {
 // ============================================
 // REPORTS MODULE (Print Price Labels & Stock Report)
 // ============================================
-RetailX.Reports = {
-    /**
-     * Generate a price label CSV (Serial No, Product Name, Price)
-     */
-    printPriceLabels: function() {
-        this._generateReport(
-            'price_labels',
-            ['Serial No', 'Product Name', 'Price'],
-            (product) => [product.serial_no || '', product.product_name, product.price]
-        );
-    },
-
-    /**
-     * Generate a stock report CSV (Product Name, Quantity)
-     */
-    stockReport: function() {
-        this._generateReport(
-            'stock_report',
-            ['Product Name', 'Quantity'],
-            (product) => [product.product_name, product.quantity]
-        );
-    },
-
-    /**
-     * Internal method: fetch products from /api/products/ and create CSV
-     */
-    _generateReport: function(filenamePrefix, headers, rowMapper) {
-        RetailX.showToast('Generating report...', 'info');
-
-        $.ajax({
-            url: '/api/products/',
-            method: 'GET',
-            headers: { 'X-CSRFToken': getCSRFToken() },
-            success: (response) => {
-                if (response.products && response.products.length > 0) {
-                    const products = response.products;
-                    const csvRows = [];
-
-                    csvRows.push(headers.join(','));
-
-                    products.forEach(p => {
-                        const row = rowMapper(p).map(cell => {
-                            if (typeof cell === 'string') {
-                                return `"${cell.replace(/"/g, '""')}"`;
-                            }
-                            return cell;
-                        }).join(',');
-                        csvRows.push(row);
-                    });
-
-                    const csvString = csvRows.join('\n');
-                    const blob = new Blob([csvString], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`;
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-
-
-                    RetailX.showToast('Report generated successfully', 'success');
-                } else {
-                    RetailX.showToast('No products found', 'warning');
-                }
-            },
-            error: (xhr) => {
-                console.error('Failed to fetch products:', xhr);
-                RetailX.showToast('Failed to fetch products. Check console.', 'error');
-            }
-        });
-    }
-};
-
 // ============================================
-// SETTINGS MODULE (simple placeholder)
+// REPORTS MODULE - ADVANCED ANALYTICS DASHBOARD
 // ============================================
-RetailX.Settings = {
-    showComingSoon: function() {
-        RetailX.showToast('Settings feature coming soon!', 'info');
-    }
-};
+
+
 
 // ============================================
 // LOGOUT HANDLER
@@ -3701,15 +3625,30 @@ RetailX.Reports = {
         });
     },
     
-    // Report generation functions
+    // Report generation functions - UPDATED to use direct download URLs
     generateReport: function(type) {
-        $('#reportGenerationModal').fadeIn(300).css('display', 'flex');
-        
-        // Simulate report generation
-        setTimeout(() => {
-            $('.preview-loading').hide();
-            $('.preview-complete').fadeIn(300);
-        }, 2000);
+        let url = '';
+        switch(type) {
+            case 'daily-sales':
+                url = '/api/reports/daily-sales/';
+                break;
+            case 'weekly-summary':
+                url = '/api/reports/weekly-summary/';
+                break;
+            case 'monthly-review':
+                url = '/api/reports/monthly-review/';
+                break;
+            default:
+                // Fallback: show modal for unknown types
+                $('#reportGenerationModal').fadeIn(300).css('display', 'flex');
+                setTimeout(() => {
+                    $('.preview-loading').hide();
+                    $('.preview-complete').fadeIn(300);
+                }, 2000);
+                return;
+        }
+        // Trigger CSV download
+        window.location.href = url;
     },
     
     scheduleReport: function() {

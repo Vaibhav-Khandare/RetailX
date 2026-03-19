@@ -83,6 +83,135 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 import logging
 
+
+import csv
+from datetime import timedelta
+from django.http import HttpResponse
+from django.utils import timezone
+from django.db.models import Sum, F
+from DatasetDB.models import Bill, Cashier_Product   # adjust if models are elsewhere
+
+# ------------------ Report Exports ------------------
+
+def export_daily_sales(request):
+    """CSV of today's bills (each bill as one row)."""
+    if not request.session.get('manager_username'):
+        return HttpResponse('Unauthorized', status=401)
+
+    today = timezone.now().date()
+    bills = Bill.objects.filter(created_at__date=today).order_by('-created_at')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="daily_sales_{today}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Bill Number', 'Date', 'Time', 'Cashier', 'Items', 'Total (₹)', 'Payment Method'])
+
+    for bill in bills:
+        writer.writerow([
+            bill.bill_number,
+            bill.created_at.date(),
+            bill.created_at.strftime('%H:%M:%S'),
+            bill.cashier_username,
+            bill.item_count,
+            bill.total_amount,
+            bill.payment_method
+        ])
+
+    return response
+
+
+def export_weekly_summary(request):
+    """Aggregated sales per day for the last 7 days."""
+    if not request.session.get('manager_username'):
+        return HttpResponse('Unauthorized', status=401)
+
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=6)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="weekly_summary_{start_date}_to_{end_date}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Total Revenue (₹)', 'Bill Count', 'Avg Order Value (₹)'])
+
+    for i in range(7):
+        date = start_date + timedelta(days=i)
+        bills = Bill.objects.filter(created_at__date=date)
+        total = bills.aggregate(total=Sum('total_amount'))['total'] or 0
+        count = bills.count()
+        avg = total / count if count else 0
+        writer.writerow([date, total, count, avg])
+
+    return response
+
+
+def export_monthly_review(request):
+    """Daily sales for the last 30 days."""
+    if not request.session.get('manager_username'):
+        return HttpResponse('Unauthorized', status=401)
+
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=29)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="monthly_review_{start_date}_to_{end_date}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Total Revenue (₹)', 'Bill Count'])
+
+    for i in range(30):
+        date = start_date + timedelta(days=i)
+        bills = Bill.objects.filter(created_at__date=date)
+        total = bills.aggregate(total=Sum('total_amount'))['total'] or 0
+        count = bills.count()
+        writer.writerow([date, total, count])
+
+    return response
+
+
+def export_low_stock_csv(request):
+    """Products where stock < threshold."""
+    if not request.session.get('manager_username'):
+        return HttpResponse('Unauthorized', status=401)
+
+    low_stock = Cashier_Product.objects.filter(stock__lt=F('threshold')).values(
+        'sku', 'name', 'stock', 'threshold', 'category'
+    )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="low_stock_{timezone.now().date()}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['SKU', 'Product Name', 'Current Stock', 'Threshold', 'Category'])
+    for p in low_stock:
+        writer.writerow([p['sku'], p['name'], p['stock'], p['threshold'], p['category']])
+
+    return response
+
+
+def export_all_products_csv(request):
+    """All products (complete inventory)."""
+    if not request.session.get('manager_username'):
+        return HttpResponse('Unauthorized', status=401)
+
+    products = Cashier_Product.objects.all().values(
+        'sku', 'name', 'category', 'price', 'stock', 'threshold'
+    )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="all_products_{timezone.now().date()}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['SKU', 'Product Name', 'Category', 'Price (₹)', 'Stock', 'Threshold'])
+    for p in products:
+        writer.writerow([p['sku'], p['name'], p['category'], p['price'], p['stock'], p['threshold']])
+
+    return response
+
+
+
+
 # ============================================
 # CONSOLE COLOR CODES
 # ============================================
@@ -1102,12 +1231,15 @@ def save_bill(request):
         }, status=500)
 
 
-@login_required
-@require_GET
+# ---------- FIXED: Removed @login_required, added session check ----------
 def get_today_revenue(request):
     """
     Calculate total revenue from bills created today (12:00 AM to 11:59 PM)
     """
+    # Session check
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
     try:
         # Get today's date range
         today = timezone.now().date()
@@ -1174,12 +1306,13 @@ def get_today_revenue(request):
         }, status=500)
 
 
-@login_required
-@require_GET
 def get_today_bills(request):
     """
     API endpoint to get today's bills for the cashier dashboard
     """
+    if not request.session.get('cashier_username') and not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
     try:
         today = timezone.now().date()
         cashier_username = request.session.get('cashier_username')
@@ -1227,12 +1360,14 @@ def get_today_bills(request):
         }, status=500)
 
 
-@login_required
-@require_GET
+# ---------- FIXED: Removed @login_required, added session check ----------
 def get_inventory_value(request):
     """
     Calculate total inventory value by summing (stock * price) for all products
     """
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
     try:
         # Method 1: Calculate in Python (more control)
         products = Cashier_Product.objects.all()
@@ -1471,8 +1606,9 @@ def get_brands_for_category(request):
 
 
 # ================== PRODUCT LIST (for reports) ==================
-@login_required
 def product_list(request):
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
     products = Product.objects.all().values(
         'serial_no',
         'product_name',
@@ -1485,8 +1621,9 @@ def product_list(request):
 
 
 # ================== RANDOM INVENTORY ==================
-@login_required
 def get_random_inventory(request):
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
     products = list(Product.objects.all().values(
         'id', 'serial_no', 'product_name', 'price', 'quantity', 'category', 'subcategory'
     ))
@@ -1495,7 +1632,6 @@ def get_random_inventory(request):
 
 
 # ================== PREDICTION HELPERS ==================
-@login_required
 def get_products_for_festival_api(request):
     festival = request.GET.get('festival', '')
     mock_products = {
@@ -1507,7 +1643,6 @@ def get_products_for_festival_api(request):
     return JsonResponse({'products': products})
 
 
-@login_required
 def predict_sales_api(request):
     product_name = request.GET.get('product')
     predicted_units = random.randint(50, 200)
@@ -3229,6 +3364,8 @@ def _normalize_column_name(col):
 @csrf_exempt
 @never_cache
 def get_random_inventory(request):
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
     if not os.path.exists(INVENTORY_CSV_PATH):
         return JsonResponse({'error': 'CSV file not found'}, status=404)
 
@@ -3550,6 +3687,8 @@ def low_stock_alert(request):
     Returns a list of products where stock is below threshold.
     Used by manager dashboard to display low stock notifications.
     """
+    if not request.session.get('manager_username'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
     try:
         low_stock_products = Cashier_Product.objects.filter(stock__lt=models.F('threshold')).values(
             'sku', 'name', 'stock', 'threshold'

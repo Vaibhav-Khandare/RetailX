@@ -129,5 +129,10 @@ urlpatterns = [
     path('api/chat/messages/<int:chat_room_id>/', views.get_messages, name='get_messages'),
     path('api/chat/send/', views.send_message, name='send_message'),
     path('api/check-managers/', views.check_managers, name='check_managers'),
+    path('api/reports/daily-sales/', views.export_daily_sales, name='export_daily_sales'),
+    path('api/reports/weekly-summary/', views.export_weekly_summary, name='export_weekly_summary'),
+    path('api/reports/monthly-review/', views.export_monthly_review, name='export_monthly_review'),
+    path('api/reports/low-stock-csv/', views.export_low_stock_csv, name='export_low_stock_csv'),
+    path('api/reports/all-products/', views.export_all_products_csv, name='export_all_products_csv'),
 
 ]
