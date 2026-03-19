@@ -15,9 +15,8 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="{% static 'images/RetailX logo with fruits in trolly.png' %}" type="image/png">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -25,11 +24,22 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Custom CSS -->
+    <!-- Custom CSS (Manager theme) -->
     <link rel="stylesheet" href="{% static 'css/supplier_home.css' %}">
 </head>
 
 <body>
+    <!-- Hidden data element for supplier profile -->
+    <div id="supplier-data" 
+         data-name="{{ supplier_name|escapejs }}"
+         data-email="{{ supplier_email|default:''|escapejs }}"
+         data-username="{{ supplier_username|default:''|escapejs }}"
+         data-location="{{ supplier_location|default:''|escapejs }}"
+         data-contact="{{ supplier_contact|default:''|escapejs }}"
+         data-category="{{ supplier_category|escapejs }}"
+         style="display: none;">
+    </div>
+
     <!-- Custom Cursor -->
     <div class="cursor" id="cursor"></div>
     <div class="cursor-follower" id="cursorFollower"></div>
@@ -83,20 +93,7 @@
             <div class="banner-content">
                 <h2>Welcome back, <span id="welcomeName">{{ supplier_name }}</span>! 👋</h2>
                 <p><i class="fas fa-chart-line"></i> Manage your orders and products</p>
-                <div class="banner-stats" id="bannerStats">
-                    <div class="banner-stat-item">
-                        <span class="value" id="totalOrders">0</span>
-                        <span class="label">Total Orders</span>
-                    </div>
-                    <div class="banner-stat-item">
-                        <span class="value" id="totalRevenue">₹ 0</span>
-                        <span class="label">Revenue</span>
-                    </div>
-                    <div class="banner-stat-item">
-                        <span class="value" id="activeProducts">0</span>
-                        <span class="label">Products</span>
-                    </div>
-                </div>
+                <!-- Banner stats can be added later from real data -->
             </div>
             <div class="banner-icon">
                 <i class="fas fa-truck"></i>
@@ -136,7 +133,7 @@
 
                 <!-- Right Side - WhatsApp‑style Chat Area -->
                 <div class="chat-area-whatsapp">
-                    <!-- Chat Header (SINGLE VERSION with back button) -->
+                    <!-- Chat Header -->
                     <div class="chat-header-whatsapp" id="chatHeader">
                         <div class="chat-supplier-info">
                             <button class="back-to-suppliers" id="backToManagersBtn" title="Back to managers" style="display: none;">
@@ -189,18 +186,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- DEBUG BUTTONS - MOVED OUTSIDE CHAT CONTAINER -->
-        <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <h4 style="margin: 0 0 10px 0;">🔍 DEBUG PANEL</h4>
-            <button onclick="debugManagers()" style="padding: 8px 15px; background: #4361ee; color: white; border: none; border-radius: 5px; margin-right: 5px; cursor: pointer;">
-                Test Managers API
-            </button>
-            <button onclick="checkDatabase()" style="padding: 8px 15px; background: #10b981; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                Check DB
-            </button>
-            <div id="debugOutput" style="margin-top: 10px; font-size: 12px; max-height: 200px; overflow-y: auto; background: #f1f5f9; padding: 8px; border-radius: 5px;"></div>
         </div>
 
         <!-- ========== PRODUCTS TAB ========== -->
@@ -316,8 +301,7 @@
         </div>
     </div>
 
-    <!-- ========== MODALS ========== -->
-
+    <!-- Modals (unchanged) -->
     <!-- Add/Edit Product Modal -->
     <div class="modal" id="productModal">
         <div class="modal-content">
@@ -327,12 +311,10 @@
             </div>
             <form id="productForm" enctype="multipart/form-data">
                 <input type="hidden" id="productId" name="productId">
-
                 <div class="form-group">
                     <label for="productName">Product Name *</label>
                     <input type="text" id="productName" name="name" required>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="productSKU">SKU *</label>
@@ -343,7 +325,6 @@
                         <input type="text" id="productCategory" name="category" required>
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="productPrice">Price (₹) *</label>
@@ -354,7 +335,6 @@
                         <input type="number" id="productStock" name="stock_quantity" required>
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="productMinStock">Min Stock Level</label>
@@ -365,12 +345,10 @@
                         <input type="text" id="productUnit" name="unit" value="pcs">
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="productDescription">Description</label>
                     <textarea id="productDescription" name="description" rows="3"></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="productActive">Status</label>
                     <select id="productActive" name="is_active">
@@ -378,7 +356,6 @@
                         <option value="false">Inactive</option>
                     </select>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="cancel-modal">Cancel</button>
                     <button type="submit" class="save-modal">Save Product</button>
@@ -458,55 +435,9 @@
         </div>
     </div>
 
-    <!-- JavaScript Files (LOADED ONCE) -->
+    <!-- JavaScript Files -->
     <script src="{% static 'js/supplier_home.js' %}"></script>
     <script src="{% static 'js/chat_supplier.js' %}"></script>
-    
-    <!-- Debug Functions -->
-    <script>
-    async function debugManagers() {
-        const output = document.getElementById('debugOutput');
-        output.innerHTML = 'Loading...';
-        
-        try {
-            const response = await fetch('/api/managers-for-supplier/');
-            const data = await response.json();
-            output.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            console.log('DEBUG - Managers API response:', data);
-        } catch (e) {
-            output.innerHTML = 'Error: ' + e.message;
-        }
-    }
-
-    async function checkDatabase() {
-        const output = document.getElementById('debugOutput');
-        output.innerHTML = 'Checking...';
-        
-        try {
-            const response = await fetch('/api/check-managers/');
-            const data = await response.json();
-            output.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-        } catch (e) {
-            output.innerHTML = 'Error: ' + e.message;
-        }
-    }
-    
-    function debugChat() {
-        console.log('=== DEBUG INFO ===');
-        console.log('currentManagerId:', currentManagerId);
-        console.log('currentChatRoomId:', currentChatRoomId);
-        console.log('managers:', managers);
-        console.log('messages:', messages);
-        console.log('polling interval:', messagePollingInterval);
-        
-        if (currentChatRoomId) {
-            fetch(`/api/chat/messages/${currentChatRoomId}/`)
-                .then(r => r.json())
-                .then(data => console.log('API test result:', data))
-                .catch(e => console.error('API test failed:', e));
-        }
-    }
-    </script>
 </body>
 
 </html>

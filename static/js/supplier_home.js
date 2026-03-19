@@ -1,4 +1,4 @@
-// ========== SUPPLIER DASHBOARD JAVASCRIPT (WITH MOCK DATA) ==========
+// ========== SUPPLIER DASHBOARD JAVASCRIPT (WITH REAL PROFILE DATA) ==========
 
 // ========== GLOBAL VARIABLES ==========
 let currentProductId = null;
@@ -8,6 +8,11 @@ let messages = [];
 let products = [];
 let notifications = [];
 
+// Flag to prevent multiple sends while waiting for reply
+let isSendingMessage = false;
+
+// Supplier profile data from hidden element
+let supplierProfile = {};
 
 // ========== PREVENT BACK AFTER LOGOUT ==========
 history.pushState(null, null, location.href);
@@ -33,19 +38,47 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+// ========== LOAD SUPPLIER DATA FROM HIDDEN ELEMENT ==========
+function loadSupplierData() {
+    const dataEl = document.getElementById('supplier-data');
+    if (dataEl) {
+        supplierProfile = {
+            name: dataEl.dataset.name || 'Supplier',
+            email: dataEl.dataset.email || '',
+            username: dataEl.dataset.username || '',
+            location: dataEl.dataset.location || '',
+            contact: dataEl.dataset.contact || '',
+            category: dataEl.dataset.category || 'Grocery'
+        };
+    } else {
+        // Fallback if data element missing
+        supplierProfile = {
+            name: 'Supplier',
+            email: '',
+            username: '',
+            location: '',
+            contact: '',
+            category: 'Grocery'
+        };
+    }
+}
+
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
+    // Load supplier data
+    loadSupplierData();
+
     // Set current date
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Load mock data
-    loadDashboardStats();
+    // Load mock data (orders, products, notifications are still mock for now)
+    loadDashboardStats(); // if any stats needed
     loadNotifications();
     loadManagers();
     loadProducts();
-    loadProfile();
+    loadProfile(); // now loads real profile
 
     // Set up event listeners
     setupEventListeners();
@@ -53,10 +86,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Theme
     initTheme();
 
-    // Refresh mock data periodically (just for demo)
+    // Refresh mock data periodically
     setInterval(() => {
         if (document.getElementById('orders').classList.contains('active')) {
-            // In orders tab, maybe refresh messages
             if (currentManagerId) loadMessages(currentManagerId);
         }
     }, 10000);
@@ -99,15 +131,18 @@ function setupEventListeners() {
     // Message form
     document.getElementById('messageForm')?.addEventListener('submit', sendMessage);
 
-    // Quick reply chips
-    document.querySelectorAll('.quick-reply-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            const message = this.getAttribute('data-message');
+    // Event delegation for quick reply chips (single listener)
+    document.addEventListener('click', function(e) {
+        const chip = e.target.closest('.quick-reply-chip');
+        if (chip) {
+            e.preventDefault();
+            e.stopPropagation();
+            const message = chip.getAttribute('data-message');
             if (message) {
                 document.getElementById('messageText').value = message;
                 document.getElementById('sendMessageBtn').click();
             }
-        });
+        }
     });
 
     // Password change form
@@ -146,13 +181,12 @@ function switchTab(tabId) {
         activeTab.classList.add('active');
         activePane.classList.add('active');
 
-        // Refresh data when switching tabs (mock)
         if (tabId === 'orders') {
             loadManagers();
         } else if (tabId === 'products') {
             loadProducts();
         } else if (tabId === 'profile') {
-            loadProfile();
+            loadProfile(); // real profile
         }
     }
 }
@@ -244,7 +278,6 @@ function renderNotifications(notifications) {
 }
 
 async function markNotificationRead(id) {
-    // Mock mark as read
     const notif = notifications.find(n => n.id === id);
     if (notif) notif.is_read = true;
     loadNotifications();
@@ -257,16 +290,13 @@ async function markAllNotificationsRead() {
     showToast('All notifications marked as read', 'success');
 }
 
-// ========== DASHBOARD STATS (MOCK) ==========
+// ========== DASHBOARD STATS (MOCK, can be removed) ==========
 async function loadDashboardStats() {
-    document.getElementById('totalOrders').textContent = '156';
-    document.getElementById('totalRevenue').textContent = '₹ 45,780';
-    document.getElementById('activeProducts').textContent = '23';
+    // Not used now, but kept for future
 }
 
 // ========== ORDERS TAB - MANAGER LIST (MOCK) ==========
 async function loadManagers() {
-    // Mock managers
     managers = [
         { id: 1, fullname: 'John Manager', email: 'john@retailx.com', unread_count: 2 },
         { id: 2, fullname: 'Sarah Smith', email: 'sarah@retailx.com', unread_count: 0 },
@@ -308,16 +338,13 @@ function filterManagers() {
 window.selectManager = function(managerId, managerName) {
     currentManagerId = managerId;
     
-    // Update active state in sidebar
     document.querySelectorAll('.manager-item').forEach(item => item.classList.remove('active'));
     event.currentTarget.classList.add('active');
 
-    // Update chat header
     document.getElementById('chatManagerName').textContent = managerName;
     document.getElementById('chatManagerStatus').textContent = 'Online';
     document.getElementById('chatManagerAvatar').textContent = managerName.charAt(0);
     
-    // Update status dot and text for WhatsApp style
     const statusDot = document.getElementById('managerStatusDot');
     const statusText = document.getElementById('chatManagerStatus');
     if (statusDot) {
@@ -328,21 +355,17 @@ window.selectManager = function(managerId, managerName) {
         statusText.textContent = 'Online';
     }
 
-    // Show message input area and minimize button
     document.getElementById('messageInputArea').style.display = 'block';
     document.getElementById('minimizeChatBtn').style.display = 'flex';
 
-    // Clear no selection message with loading indicator
     const container = document.getElementById('messagesContainer');
     container.innerHTML = '<div class="typing-indicator" id="loadingMessages"><span></span><span></span><span></span></div>';
 
-    // Load messages
     loadMessages(managerId);
 };
 
 // ========== ORDERS TAB - MESSAGES (MOCK) ==========
 async function loadMessages(managerId) {
-    // Mock messages for the selected manager
     messages = [
         { id: 1, text: 'Hello, how can I help you today?', is_sent_by_supplier: false, created_at: new Date(Date.now() - 3600000) },
         { id: 2, text: 'I need to check my order status', is_sent_by_supplier: true, created_at: new Date(Date.now() - 1800000) },
@@ -371,29 +394,31 @@ function renderMessages(messages) {
         `;
     }).join('');
 
-    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 }
 
-// Send message with optimistic UI and simulated reply
 async function sendMessage(e) {
     e.preventDefault();
 
     if (!currentManagerId) {
-        showToast('Please select a manager first', 'warning');
+        console.log('No manager selected');
         return;
     }
+
+    if (isSendingMessage) return;
+    isSendingMessage = true;
 
     const messageInput = document.getElementById('messageText');
     const text = messageInput.value.trim();
 
-    if (!text) return;
+    if (!text) {
+        isSendingMessage = false;
+        return;
+    }
 
-    // Add message to UI immediately (optimistic)
     const container = document.getElementById('messagesContainer');
-    const tempId = 'temp-' + Date.now();
     container.innerHTML += `
-        <div class="message sent" id="${tempId}">
+        <div class="message sent">
             <div class="message-content">${escapeHtml(text)}</div>
             <div class="message-time">Just now</div>
         </div>
@@ -401,10 +426,7 @@ async function sendMessage(e) {
     container.scrollTop = container.scrollHeight;
     messageInput.value = '';
 
-    // Simulate reply after 2 seconds
     setTimeout(() => {
-        // Remove temp ID (just a demo, we don't actually remove)
-        // Add a received message
         container.innerHTML += `
             <div class="message received">
                 <div class="message-content">Thanks for your message. I'll get back to you soon.</div>
@@ -412,26 +434,77 @@ async function sendMessage(e) {
             </div>
         `;
         container.scrollTop = container.scrollHeight;
+        isSendingMessage = false;
     }, 2000);
-
-    // In a real app, you'd send to server here
 }
 
-// Typing indicator functions (for future use)
-function showTypingIndicator(managerId) {
-    if (currentManagerId !== managerId) return;
-    const container = document.getElementById('messagesContainer');
-    if (document.getElementById('typingIndicator')) return;
-    container.innerHTML += `
-        <div class="typing-indicator" id="typingIndicator">
-            <span></span><span></span><span></span>
-        </div>
-    `;
-    container.scrollTop = container.scrollHeight;
+// ========== PROFILE TAB (REAL DATA) ==========
+function loadProfile() {
+    const infoGrid = document.getElementById('profileInfo');
+    if (infoGrid) {
+        infoGrid.innerHTML = `
+            <div class="info-item"><label>Full Name</label><p>${escapeHtml(supplierProfile.name)}</p></div>
+            <div class="info-item"><label>Email</label><p>${escapeHtml(supplierProfile.email) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Username</label><p>${escapeHtml(supplierProfile.username) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Location</label><p>${escapeHtml(supplierProfile.location) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Contact</label><p>${escapeHtml(supplierProfile.contact) || 'Not provided'}</p></div>
+            <div class="info-item"><label>Category</label><p>${escapeHtml(supplierProfile.category)}</p></div>
+        `;
+    }
+
+    document.getElementById('profileFullName').textContent = supplierProfile.name;
+    document.getElementById('profileCategory').textContent = `${supplierProfile.category} Supplier`;
+    document.getElementById('profileAvatar').textContent = supplierProfile.name.charAt(0);
+
+    const emailPref = localStorage.getItem('emailNotifications') === 'true';
+    document.getElementById('emailNotifications').checked = emailPref;
 }
 
-function hideTypingIndicator() {
-    document.getElementById('typingIndicator')?.remove();
+function openEditProfileModal() {
+    document.getElementById('editFullName').value = supplierProfile.name;
+    document.getElementById('editEmail').value = supplierProfile.email || '';
+    document.getElementById('editLocation').value = supplierProfile.location || '';
+    document.getElementById('editContact').value = supplierProfile.contact || '';
+    document.getElementById('editCategory').value = supplierProfile.category;
+    document.getElementById('editProfileModal').classList.add('show');
+}
+
+async function updateProfile(e) {
+    e.preventDefault();
+    // In a real app, you'd send to server and update supplierProfile
+    // For now, update local object and UI
+    supplierProfile.name = document.getElementById('editFullName').value;
+    supplierProfile.email = document.getElementById('editEmail').value;
+    supplierProfile.location = document.getElementById('editLocation').value;
+    supplierProfile.contact = document.getElementById('editContact').value;
+    supplierProfile.category = document.getElementById('editCategory').value;
+
+    loadProfile(); // refresh display
+    closeAllModals();
+    showToast('Profile updated (mock)', 'success');
+}
+
+function openPasswordModal() {
+    document.getElementById('passwordModal').classList.add('show');
+}
+
+async function changePassword(e) {
+    e.preventDefault();
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+
+    if (newPass !== confirmPass) {
+        showToast('New passwords do not match', 'error');
+        return;
+    }
+    showToast('Password changed (mock)', 'success');
+    closeAllModals();
+    document.getElementById('passwordForm').reset();
+}
+
+function toggleEmailNotifications(e) {
+    localStorage.setItem('emailNotifications', e.target.checked);
+    showToast(e.target.checked ? 'Email notifications enabled' : 'Email notifications disabled', 'success');
 }
 
 // ========== PRODUCTS TAB (MOCK) ==========
@@ -540,7 +613,6 @@ window.editProduct = async function(id) {
 
 async function saveProduct(e) {
     e.preventDefault();
-    // Mock save
     showToast('Product saved (mock)', 'success');
     closeAllModals();
     loadProducts();
@@ -557,83 +629,10 @@ window.deleteProduct = async function(id) {
     });
 
     if (result.isConfirmed) {
-        // Mock delete
         showToast('Product deleted (mock)', 'success');
         loadProducts();
     }
 };
-
-// ========== PROFILE TAB (MOCK) ==========
-async function loadProfile() {
-    // Mock profile
-    const profile = {
-        fullname: 'Supplier Name',
-        email: 'supplier@example.com',
-        username: 'supplier1',
-        location: 'Mumbai',
-        contact: '+91 9876543210',
-        category: 'Grocery'
-    };
-
-    const infoGrid = document.getElementById('profileInfo');
-    if (infoGrid) {
-        infoGrid.innerHTML = `
-            <div class="info-item"><label>Full Name</label><p>${escapeHtml(profile.fullname)}</p></div>
-            <div class="info-item"><label>Email</label><p>${escapeHtml(profile.email)}</p></div>
-            <div class="info-item"><label>Username</label><p>${escapeHtml(profile.username)}</p></div>
-            <div class="info-item"><label>Location</label><p>${escapeHtml(profile.location) || 'Not provided'}</p></div>
-            <div class="info-item"><label>Contact</label><p>${escapeHtml(profile.contact) || 'Not provided'}</p></div>
-            <div class="info-item"><label>Category</label><p>${escapeHtml(profile.category)}</p></div>
-        `;
-    }
-
-    document.getElementById('profileFullName').textContent = profile.fullname;
-    document.getElementById('profileCategory').textContent = `${profile.category} Supplier`;
-    document.getElementById('profileAvatar').textContent = profile.fullname.charAt(0);
-
-    const emailPref = localStorage.getItem('emailNotifications') === 'true';
-    document.getElementById('emailNotifications').checked = emailPref;
-}
-
-function openEditProfileModal() {
-    // Pre-fill with current mock data
-    document.getElementById('editFullName').value = 'Supplier Name';
-    document.getElementById('editEmail').value = 'supplier@example.com';
-    document.getElementById('editLocation').value = 'Mumbai';
-    document.getElementById('editContact').value = '+91 9876543210';
-    document.getElementById('editCategory').value = 'Grocery';
-    document.getElementById('editProfileModal').classList.add('show');
-}
-
-async function updateProfile(e) {
-    e.preventDefault();
-    showToast('Profile updated (mock)', 'success');
-    closeAllModals();
-    loadProfile();
-}
-
-function openPasswordModal() {
-    document.getElementById('passwordModal').classList.add('show');
-}
-
-async function changePassword(e) {
-    e.preventDefault();
-    const newPass = document.getElementById('newPassword').value;
-    const confirmPass = document.getElementById('confirmPassword').value;
-
-    if (newPass !== confirmPass) {
-        showToast('New passwords do not match', 'error');
-        return;
-    }
-    showToast('Password changed (mock)', 'success');
-    closeAllModals();
-    document.getElementById('passwordForm').reset();
-}
-
-function toggleEmailNotifications(e) {
-    localStorage.setItem('emailNotifications', e.target.checked);
-    showToast(e.target.checked ? 'Email notifications enabled' : 'Email notifications disabled', 'success');
-}
 
 // ========== LOGOUT ==========
 function handleLogout(e) {
