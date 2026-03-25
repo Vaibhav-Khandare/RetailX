@@ -141,26 +141,27 @@ RetailX.SidebarManager = {
 };
 
 // ============================================
-// NOTIFICATION MANAGER (with low stock alerts)
+// NOTIFICATION MANAGER (with low stock alerts) - FIXED VERSION
 // ============================================
 RetailX.NotificationManager = {
-    notifications: [],  // ab empty – sirf low stock aayenge
-
-    lowStockProducts: [],  // raw data from backend
+    notifications: [],
+    lowStockProducts: [],
 
     init: function() {
-        console.log('🔔 Initializing Notification Manager...');
+        console.log('🔔🔔🔔 NOTIFICATION MANAGER INITIALIZED 🔔🔔🔔');
         this.bindEvents();
-        // Load low stock alerts
         this.loadLowStockAlerts();
-        // Refresh every 5 minutes
-        setInterval(() => this.loadLowStockAlerts(), 300000);
+        // Refresh every 30 seconds (for testing)
+        setInterval(() => this.loadLowStockAlerts(), 30000);
     },
 
     bindEvents: function() {
+        console.log('🔔 Binding notification events');
+        
         $('#notificationsBtn').on('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('🔔 Notification bell clicked!');
             this.togglePopup();
         });
 
@@ -182,20 +183,10 @@ RetailX.NotificationManager = {
         $('#viewAllNotificationsBtn').on('click', () => {
             this.showAllNotifications();
         });
-
-        $(document).on('click', '.notification-item', function() {
-            const id = $(this).data('id');
-            RetailX.NotificationManager.markAsRead(id);
-        });
-
-        $(document).on('keydown', (e) => {
-            if (e.key === 'Escape' && $('#notificationPopup').hasClass('show')) {
-                this.hidePopup();
-            }
-        });
     },
 
     togglePopup: function() {
+        console.log('🔔 Toggling popup');
         $('#notificationPopup').toggleClass('show');
         if ($('#notificationPopup').hasClass('show')) {
             this.renderNotifications();
@@ -207,80 +198,143 @@ RetailX.NotificationManager = {
     },
 
     loadLowStockAlerts: function() {
+        console.log('📡📡📡 LOADING LOW STOCK ALERTS 📡📡📡');
+        console.log('Current session:', document.cookie);
+        
         $.ajax({
             url: '/api/low-stock/',
             method: 'GET',
-            success: (response) => {
-                if (response.success && response.low_stock) {
-                    this.lowStockProducts = response.low_stock;
-                    this.updateLowStockNotifications();
-                }
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            error: (xhr) => {
-                console.error('Failed to load low stock alerts:', xhr);
+            success: (response) => {
+                console.log('✅✅✅ API RESPONSE RECEIVED ✅✅✅');
+                console.log('Full response:', response);
+                console.log('Response.success:', response.success);
+                console.log('Response.low_stock:', response.low_stock);
+                console.log('Number of low stock items:', response.low_stock ? response.low_stock.length : 0);
+                
+                if (response.success) {
+                    if (response.low_stock && response.low_stock.length > 0) {
+                        this.lowStockProducts = response.low_stock;
+                        console.log('📦 Found', this.lowStockProducts.length, 'low stock products');
+                        console.log('Low stock products:', this.lowStockProducts);
+                    } else {
+                        console.log('✅ No low stock products found in database');
+                        this.lowStockProducts = [];
+                    }
+                } else {
+                    console.error('❌ API returned success=false:', response.error);
+                    this.lowStockProducts = [];
+                }
+                this.updateLowStockNotifications();
+            },
+            error: (xhr, status, error) => {
+                console.error('❌❌❌ AJAX ERROR ❌❌❌');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
+                this.lowStockProducts = [];
+                this.updateLowStockNotifications();
             }
         });
     },
 
     updateLowStockNotifications: function() {
-        // Purani notifications hatao aur low stock se nayi banao
+        console.log('🔄 UPDATING NOTIFICATIONS 🔄');
+        console.log('lowStockProducts length:', this.lowStockProducts.length);
+        
         this.notifications = [];
-        this.lowStockProducts.forEach(p => {
+        
+        if (this.lowStockProducts.length > 0) {
+            console.log('✅ Creating low stock notifications');
+            this.lowStockProducts.forEach((p, index) => {
+                const stock = p.in_stock !== undefined ? p.in_stock : p.stock;
+                const threshold = p.min_stock_level !== undefined ? p.min_stock_level : p.threshold;
+                
+                console.log(`  Product ${index + 1}: ${p.name}, stock=${stock}, threshold=${threshold}`);
+                
+                this.notifications.push({
+                    id: 'lowstock_' + p.sku,
+                    type: 'warning',
+                    title: `⚠️ Low Stock Alert: ${p.name}`,
+                    description: `Current stock: ${stock} units | Minimum required: ${threshold} units`,
+                    time: 'Just now',
+                    read: false,
+                    isLowStock: true
+                });
+            });
+        } else {
+            console.log('✅ No low stock - showing success message');
             this.notifications.push({
-                id: 'lowstock_' + p.sku,
-                type: 'warning',
-                title: `⚠️ Low stock: ${p.name} (${p.stock} left, threshold ${p.threshold})`,
+                id: 'no_alerts_' + Date.now(),
+                type: 'success',
+                title: '✅ All Products Have Sufficient Stock!',
+                description: 'No low stock alerts at this time. Your inventory is healthy.',
                 time: 'Just now',
                 read: false,
-                isLowStock: true
+                isNoAlert: true
             });
-        });
-
-        // Sirf 20 tak rakho
-        if (this.notifications.length > 20) {
-            this.notifications = this.notifications.slice(0, 20);
         }
-
+        
+        console.log('Total notifications to render:', this.notifications.length);
         this.renderNotifications();
         this.updateBadge();
     },
 
     renderNotifications: function() {
+        console.log('🎨 RENDERING NOTIFICATIONS 🎨');
         const $container = $('#notificationPopupBody');
         $container.empty();
+        
+        console.log('Container found:', $container.length > 0);
+        console.log('Notifications to render:', this.notifications.length);
 
-        const unread = this.notifications.filter(n => !n.read);
-        const read = this.notifications.filter(n => n.read).slice(0, 3);
-        const display = [...unread, ...read].slice(0, 8);
-
-        if (display.length === 0) {
+        if (this.notifications.length === 0) {
+            console.log('No notifications - showing empty state');
             $container.html(`
                 <div class="empty-notifications">
                     <i class="fas fa-bell-slash"></i>
-                    <p>No notifications</p>
+                    <p>No notifications available</p>
                 </div>
             `);
         } else {
-            display.forEach(n => {
+            this.notifications.forEach((n, index) => {
                 const unreadClass = !n.read ? 'unread' : '';
                 const icon = this.getIcon(n.type);
                 
-                $container.append(`
-                    <div class="notification-item ${unreadClass}" data-id="${n.id}">
-                        <div class="notification-icon ${n.type}">
-                            <i class="fas ${icon}"></i>
+                console.log(`Rendering notification ${index + 1}: ${n.title}`);
+                
+                const notificationHtml = `
+                    <div class="notification-item ${unreadClass}" data-id="${n.id}" style="padding: 12px; border-bottom: 1px solid #e2e8f0; cursor: pointer; ${!n.read ? 'background: #f0f9ff;' : ''}">
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div class="notification-icon ${n.type}" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${n.type === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)'};">
+                                <i class="fas ${icon}" style="color: ${n.type === 'warning' ? '#f59e0b' : '#10b981'};"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: ${!n.read ? '600' : '500'}; margin-bottom: 4px;">${n.title}</div>
+                                ${n.description ? `<div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">${n.description}</div>` : ''}
+                                <div style="font-size: 11px; color: #94a3b8;">
+                                    <i class="far fa-clock"></i> ${n.time}
+                                </div>
+                            </div>
+                            ${!n.read && !n.isNoAlert ? '<span style="background: #4361ee; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">New</span>' : ''}
                         </div>
-                        <div class="notification-content">
-                            <p>${n.title}</p>
-                            <span class="notification-time"><i class="far fa-clock"></i> ${n.time}</span>
-                        </div>
-                        ${!n.read ? '<span class="notification-badge">New</span>' : ''}
                     </div>
-                `);
+                `;
+                
+                $container.append(notificationHtml);
             });
         }
-
-        this.updateBadge();
+        
+        // Add click handlers
+        $('.notification-item').off('click').on('click', function() {
+            const id = $(this).data('id');
+            console.log('Notification clicked:', id);
+            RetailX.NotificationManager.markAsRead(id);
+        });
+        
+        console.log('✅ Notifications rendered successfully');
     },
 
     getIcon: function(type) {
@@ -294,8 +348,10 @@ RetailX.NotificationManager = {
     },
 
     updateBadge: function() {
-        const unreadCount = this.notifications.filter(n => !n.read).length;
+        const unreadCount = this.notifications.filter(n => !n.read && !n.isNoAlert).length;
         const $badge = $('.badge');
+        
+        console.log('Updating badge - unread count:', unreadCount);
         
         if (unreadCount > 0) {
             $badge.text(unreadCount).show();
@@ -306,7 +362,7 @@ RetailX.NotificationManager = {
 
     markAsRead: function(id) {
         const notification = this.notifications.find(n => n.id == id);
-        if (notification && !notification.read) {
+        if (notification && !notification.read && !notification.isNoAlert) {
             notification.read = true;
             this.renderNotifications();
             this.updateBadge();
@@ -315,7 +371,11 @@ RetailX.NotificationManager = {
     },
 
     markAllAsRead: function() {
-        this.notifications.forEach(n => n.read = true);
+        this.notifications.forEach(n => {
+            if (!n.isNoAlert) {
+                n.read = true;
+            }
+        });
         this.renderNotifications();
         this.updateBadge();
         RetailX.showToast('All notifications marked as read', 'success');
@@ -326,15 +386,17 @@ RetailX.NotificationManager = {
         
         const html = this.notifications.map(n => {
             const icon = this.getIcon(n.type);
-            const unreadClass = !n.read ? 'unread' : '';
             return `
-                <div class="notification-item ${unreadClass}" data-id="${n.id}">
-                    <div class="notification-icon ${n.type}">
-                        <i class="fas ${icon}"></i>
-                    </div>
-                    <div class="notification-content">
-                        <p>${n.title}</p>
-                        <span class="notification-time"><i class="far fa-clock"></i> ${n.time}</span>
+                <div style="padding: 12px; border-bottom: 1px solid #e2e8f0; background: ${!n.read ? '#f0f9ff' : '#fff'};">
+                    <div style="display: flex; gap: 12px;">
+                        <div style="width: 32px;">
+                            <i class="fas ${icon}" style="color: ${n.type === 'warning' ? '#f59e0b' : '#10b981'}; font-size: 18px;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: ${!n.read ? '600' : '500'};">${n.title}</div>
+                            ${n.description ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">${n.description}</div>` : ''}
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;"><i class="far fa-clock"></i> ${n.time}</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -342,22 +404,25 @@ RetailX.NotificationManager = {
 
         Swal.fire({
             title: 'All Notifications',
-            html: `<div style="max-height: 400px; overflow-y: auto;">${html || '<p>No notifications</p>'}</div>`,
+            html: `<div style="max-height: 500px; overflow-y: auto;">${html || '<p style="text-align: center; padding: 40px;">No notifications</p>'}</div>`,
             showCloseButton: true,
             showConfirmButton: false,
             width: '500px'
         });
     },
 
-    addNotification: function(title, type = 'info') {
+    addNotification: function(title, description = '', type = 'info') {
         const newNotification = {
             id: 'dyn_' + Date.now(),
             type: type,
             title: title,
+            description: description,
             time: 'Just now',
-            read: false
+            read: false,
+            isNoAlert: false
         };
         
+        this.notifications = this.notifications.filter(n => !n.isNoAlert);
         this.notifications.unshift(newNotification);
         
         if (this.notifications.length > 20) {
@@ -369,10 +434,10 @@ RetailX.NotificationManager = {
         
         if (!$('#notificationPopup').hasClass('show')) {
             this.togglePopup();
-            setTimeout(() => this.hidePopup(), 3000);
+            setTimeout(() => this.hidePopup(), 4000);
         }
         
-        RetailX.showToast('New notification received', 'info');
+        RetailX.showToast(title, type);
     }
 };
 

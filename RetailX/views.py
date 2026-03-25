@@ -3825,12 +3825,14 @@ def update_stock(request):
 
 
 # ================== LOW STOCK ALERT API ==================
+# ================== LOW STOCK ALERT API ==================
+# ================== LOW STOCK ALERT API ==================
 
 @require_GET
 def low_stock_alert(request):
     """
     Returns a list of products where stock is below threshold.
-    Now allows both managers AND admins.
+    Uses the Cashier_Product model.
     """
     # Check if user is authorized (manager OR admin)
     is_manager = request.session.get('manager_username') is not None
@@ -3840,10 +3842,18 @@ def low_stock_alert(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     try:
-        from productsDB.models import Product
-        low_stock_products = Product.objects.filter(in_stock__lt=models.F('min_stock_level')).values(
-            'sku', 'name', 'in_stock', 'min_stock_level'
-        )
-        return JsonResponse({'success': True, 'low_stock': list(low_stock_products)})
+        from DatasetDB.models import Cashier_Product
+        from django.db import models
+        
+        # Get products where stock is less than threshold
+        low_stock_products = Cashier_Product.objects.filter(
+            stock__lt=models.F('threshold')
+        ).values('sku', 'name', 'stock', 'threshold')
+        
+        # Convert to list for JSON response
+        low_stock_list = list(low_stock_products)
+        
+        return JsonResponse({'success': True, 'low_stock': low_stock_list})
+        
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
